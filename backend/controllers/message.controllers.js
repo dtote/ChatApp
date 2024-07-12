@@ -3,15 +3,14 @@ import Message from "../models/message.model.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const { message} = req.body;
+    const { message } = req.body;
     const { id: receiverId } = req.params;
-    const {senderId} = req.user._id;
+    const senderId = req.user._id;
+
 
     let conversation = await Conversation.findOne({
       participants: { $all: [senderId, receiverId] },
     });
-
-   
 
     if (!conversation) {
       conversation = await Conversation.create({
@@ -26,10 +25,14 @@ export const sendMessage = async (req, res) => {
     });
 
     if(newMessage) {
-      conversation.messages.push(newMessage);
-      await conversation.save();
-      res.status(201).json({newMessage});
+      conversation.messages.push(newMessage._id);
     }
+
+    // SOCKET FUNCTIONALITY GOES HERE
+    
+    await Promise.all([newMessage.save(), conversation.save()]);
+
+    res.status(201).json({newMessage});
  } catch (error) {
    console.log("Error in sendMessage controller", error.message);
    res.status(500).json({ error: "Internal Server Error" });
@@ -39,14 +42,14 @@ export const sendMessage = async (req, res) => {
 export const getMessages = async (req, res) => { 
   try {
     const { id: userToChatId } = req.params;
-    const {senderId} = req.user._id;
+    const senderId = req.user._id;
 
     let conversation = await Conversation.findOne({
       participants: { $all: [senderId, userToChatId] },
     }).populate("messages");
 
-    res.status(200).json({ messages: conversation.messages});
-    
+    res.status(200).json({ messages: conversation});
+
   } catch (error) {
     console.log("Error in getMessages controller", error.message);
     res.status(500).json({ error: "Internal Server Error" });
