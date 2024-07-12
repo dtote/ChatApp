@@ -2,7 +2,9 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 
 export const protectRoute = async (req, res, next) => {
+  
   try {
+
     const token = req.cookies.jwt;
     if (!token) {
       return res.status(401).json({ error: "You need to be logged in to access this route" });
@@ -10,8 +12,7 @@ export const protectRoute = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    console.log("decoded", decoded);
-    
+
     if (!decoded) {
       return res.status(401).json({ error: "Invalid token" });
     }
