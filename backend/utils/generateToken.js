@@ -1,16 +1,25 @@
 import jwt from 'jsonwebtoken';
+import { keygen, sign } from './crystalsDilithium.js';
 
 const generateTokenAndSetCookie = (userId, res) => {
-  const token = jwt.sign({userId}, process.env.JWT_SECRET, { 
+  let n = Math.floor(Math.random() * 10) + 5;
+  let q = Math.pow(2, 23) - Math.pow(2, 13) + 1;
+  const { pk, sk } = keygen(n, n, q); // Genera las claves
+
+ 
+  const { sigma, beta } = sign(sk, userId.toString()); // Firma el id del usuario
+
+  //console.log('pk', pk);
+  const token = jwt.sign({userId, sigma, beta, pk}, process.env.JWT_SECRET, { 
     expiresIn: '30d'
-  })
+  });
 
   res.cookie('jwt', token, {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    httpOnly: true, // prevent XSS attacks crost-site scripting attacks
-    sameSite: "strict", // csrf attacks cross-site request forgery attacks
-    secure: process.env.NODE_ENV !== 'development' // cookie only works in https
-  })
-};
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
+    httpOnly: true, // Prevenir ataques XSS
+    sameSite: "strict", // Prevenir ataques CSRF
+    secure: process.env.NODE_ENV !== 'development' // La cookie solo funciona en HTTPS
+    });
+}
 
 export default generateTokenAndSetCookie;
