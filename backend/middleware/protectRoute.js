@@ -12,18 +12,23 @@ export const protectRoute = async (req, res, next) => {
   
     const { userId, sigma, beta, pk } = jwt.verify(token, process.env.JWT_SECRET);
   
+    // console.log('pk:', pk);
+    // console.log('userId:', userId);
+    // console.log('sigma:', sigma);
+    // console.log('beta:', beta);
+
     if (!verifySignature(pk, userId, sigma, beta)) {
       return res.status(401).send('Firma inválida');
     }
   
-    const user = await User.findById(decoded.userId).select("-password");
+    const user = await User.findById(userId).select("-password");
 
     req.user = user;
 
     next();
 
-  } catch {
-    console.log("Error in protectRoute middleware", error.message);
+  } catch (error){
+    console.log("Error in protectRoute middleware", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 }

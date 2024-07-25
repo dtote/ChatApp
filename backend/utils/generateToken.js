@@ -7,9 +7,15 @@ const generateTokenAndSetCookie = (userId, res) => {
   const { pk, sk } = keygen(n, n, q); // Genera las claves
 
  
-  const { sigma, beta } = sign(sk, userId.toString()); // Firma el id del usuario
 
-  //console.log('pk', pk);
+  const result = sign(sk, userId.toString()); // Firma el id del usuario
+
+  let sigma = result[0];
+  let beta = result[1];
+  // console.log('pk', pk);
+  // console.log('sigma', result[0]);
+  // console.log('beta', result[1]);
+
   const token = jwt.sign({userId, sigma, beta, pk}, process.env.JWT_SECRET, { 
     expiresIn: '30d'
   });
