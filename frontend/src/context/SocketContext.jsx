@@ -15,18 +15,27 @@ export const SocketContextProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (authUser) {
-			const socket = io("https://chatapp-prod-q8k9.onrender.com", {
+			
+			const socket = io("http://localhost:4000", {
 				query: {
 					userId: authUser._id,
-			 },
+				},
 			}
     );
 
 			setSocket(socket);
 
+			socket.on("connect", () => {
+				console.log("Conectado al servidor:", socket.id); // Esto debería confirmarte la conexión desde el cliente
+			});
+	
+			socket.on("connect_error", (err) => {
+				console.error("Error de conexión:", err); // Identificar errores en la conexión
+			});
+	
 			// socket.on() is used to listen to the events. can be used both on client and server side
 			socket.on("getOnlineUsers", (users) => {
-			 	setOnlineUsers(users);
+				setOnlineUsers(users);
 			});
 
 			return () => socket.close();

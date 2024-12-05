@@ -1,52 +1,65 @@
-import  {useState} from 'react'
-import toast from 'react-hot-toast'
-import { useAuthContext } from '../context/AuthContext'
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useAuthContext } from '../context/AuthContext';
 
 const useSignup = () => {
-  const [loading, setLoading] = useState(false)
-  const {authUser, setAuthUser} = useAuthContext();
-  const signup = async ({username, email, password, confirmPassword, gender}) => {
-    const succes = handleInputErrors({username, email, password, confirmPassword, gender})
-    if (!succes) return;
+  const [loading, setLoading] = useState(false);
+  const { authUser, setAuthUser } = useAuthContext();
+
+  const signup = async ({ username, email, password, confirmPassword, gender, faceImage }) => {
+    const success = handleInputErrors({ username, email, password, confirmPassword, gender });
+    if (!success) return;
+
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('confirmpassword', confirmPassword);
+    formData.append('gender', gender);
+    // if (faceImage) {
+    //   formData.append('faceImage', faceImage); // Agregar la imagen facial al FormData
+    // }
+
+    setLoading(true); // Iniciar carga
 
     try {
-        const res = await fetch('/api/auth/signup',{
-          method: 'POST',
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({username, password, email, confirmpassword: confirmPassword, gender})
-        });
-        const data = await res.json();
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        body: formData, // Enviar el FormData
+      });
+      const data = await res.json();
 
-        if (data.error) {
-          toast.error(data.error);
-        }
-
+      if (data.error) {
+        toast.error(data.error);
+      } else {
         console.log(data);
         localStorage.setItem('chat-user', JSON.stringify(data));
         setAuthUser(data);
         toast.success('Signup successful');
+      }
 
     } catch (error) {
-      toast.error(error.message);
+      console.error(error); // Registrar el error en consola
+      toast.error('Error en el registro. Por favor intenta nuevamente.');
     } finally {
-      setLoading(false);
+      setLoading(false); // Finalizar carga
     }
   };
 
-  return { loading, signup }
-}
+  return { loading, signup };
+};
 
-export default useSignup
+export default useSignup;
 
-function handleInputErrors({username, password, confirmPassword, gender}) {
+function handleInputErrors({ username, password, confirmPassword, gender }) {
   if (!username || !password || !confirmPassword || !gender) {
     toast.error('Please fill all the fields');
-    return false 
+    return false;
   }
 
   if (password !== confirmPassword) {
     toast.error('Passwords do not match');
-    return false
+    return false;
   }
 
   if (password.length < 6) {

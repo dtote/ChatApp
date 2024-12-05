@@ -1,28 +1,211 @@
+import { useEffect, useState, useMemo } from "react";
 import { useAuthContext } from "../../context/AuthContext";
-import { extractTime } from "../../utils/extractTime";
-import useConversation from "../../zustand/useConversation";
+import useConversation from "../../zustand/useConversation.js";
+import { useSocketContext } from "../../context/SocketContext"; // Asegúrate de importar correctamente
+import { pdfjs } from "react-pdf";
+import { FaLock, FaLockOpen } from "react-icons/fa"; // Iconos de candado para URL segura e insegura
+import { extractTime } from "../../utils/extractTime.js";
+import './Message.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 const Message = ({ message }) => {
-	const { authUser } = useAuthContext();
-	const { selectedConversation } = useConversation();
-	const fromMe = message.senderId === authUser._id;
-	const formattedTime = extractTime(message.createdAt);
-	const chatClassName = fromMe ? "chat-end" : "chat-start";
-	const profilePic = fromMe ? authUser.profilePic : selectedConversation?.profilePic;
-	const bubbleBgColor = fromMe ? "bg-blue-500" : "";
+  const { authUser } = useAuthContext();
+  const { selectedConversation } = useConversation();
+  const { socket } = useSocketContext();
+  const fromMe = message.senderId === authUser._id;
+  const formattedTime = extractTime(message.createdAt);
+  const chatClassName = fromMe ? "chat-end" : "chat-start";
+  const bubbleBgColor = fromMe ? "bg-blue-500" : "";
+  const [urlStatus, setUrlStatus] = useState({});
+  const [showEncrypted, setShowEncrypted] = useState(false);
+  const [showPopup, setShowPopup] = useState(false); // Estado para controlar la visibilidad del popup
+  const [profilePic, setProfilePic] = useState(
+    fromMe ? authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
+  );
+  const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
+  const pdfUrl = `http://localhost:4000${message.fileUrl}`;
 
-	const shakeClass = message.shouldShake ? "shake" : "";
+  const [userData, setUserData] = useState({
+    email: "",
+    username: "",
+    publicKey: "",
+    sharedElements: "Elementos compartidos"
+  });
 
-	return (
-		<div className={`chat ${chatClassName}`}>
-			<div className='chat-image avatar'>
-				<div className='w-10 rounded-full'>
-					<img alt='Tailwind CSS chat bubble component' src={profilePic} />
-				</div>
-			</div>
-			<div className={`chat-bubble text-white ${bubbleBgColor} ${shakeClass} pb-2`}>{message.message}</div>
-			<div className='chat-footer opacity-50 text-xs flex gap-1 items-center'>{formattedTime}</div>
-		</div>
-	);
+  useEffect(() => {
+    if (!fromMe) {
+      // Obtener la imagen de perfil si es una comunidad
+      fetchProfilePic(message.senderId);
+    }
+    if (showPopup) {
+      fetchUserData(message.senderId); // Llamada al abrir el popup
+    }
+    if (socket) {
+      socket.on("newMessage", (newMsg) => {
+        setMessages((prev) => [...prev, newMsg]); // Añadir el nuevo mensaje al estado local
+      });
+    }
+    if (typeof message.message === 'string') {
+      const urls = message.message.match(urlPattern);
+      if (urls) {
+        urls.forEach((url) => {
+          checkUrlSafety(url);
+        });
+      }
+    }
+  }, [message.senderId, selectedConversation?.type, showPopup, message.message, message.fileUrl, urlPattern, socket]);
+
+  const fetchProfilePic = async (senderId) => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/users/${senderId}/profile-pic`);
+      if (response.ok) {
+        const data = await response.json();
+        setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
+      } else {
+        console.error("Error al obtener la imagen de perfil");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud fetch:", error);
+    }
+  };
+
+  const fetchUserData = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/users/${userId}/popup-data`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserData({
+          email: data.email,
+          username: data.username,
+          publicKey: data.publicKey,
+          sharedElements: "Elementos compartidos" // Puedes cambiarlo si es dinámico
+        });
+      } else {
+        console.error("Error al obtener los datos del usuario");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud fetch:", error);
+    }
+  };
+
+  // Lista de palabras clave peligrosas
+  const dangerousKeywords = ['troyano', 'malware', 'virus', 'phishing', 'scam'];
+
+  useEffect(() => {
+    
+  }, []);
+
+
+  const checkUrlSafety = (url) => {
+    const normalizedUrl = url.toLowerCase(); // Convertir la URL a minúsculas
+    const isHttps = normalizedUrl.startsWith('https://');
+  
+    // Verificar si la URL contiene alguna palabra clave peligrosa
+    const containsDangerousKeywords = dangerousKeywords.some(keyword => normalizedUrl.includes(keyword));
+  
+    // Expresión regular para validar el formato de la URL
+    const urlFormatValid = /^(https?:\/\/)?([\da-z.-]+\.[a-z.]{2,6})([/\w .-]*)*\/?$/.test(normalizedUrl);
+  
+    // URL será segura solo si comienza con http/https, no contiene palabras peligrosas y el formato es válido
+    const isSafe = isHttps && !containsDangerousKeywords && urlFormatValid;
+    setUrlStatus((prev) => ({
+      ...prev,
+      [url]: isSafe ? true : false, // Si es segura, true; si no, false
+    }));
+  };
+
+  const handleEncryptMessage = () => {
+    const encryptedMessage = btoa(message.message);
+    const signedMessage = `${encryptedMessage}.signedBy-${authUser.username}`;
+    return signedMessage;
+  };
+
+  
+  return (
+    <>
+      <div className={`chat ${chatClassName}`} onDoubleClick={() => setShowEncrypted(!showEncrypted)}>
+        <div className='chat-image avatar' onClick={() => setShowPopup(true)}>
+          <div className='w-10 rounded-full'>
+            <img alt='Tailwind CSS chat bubble component' src={profilePic} />
+          </div>
+        </div>
+        <div className={`chat-bubble text-white ${bubbleBgColor}`}>
+          {showEncrypted ? (
+            <span className="text-yellow-500">{handleEncryptMessage()}</span>
+          ) : (
+            <>
+              {(message.message || '').split(urlPattern).map((part, index) => {
+                const urlMatch = part.match(urlPattern);
+                if (urlMatch) {
+                  const url = urlMatch[0];
+                  return (
+                    <span key={index}>
+                      {urlStatus[url] !== undefined ? (
+                        <>
+                          {urlStatus[url] ? (
+                            <a href={url} key={`url-${index}`} target="_blank" rel="noopener noreferrer" className="text-green-500">
+                              {url}
+                            </a>
+                          ) : (
+                            <a href={url} key={`url-${index}`} target="_blank" rel="noopener noreferrer" className="red">
+                              {url}
+                            </a>
+                          )}
+                          {urlStatus[url] ? (
+                            <FaLock className="inline-block text-green-500 ml-1" />
+                          ) : (
+                            <FaLockOpen className="inline-block red ml-1" />
+                          )}
+                        </>
+                      ) : (
+                        <span>{url}</span>
+                      )}
+                    </span>
+                  );
+                }
+                return part;
+              })}
+              { message.fileUrl && message.fileUrl.endsWith('.pdf') && (
+                <div className="iframe-container mt-2">
+                  <iframe src={pdfUrl} width="100%" height="300px" />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        <div className='chat-footer opacity-50 text-xs flex gap-1 items-center'>{formattedTime}</div>
+      </div>
+
+      {showPopup && (
+        <div className="bg-white fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded shadow-lg max-w-md mx-auto">
+            <h2 className="text-center text-2xl font-bold mb-4">Información del Usuario</h2>
+            <div className="text-center flex justify-center mb-4">
+              <img
+                src={profilePic}
+                alt="Foto de Perfil"
+                className="w-10 h-10 rounded-full"
+              />
+            </div>
+            <p className="text-center"><strong>Email:</strong> {userData.email}</p>
+            <p className="text-center"><strong>Apodo:</strong> {userData.username}</p>
+            <p className="text-center ajustText"><strong>Clave pública:</strong> {userData.publicKey}</p>
+            <p className="text-center"><strong>Elementos compartidos:</strong> {userData.sharedElements || 'No hay elemento compartidos'}</p>
+            <button
+              className="text-center mt-4 bg-blue-500 text-white py-2 px-4 rounded"
+              onClick={() => setShowPopup(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
+
 export default Message;

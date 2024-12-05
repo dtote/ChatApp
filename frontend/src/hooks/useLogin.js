@@ -1,45 +1,67 @@
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { useAuthContext } from "../context/AuthContext";
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useAuthContext } from '/src/context/AuthContext.jsx';
 
 const useLogin = () => {
-	const [loading, setLoading] = useState(false);
-	const { setAuthUser } = useAuthContext();
+  const [loading, setLoading] = useState(false);
+  const { setAuthUser } = useAuthContext();
 
-	const login = async (username, password) => {
-		const success = handleInputErrors(username, password);
-		if (!success) return;
-		setLoading(true);
-		try {
-			const res = await fetch("/api/auth/login", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username, password }),
-			});
+  const login = async (username, password) => {
+    const success = handleInputErrors(username, password);
+    if (!success) return;
+    setLoading(true);
 
-			const data = await res.json();
-			if (data.error) {
-				throw new Error(data.error);
-			}
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-			localStorage.setItem("chat-user", JSON.stringify(data));
-			setAuthUser(data);
-		} catch (error) {
-			toast.error(error.message);
-		} finally {
-			setLoading(false);
-		}
-	};
+      // Verifica el código de estado HTTP antes de proceder
+      if (!res.ok) {
+        const errorMessage = `Error ${res.status}: ${res.statusText}`;
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
+      }
 
-	return { loading, login };
+      // Verifica si hay cuerpo de respuesta antes de parsear
+      const responseText = await res.text(); // Leer como texto primero
+      let data = {};
+      if (responseText) {
+        data = JSON.parse(responseText); // Intentar parsear solo si no está vacío
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      localStorage.setItem("chat-user", JSON.stringify(data));
+      setAuthUser(data);
+      toast.success('Login successful!');
+
+    } catch (error) {
+      console.log('Error:', error);
+      toast.error(error.message || 'An error occurred during login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { loading, login };
 };
+
 export default useLogin;
 
+// Manejo de validación de entradas
 function handleInputErrors(username, password) {
-	if (!username || !password) {
-		toast.error("Please fill in all fields");
-		return false;
-	}
-
-	return true;
+  if (!username || !password) {
+    toast.error('Please fill out both fields');
+    return false;
+  }
+  if (password.length < 6) {
+    toast.error('Password must be at least 6 characters long');
+    return false;
+  }
+  return true;
 }
