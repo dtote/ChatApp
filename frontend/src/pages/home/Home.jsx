@@ -2,7 +2,7 @@ import Sidebar from '../../components/sidebar/Sidebar';
 import MessageContainer from '../../components/messages/MessageContainer';
 import SecurityOptions from '../../components/security/SecurityOptions';
 import PostQuantumEducation from '../../components/education/PostQuantumEducation';
-import './home.css';
+import './Home.css';
 
 const Home = () => {
   return (
