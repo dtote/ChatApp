@@ -1,4 +1,4 @@
-import Sidebar from '../../components/sidebar/sidebar';
+import Sidebar from '../../components/sidebar/Sidebar';
 import MessageContainer from '../../components/messages/messageContainer';
 import SecurityOptions from '../../components/security/securityOptions';
 import PostQuantumEducation from '../../components/education/postQuantumEducation';
