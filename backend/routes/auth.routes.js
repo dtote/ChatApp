@@ -1,11 +1,14 @@
-import express from "express";
-import {login, logout, signup} from "../controllers/auth.controllers.js";
-const  router = express.Router();
+import express from 'express';
+import multer from 'multer';
+import { signup, signupFacial, login, loginFacial, logout } from '../controllers/auth.controllers.js';
 
-router.post("/signup", signup);
+const router = express.Router();
+const upload = multer({ dest: 'uploads/' }); // Guardar imágenes en el directorio uploads
 
+router.post("/signup", upload.none(), signup);
+router.post("/signupFacial", upload.single('faceImage'), signupFacial);
 router.post("/login", login);
-
-router.post("/logout", logout);
+router.post("/loginFacial", upload.single('faceImage'),loginFacial);
+router.post("/logout", logout); 
 
 export default router;

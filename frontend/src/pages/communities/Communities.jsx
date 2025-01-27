@@ -1,4 +1,3 @@
-// src/pages/Communities.jsx
 import React from "react";
 import { Link, Routes, Route } from "react-router-dom";
 import CommunityList from "../../components/community/CommunityList.jsx";
@@ -18,6 +17,6 @@ const Communities = () => {
       </Routes>
     </div>
   );
-};
+}
 
 export default Communities;

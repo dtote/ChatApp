@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Conversation from './Conversation.jsx';
 import useGetConversations from "../../hooks/useGetConversations.js";
 import useGetCommunities from "../../hooks/useGetCommunities.js";

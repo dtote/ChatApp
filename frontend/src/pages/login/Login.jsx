@@ -7,8 +7,9 @@ import { toast } from 'react-hot-toast';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isFaceLogin, setIsFaceLogin] = useState(false); // Para cambiar entre métodos de inicio de sesión
+  const [isFaceLogin, setIsFaceLogin] = useState(false); // Cambiar entre métodos de inicio de sesión
   const videoRef = useRef(null);
+  const canvasRef = useRef(null); // Canvas para capturar la imagen
   const { loading, login } = useLogin();
 
   // Función para iniciar el video
@@ -22,55 +23,51 @@ const Login = () => {
 
   // Función para capturar la imagen y enviar al backend
   const captureImage = async () => {
-  try {
-    // Cargar los modelos necesarios desde el servidor
-    await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+    try {
+      // Crear un canvas para capturar un frame del video
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
 
-    // Detección de la cara usando el video de referencia
-    const detections = await faceapi.detectAllFaces(
-      videoRef.current,
-      new faceapi.TinyFaceDetectorOptions()
-    ).withFaceLandmarks().withFaceDescriptors();
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    // Si no se detecta ninguna cara, mostrar un error
-    if (detections.length === 0) {
-      toast.error('No se detectó ninguna cara. Por favor, inténtalo de nuevo.');
-      return;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convertir el contenido del canvas a un archivo Blob
+      const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg'));
+
+      // Crear un FormData y añadir la imagen capturada
+      const formData = new FormData();
+      formData.append('faceImage', imageBlob, 'capture.jpg');
+      formData.append('username', username);
+
+      // Enviar los datos al backend
+      const response = await fetch('/api/auth/loginFacial', {
+        method: 'POST',
+        body: formData, // Enviar FormData directamente
+      });
+
+      // Manejar la respuesta
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.status}`);
+      }
+
+      const data = await response.json();
+      toast.success('Inicio de sesión facial exitoso');
+      // Manejar el token y autenticación
+    } catch (error) {
+      console.error('Error durante el inicio de sesión facial:', error);
+      toast.error(error.message);
     }
+  };
 
-    const faceData = detections[0].descriptor; // Descripción de la cara
-
-    // Enviar los datos faciales al backend
-    const response = await fetch('/api/auth/loginFacial', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ faceData }), // Enviar solo la descripción facial
-    });
-
-    // Manejar la respuesta
-    if (!response.ok) {
-      throw new Error(`Error en la solicitud: ${response.status}`);
-    }
-
-    const data = await response.json();
-    toast.success('Inicio de sesión facial exitoso');
-    // Manejar el token y autenticación
-  } catch (error) {
-    console.error('Error durante el inicio de sesión facial:', error);
-    toast.error(error.message);
-  }
-};
-
-	
   // Manejo del envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isFaceLogin) {
       await login(username, password); // Login por usuario y contraseña
     } else {
-			console.log("Iniciando captura de imagen...");
       await captureImage(); // Login facial
     }
   };
@@ -116,7 +113,20 @@ const Login = () => {
               <label className='label p-2'>
                 <span className='text-base label-text'>Facial Login</span>
               </label>
+              <div>
+                <label className='label p-2'>
+                  <span className='text-base label-text'>Username</span>
+                </label>
+                <input
+                  type='text'
+                  placeholder='Enter username'
+                  className='w-full input input-bordered h-10'
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
               <video ref={videoRef} autoPlay className='w-full h-40 mb-4' />
+              <canvas ref={canvasRef} className='hidden' /> {/* Canvas oculto */}
               <button type='button' onClick={startVideo} className='btn btn-block'>
                 Start Video
               </button>
@@ -144,4 +154,3 @@ const Login = () => {
 };
 
 export default Login;
-

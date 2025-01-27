@@ -16,10 +16,12 @@ export const SocketContextProvider = ({ children }) => {
 	useEffect(() => {
 		if (authUser) {
 			
-			const socket = io("http://localhost:4000", {
+			const socket = io("https://localhost:4000", {
 				query: {
 					userId: authUser._id,
 				},
+        secure: true, // Asegura que se use HTTPS
+				transports: ["websocket"], // Usar solo WebSockets
 			}
     );
 
@@ -30,9 +32,9 @@ export const SocketContextProvider = ({ children }) => {
 			});
 	
 			socket.on("connect_error", (err) => {
-				console.error("Error de conexión:", err); // Identificar errores en la conexión
+				console.error("Error de conexión:", err.message, err);
 			});
-	
+
 			// socket.on() is used to listen to the events. can be used both on client and server side
 			socket.on("getOnlineUsers", (users) => {
 				setOnlineUsers(users);

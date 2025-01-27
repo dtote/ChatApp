@@ -1,39 +1,54 @@
-import {Server} from 'socket.io'
-import http from 'http'
-import express from 'express'
+import { Server } from 'socket.io';
+import https from 'https';
+import fs from 'fs';
+import express from 'express';
+import path from 'path';
 
+const __dirname = path.resolve();
 const app = express();
 
-const server = http.createServer(app);
-
-const io = new Server(server, {
-	cors: {
-		origin: ["http://localhost:3000"],
-		methods: ["GET", "POST"],
-	},
-});
-
-export const getReceiverSocketId = (receiverId) => {
-	return userSocketMap[receiverId];
+// Cargar el certificado y la clave privada
+const httpsOptions = {
+  key: fs.readFileSync(path.join(__dirname, "keys", "localhost.key")),
+	cert: fs.readFileSync(path.join(__dirname, "keys", "localhost.crt")),
 };
 
-const userSocketMap = {}; // {userId: socketId}
+// Crear el servidor HTTPS
+const httpsServer = https.createServer(httpsOptions, app);
 
-io.on("connection", (socket) => {
-	console.log("a user connected", socket.id);
-
-	const userId = socket.handshake.query.userId;
-	if (userId != "undefined") userSocketMap[userId] = socket.id;
-
-	// io.emit() is used to send events to all the connected clients
-	io.emit("getOnlineUsers", Object.keys(userSocketMap));
-
-	// socket.on() is used to listen to the events. can be used both on client and server side
-	socket.on("disconnect", () => {
-		console.log("user disconnected", socket.id);
-		delete userSocketMap[userId];
-		io.emit("getOnlineUsers", Object.keys(userSocketMap));
-	});
+// Configurar Socket.io con el servidor HTTPS
+const io = new Server(httpsServer, {
+  cors: {
+    origin: ["https://localhost:3000"], 
+    methods: ["GET", "POST"],
+		credentials: true,
+		transports: ["websocket"],
+  },
 });
 
-export { app, io, server };
+// Mapeo de usuarios con sus sockets
+const userSocketMap = {}; // {userId: socketId}
+
+export const getReceiverSocketId = (receiverId) => {
+  return userSocketMap[receiverId];
+};
+
+io.on("connection", (socket) => {
+  console.log("A user connected", socket.id);
+
+  const userId = socket.handshake.query.userId;
+  if (userId != "undefined") userSocketMap[userId] = socket.id;
+
+  // Notificar a todos los usuarios conectados sobre los usuarios en línea
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  // Manejar la desconexión del usuario
+  socket.on("disconnect", () => {
+    console.log("User disconnected", socket.id);
+    delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+});
+
+// Exportar app, io y server
+export { app, io, httpsServer };

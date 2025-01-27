@@ -1,66 +1,169 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
-
+import axios from 'axios';
+import User from "../models/user.model.js";
+import { shared } from "@tensorflow/tfjs-node";
+// Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
-	try {
-		const { message } = req.body;
-		const { id: receiverId } = req.params;
-		const senderId = req.user._id;
+  try {
+    const { message } = req.body;
+    const { id: receiverId } = req.params;
+    const senderId = req.user._id;  // ID del remitente (autenticado)
+    const file = req.file;  // Archivo PDF adjunto
+    // console.log(receiverId);
+    // console.log(message);
+    // console.log(senderId);
+    // Obtener la clave pública del receptor desde la base de datos
+    const receiver = await User.findById(receiverId);
+    if (!receiver || !receiver.publicKey) {
+      return res.status(400).json({ error: "Receiver not found or missing public key." });
+    }
+	
 
-		let conversation = await Conversation.findOne({
-			participants: { $all: [senderId, receiverId] },
-		});
+    // Cifrar el mensaje usando la API de cifrado
+    const encryptionResponse = await axios.post('http://127.0.0.1:5001/encrypt', {
+      kem_name: "ML-KEM-512",
+      message: message,
+      public_key: receiver.publicKey,  // clave pública en base64
+    });
 
-		if (!conversation) {
-			conversation = await Conversation.create({
-				participants: [senderId, receiverId],
-			});
-		}
+    const { ciphertext, shared_secret } = encryptionResponse.data;
+    console.log("Encrypted message:", ciphertext);
+    console.log("Shared secret:", shared_secret);
+    // Verificar si ya existe una conversación entre los participantes
+    let conversation = await Conversation.findOne({
+      participants: { $all: [senderId, receiverId] },
+    });
 
-		const newMessage = new Message({
-			senderId,
-			receiverId,
-			message,
-		});
+    if (!conversation) {
+      conversation = await Conversation.create({
+        participants: [senderId, receiverId],
+      });
+    }
 
-		if (newMessage) {
-			conversation.messages.push(newMessage._id);
-		}
+    // Crear el nuevo mensaje con el archivo adjunto (si existe)
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      message: ciphertext, // mensaje cifrado
+      sharedSecret: shared_secret, // clave secreta compartida
+      fileUrl: file ? `/uploads/${file.filename}` : null  // URL del archivo PDF (si se adjunta)
+    });
 
-		// await conversation.save();
-		// await newMessage.save();
+    // Guardar el nuevo mensaje y actualizar la conversación
+    if (newMessage) {
+      conversation.messages.push(newMessage._id);
+    }
 
-		// this will run in parallel
-		await Promise.all([conversation.save(), newMessage.save()]);
+    await Promise.all([conversation.save(), newMessage.save()]);
 
-		// SOCKET IO FUNCTIONALITY WILL GO HERE
-		const receiverSocketId = getReceiverSocketId(receiverId);
-		if (receiverSocketId) {
-			io.to(receiverSocketId).emit("newMessage", newMessage);
-		}
-		res.status(201).json(newMessage);
-	} catch (error) {
-		console.log("Error in sendMessage controller: ", error.message);
-		res.status(500).json({ error: "Internal server error" });
-	}
+    // Descifrar el mensaje para mostrarlo en el chat del remitente
+
+    const decryptionResponse = await axios.post('http://127.0.0.1:5001/decrypt', {
+      kem_name: "ML-KEM-512",
+      ciphertext: ciphertext,  // mensaje cifrado
+      shared_secret: shared_secret,  // clave privada del receptor
+    });
+
+    const decrypted_message = decryptionResponse.data.original_message;
+
+    console.log("Decrypted message:", decrypted_message);
+    console.log("Fecha Actual:", new Date());
+    // Crear el objeto de mensaje completo para devolverlo
+    const messageResponse = {
+      _id: newMessage._id,
+      senderId: newMessage.senderId,
+      receiverId: newMessage.receiverId,
+      message: decrypted_message, // mensaje descifrado
+      sharedSecret: newMessage.sharedSecret, // clave secreta compartida
+      fileUrl: newMessage.fileUrl, // URL del archivo adjunto
+      createdAt: new Date(), // Fecha de creación (puedes ajustar si usas otro campo de tiempo)
+      updatedAt: new Date(),
+    };
+
+    // Funcionalidad de SOCKET IO
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", messageResponse);
+    }
+
+    res.status(201).json(messageResponse);
+  } catch (error) {
+    console.log("Error in sendMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 export const getMessages = async (req, res) => {
-	try {
-		const { id: userToChatId } = req.params;
-		const senderId = req.user._id;
+  try {
+    const { id: userToChatId } = req.params;
+    const senderId = req.user._id;
 
-		const conversation = await Conversation.findOne({
-			participants: { $all: [senderId, userToChatId] },
-		}).populate("messages"); // NOT REFERENCE BUT ACTUAL MESSAGES
+    // Obtener la conversación entre el remitente y el receptor
+    const conversation = await Conversation.findOne({
+      participants: { $all: [senderId, userToChatId] },
+    }).populate("messages");
 
-		if (!conversation) return res.status(200).json([]);
+    if (!conversation) return res.status(200).json([]);
 
-		const messages = conversation.messages;
+    // Obtener la clave secreta del receptor (usuario que solicita los mensajes)
+    const receiver = await User.findById(userToChatId);  
+    if (!receiver || !receiver.secretKey) {
+      return res.status(400).json({ error: "Receiver not found or missing secret key." });
+    }
 
-		res.status(200).json(messages);
-	} catch (error) {
-		res.status(500).json({ error: "Internal server error" });
-	}
+    // Descifrar cada mensaje y devolver también la URL del archivo PDF (si existe)
+    const decryptedMessages = await Promise.all(conversation.messages.map(async (msg) => {
+      try {
+        // console.log("Decrypting message:", msg.message);
+        // console.log("M value:", msg.M);
+        // console.log("Secret key:", secretKeyBase64);
+        //console.log("Mensaje:", msg);
+        // Enviar solicitud a la API para descifrar el mensaje
+        // console.log("Sending decryption request with data:", {
+        //   kem_name: "ML-KEM-512",
+        //   ciphertext: msg.message,  // mensaje cifrado
+        //   shared_secret: msg.sharedSecret,  // clave secreta en base64
+        // });
+        const decryptionResponse = await axios.post('http://127.0.0.1:5001/decrypt', {
+          kem_name: "ML-KEM-512",
+          ciphertext: msg.message,  // mensaje cifrado
+          shared_secret: msg.sharedSecret     // clave secreta en base64
+        });
+
+        //console.log("Decryption response:", decryptionResponse.data);
+        // Devolver el mensaje descifrado junto con el archivo PDF (si existe)
+        return {
+          ...msg._doc,
+          message: decryptionResponse.data.original_message,  // mensaje descifrado
+          fileUrl: msg.fileUrl || null  // devolver la URL del archivo PDF si existe
+        };
+      } catch (error) {
+        const decryptionResponse1 = await axios.post('http://127.0.0.1:5001/decrypt', {
+          kem_name: "ML-KEM-512",
+          ciphertext: msg.message,  // mensaje cifrado
+          shared_secret: msg.sharedSecret       // clave secreta en base64
+        });
+        
+        return {
+          ...msg._doc,
+          message: decryptionResponse1.data.original_message,  // mensaje descifrado
+          fileUrl: msg.fileUrl || null  // devolver la URL del archivo PDF si existe
+        };
+        // console.log("Error decrypting message: ", error.message);
+        // return {
+          // ...msg._doc,
+          // fileUrl: msg.fileUrl || null  // en caso de error, devolver el mensaje con el archivo adjunto (si lo hay)
+        // };
+      }
+    }));
+
+    res.status(200).json(decryptedMessages);
+  } catch (error) {
+    console.error("Error in getMessages:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
+
+

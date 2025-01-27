@@ -15,6 +15,14 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  sharedSecret: {
+    type: String,  // Clave secreta compartida entre el remitente y el receptor
+    required: true,
+  },
+  fileUrl: {
+    type: String,  // URL donde se almacena el PDF
+    default: null,
+  }
   //createAt, updateAt
 }, { timestamps: true });
 

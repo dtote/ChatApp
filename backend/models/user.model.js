@@ -16,16 +16,29 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
-  gender : {
+  gender: {
     type: String,
     required: true,
     enum: ["male", "female"]
   },
   profilePic: {
     type: String,
-    default: "",
-  }
-} , { timestamps: true });
+    default: ""
+  },
+  faceId: { 
+    type: String,
+    default: ""
+  },
+  communities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Community' }],  // Comunidades a las que pertenece
+  publicKey: {
+    type: String,  // Clave pública generada por el sistema Kyber
+    required: true
+  },
+  secretKey: {
+    type: String,  // Clave secreta generada por el sistema Kyber
+    required: true
+  },
+}, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
 

@@ -35,9 +35,9 @@ const Signup = () => {
     await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
     await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
     await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-
+    toast.success('Modelos cargados correctamente');
     const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
-
+    
     if (detections.length > 0) {
       const imageBlob = await new Promise((resolve) => {
         canvas.toBlob(resolve, 'image/jpeg'); // Captura la imagen en un blob

@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import {create } from "zustand";
 
 const useConversation = create((set) => ({
   selectedConversation: null,
@@ -7,12 +7,11 @@ const useConversation = create((set) => ({
   setSelectedConversation: (selectedConversation) => set((state) => {
     return {
       selectedConversation,
-      messages: [] // Limpia los mensajes cuando cambia la conversación
+      messages: [] // Clear messages when conversation changes
     };
   }),
 
   setMessages: (messages) => set({ messages }),
 }));
-
 
 export default useConversation;

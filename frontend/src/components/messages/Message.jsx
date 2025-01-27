@@ -2,15 +2,9 @@ import { useEffect, useState, useMemo } from "react";
 import { useAuthContext } from "../../context/AuthContext";
 import useConversation from "../../zustand/useConversation.js";
 import { useSocketContext } from "../../context/SocketContext"; // Asegúrate de importar correctamente
-import { pdfjs } from "react-pdf";
 import { FaLock, FaLockOpen } from "react-icons/fa"; // Iconos de candado para URL segura e insegura
 import { extractTime } from "../../utils/extractTime.js";
 import './Message.css';
-
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
 
 const Message = ({ message }) => {
   const { authUser } = useAuthContext();
@@ -20,6 +14,7 @@ const Message = ({ message }) => {
   const formattedTime = extractTime(message.createdAt);
   const chatClassName = fromMe ? "chat-end" : "chat-start";
   const bubbleBgColor = fromMe ? "bg-blue-500" : "";
+  const setMessages = useState([]);
   const [urlStatus, setUrlStatus] = useState({});
   const [showEncrypted, setShowEncrypted] = useState(false);
   const [showPopup, setShowPopup] = useState(false); // Estado para controlar la visibilidad del popup
@@ -27,7 +22,7 @@ const Message = ({ message }) => {
     fromMe ? authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
   );
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
-  const pdfUrl = `http://localhost:4000${message.fileUrl}`;
+  const pdfUrl = `https://localhost:4000${message.fileUrl}`;
 
   const [userData, setUserData] = useState({
     email: "",
@@ -61,7 +56,7 @@ const Message = ({ message }) => {
 
   const fetchProfilePic = async (senderId) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/users/${senderId}/profile-pic`);
+      const response = await fetch(`https://localhost:4000/api/users/${senderId}/profile-pic`);
       if (response.ok) {
         const data = await response.json();
         setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
@@ -75,7 +70,7 @@ const Message = ({ message }) => {
 
   const fetchUserData = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/users/${userId}/popup-data`);
+      const response = await fetch(`https://localhost:4000/api/users/${userId}/popup-data`);
       if (response.ok) {
         const data = await response.json();
         setUserData({
@@ -199,7 +194,7 @@ const Message = ({ message }) => {
               className="text-center mt-4 bg-blue-500 text-white py-2 px-4 rounded"
               onClick={() => setShowPopup(false)}
             >
-              Cerrar
+            Cerrar
             </button>
           </div>
         </div>

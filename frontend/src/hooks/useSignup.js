@@ -16,17 +16,22 @@ const useSignup = () => {
     formData.append('password', password);
     formData.append('confirmpassword', confirmPassword);
     formData.append('gender', gender);
-    // if (faceImage) {
-    //   formData.append('faceImage', faceImage); // Agregar la imagen facial al FormData
-    // }
+
+    if (faceImage) {
+      formData.append('faceImage', faceImage); // Agregar la imagen facial al FormData
+    }
 
     setLoading(true); // Iniciar carga
 
     try {
-      const res = await fetch('/api/auth/signup', {
+      // Determinar la ruta según si se incluye una imagen facial
+      const apiEndpoint = faceImage ? '/api/auth/signupFacial' : '/api/auth/signup';
+
+      const res = await fetch(apiEndpoint, {
         method: 'POST',
         body: formData, // Enviar el FormData
       });
+
       const data = await res.json();
 
       if (data.error) {
