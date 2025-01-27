@@ -31,5 +31,8 @@ export default defineConfig({
     alias: {
       crypto: 'crypto-browserify'
     }
-  }
+  },
+  build: {
+    outDir: 'build', 
+  },
 })
