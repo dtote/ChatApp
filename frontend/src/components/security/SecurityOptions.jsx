@@ -2,6 +2,10 @@ import { useState } from 'react';
 import Modal from 'react-modal';
 import { Canvas } from '@react-three/fiber';
 import { useRef } from 'react';
+import axios from 'axios';
+import useSecurity from '../../zustand/useSecurity.js';
+
+
 // Definir las opciones de seguridad y sus detalles
 const securityOptions = [
   { id: 1, title: "Borrado de mensajes", details: "El borrado de mensajes permite a los usuarios eliminar mensajes de manera permanente" },
@@ -13,13 +17,32 @@ const securityOptions = [
 const SecurityOptions = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [selectedKeySize, setSelectedKeySize] = useState('');
+  const [selectedKeySize, setLocalSelectedKeySize] = useState('');
   const [base64Key, setBase64Key] = useState('');
   const [latticePoints, setLatticePoints] = useState([]);
 
   // Función para abrir y cerrar el modal
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
+
+  // Accede a la función de zustand para actualizar el tipo de clave
+  const { setSelectedKeySize } = useSecurity(); 
+  const deleteOldMessagesFromBackend = async (timePeriod) => {
+    try {
+      const response = await axios.post('/api/deleteOldMessages', { timePeriod });
+      alert(response.data.message);  // Muestra un mensaje de éxito
+    } catch (error) {
+      console.error('Error al eliminar los mensajes', error);
+      alert('Hubo un error al intentar eliminar los mensajes.');
+    }
+  };
+
+  const handleKeySizeChange = (event) => {
+    const selectedSize = event.target.value;
+    setLocalSelectedKeySize(selectedSize); // Actualizar el tipo de clave en el estado local
+    console.log("Selected Key Size: ", selectedSize);
+    setSelectedKeySize(selectedSize); // Actualizar también el estado global de zustand
+  };
 
   // Función para seleccionar una opción de seguridad
   const handleOptionClick = (option) => {
@@ -29,11 +52,6 @@ const SecurityOptions = () => {
       setBase64Key(''); // Resetear la clave cuando se elige otra opción
       setLatticePoints([]); // Resetear la cuadrícula de puntos cuando se elige otra opción
     }
-  };
-
-  // Función para manejar el cambio de selección de tamaño de clave
-  const handleKeySizeChange = (event) => {
-    setSelectedKeySize(event.target.value);
   };
 
   // Función para manejar la clave pública en base64
@@ -109,7 +127,7 @@ const SecurityOptions = () => {
                           type="radio" 
                           name="frequency" 
                           value="1 hora" 
-                          onChange={() => {}}
+                          onChange={() => deleteOldMessagesFromBackend('1 hora')}
                         />
                         1 hora
                       </label>
@@ -119,7 +137,7 @@ const SecurityOptions = () => {
                           type="radio" 
                           name="frequency" 
                           value="1 día" 
-                          onChange={() => {}}
+                          onChange={() => deleteOldMessagesFromBackend('1 día')}
                         />
                         1 día
                       </label>
@@ -129,7 +147,8 @@ const SecurityOptions = () => {
                           type="radio" 
                           name="frequency" 
                           value="1 semana" 
-                          onChange={() => {}}
+                    
+                          onChange={() => deleteOldMessagesFromBackend('1 semana')}
                         />
                         1 semana
                       </label>

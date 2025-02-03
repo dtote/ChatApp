@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BsSend } from "react-icons/bs";
 import { FaPlus, FaTimes, FaFile, FaImage, FaUser, FaPoll } from "react-icons/fa";
 import useSendMessage from "../../hooks/useSendMessage";
+import useSecurity from "../../zustand/useSecurity";
 import './MessageInput.css';
 
 const MessageInput = () => {
@@ -9,7 +10,7 @@ const MessageInput = () => {
   const { loading, sendMessage } = useSendMessage();
   const [showPopup, setShowPopup] = useState(false);
   const [file, setFile] = useState(null); 
-
+  const { selectedKeySize } = useSecurity(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,8 +23,8 @@ const MessageInput = () => {
     if (file) {
       formData.append("file", file);
     }
-
-    await sendMessage(formData); // Enviar FormData en lugar de solo el mensaje
+    console.log("Selected Key Size Input: ", selectedKeySize);
+    await sendMessage(formData, selectedKeySize); 
     setMessage("");
     setFile(null);
   };
