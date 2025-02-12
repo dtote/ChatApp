@@ -61,12 +61,11 @@ app.get("*", (req, res) => {
 // Trabajo programado con cron
 cron.schedule('0 0 * * *', () => {
   console.log('Running message cleanup job...');
-  deleteOldMessages();
 });
 
 
 httpsServer.listen(PORT, () => {
   connectToMongoDB();
-  deleteOldMessages();
+
   console.log(`Server running on https://localhost:${PORT}`);
 });
