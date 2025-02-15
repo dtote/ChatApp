@@ -35,8 +35,10 @@ app.use(express.static(path.join(__dirname, "/frontend/dist"))); // Middleware p
 // Configuración de CORS
 app.use(cors({
   origin: 'https://localhost:3000', // Permitir solicitudes desde este origen
-  methods: ['GET'], // Asegúrate de permitir el método GET
-  allowedHeaders: ['Content-Type', 'Authorization'] // Permitir los encabezados necesarios
+  methods: ['GET', 'POST'], // Asegúrate de permitir los métodos GET y POST
+  allowedHeaders: ['Content-Type', 'Authorization'], // Permitir los encabezados necesarios
+  preflightContinue: false, // Deja que Express maneje la solicitud OPTIONS automáticamente
+  optionsSuccessStatus: 204 // Para evitar problemas con ciertos navegadores (como IE)
 }));
 
 app.use(express.json());

@@ -84,8 +84,20 @@ export const sendMessage = async (req, res) => {
 
     // Funcionalidad de SOCKET IO
     const receiverSocketId = getReceiverSocketId(receiverId);
+    console.log("Receiver Socket ID:", receiverSocketId);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", messageResponse);
+      const messageResponse2 = {
+        _id: newMessage._id,
+        senderId: newMessage.senderId,
+        receiverId: newMessage.receiverId,
+        message: ciphertext, // mensaje descifrado
+        sharedSecret: newMessage.sharedSecret, // clave secreta compartida
+        fileUrl: newMessage.fileUrl, // URL del archivo adjunto
+        createdAt: new Date(), // Fecha de creación (puedes ajustar si usas otro campo de tiempo)
+        updatedAt: new Date(),
+      }
+      console.log("Emitting new message to receiver...");
+      io.to(receiverSocketId).emit("newMessage", messageResponse2);
     }
 
     res.status(201).json(messageResponse);
