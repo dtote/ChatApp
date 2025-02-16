@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import https from 'https';
+import http from 'http';
 import fs from 'fs';
 import express from 'express';
 import path from 'path';
@@ -7,22 +7,17 @@ import path from 'path';
 const __dirname = path.resolve();
 const app = express();
 
-// Cargar el certificado y la clave privada
-const httpsOptions = {
-  key: fs.readFileSync(path.join(__dirname, "keys", "localhost.key")),
-	cert: fs.readFileSync(path.join(__dirname, "keys", "localhost.crt")),
-};
 
-// Crear el servidor HTTPS
-const httpsServer = https.createServer(httpsOptions, app);
+// Crear el servidor HTTP (ya no usamos certificados SSL)
+const httpServer = http.createServer(app);
 
-// Configurar Socket.io con el servidor HTTPS
-const io = new Server(httpsServer, {
+// Configurar Socket.io con el servidor HTTP
+const io = new Server(httpServer, {
   cors: {
-    origin: ["https://localhost:3000"], 
+    origin: ["http://localhost:3000"], // Cambié https por http
     methods: ["GET", "POST"],
-		credentials: true,
-		transports: ["websocket"],
+    credentials: true,
+    transports: ["websocket"],
   },
 });
 
@@ -37,7 +32,7 @@ io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
 
   const userId = socket.handshake.query.userId;
-  if (userId != "undefined") userSocketMap[userId] = socket.id;
+  if (userId !== "undefined") userSocketMap[userId] = socket.id;
 
   // Notificar a todos los usuarios conectados sobre los usuarios en línea
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
@@ -50,5 +45,5 @@ io.on("connection", (socket) => {
   });
 });
 
-// Exportar app, io y server
-export { app, io, httpsServer };
+// Exportar app, io y el servidor HTTP
+export { app, io, httpServer };

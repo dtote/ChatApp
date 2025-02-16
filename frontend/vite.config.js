@@ -1,6 +1,5 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import fs from 'fs';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -13,21 +12,19 @@ export default defineConfig({
   plugins: [react()],
   server: { 
     port: 3000,
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'keys/localhost.key')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'keys/localhost.crt')),
-    },
+    https: false, // 🔹 Deshabilitar HTTPS
     proxy: {
       "/api": {
-      target: "https://chatapp-7lh7.onrender.com:10000",
-      secure: false,
+        target: "http://chatapp-7lh7.onrender.com:10000", // 🔹 Cambié https por http
+        changeOrigin: true,
+        secure: false,
       }
     },
     mimeTypes: {
       'application/javascript': ['js', 'mjs']
     }
   },
-  resolve : {
+  resolve: {
     alias: {
       crypto: 'crypto-browserify'
     }
@@ -35,4 +32,4 @@ export default defineConfig({
   build: {
     outDir: 'build', 
   },
-})
+});

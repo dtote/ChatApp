@@ -15,7 +15,7 @@ import decrypt2 from "./routes/decrypt.routes.js";
 import cron from "node-cron";
 import cors from "cors";
 import fs from "fs";
-import { httpsServer } from "./socket/socket.js";  
+import { httpServer } from "./socket/socket.js";  
 
 
 dotenv.config();
@@ -23,22 +23,16 @@ dotenv.config();
 const PORT = process.env.PORT || 4000;
 const __dirname = path.resolve();
 
-// Lee los archivos del certificado y la clave privada
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, "keys", "localhost.key")),
-  cert: fs.readFileSync(path.join(__dirname, "keys", "localhost.crt")),
-};
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Middleware para servir archivos estáticos de /uploads
-app.use(express.static(path.join(__dirname, "/frontend/dist"))); // Middleware para servir la aplicación frontend
-
-// Configuración de CORS
+// Configuración de CORS (Ahora HTTP)
 app.use(cors({
-  origin: 'https://localhost:3000', // Permitir solicitudes desde este origen
-  methods: ['GET', 'POST'], // Asegúrate de permitir los métodos GET y POST
-  allowedHeaders: ['Content-Type', 'Authorization'], // Permitir los encabezados necesarios
-  preflightContinue: false, // Deja que Express maneje la solicitud OPTIONS automáticamente
-  optionsSuccessStatus: 204 // Para evitar problemas con ciertos navegadores (como IE)
+  origin: 'http://localhost:3000', // Cambié https por http
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 app.use(express.json());
@@ -53,8 +47,7 @@ app.use('/api/encrypt', encrypt);
 app.use('/api/decrypt', decrypt2);
 app.use('/api/checkUrlSafety', checkUrlSafety);
 
-// Configuración de rutas comodín
-// Esta ruta debe ir después de todas las rutas de archivos estáticos y de API
+// Rutas comodín
 app.get("*", (req, res) => {
   if (req.url.startsWith('/uploads')) return;
   res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
@@ -65,8 +58,8 @@ cron.schedule('0 0 * * *', () => {
   console.log('Running message cleanup job...');
 });
 
-
-httpsServer.listen(PORT, "0.0.0.0",  () => {
+// Iniciar el servidor HTTP en el puerto adecuado
+httpServer.listen(PORT, "0.0.0.0", () => {
   connectToMongoDB();
-  console.log(`Server running on https://0.0.0.0:${PORT}`);;
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
