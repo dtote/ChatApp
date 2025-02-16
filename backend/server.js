@@ -30,6 +30,7 @@ app.use(express.static(path.join(__dirname, "/frontend/dist")));
 app.use(cors({
   origin: 'http://localhost:3000', // Cambié https por http
   methods: ['GET', 'POST'],
+  credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
   preflightContinue: false,
   optionsSuccessStatus: 204
