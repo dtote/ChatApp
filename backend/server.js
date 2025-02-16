@@ -68,5 +68,5 @@ cron.schedule('0 0 * * *', () => {
 
 httpsServer.listen(PORT, "0.0.0.0",  () => {
   connectToMongoDB();
-  console.log(`Server running on http://0.0.0.0:${PORT}`);;
+  console.log(`Server running on https://0.0.0.0:${PORT}`);;
 });

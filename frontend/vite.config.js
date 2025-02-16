@@ -19,7 +19,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-      target: "https://localhost:4000",
+      target: "https://chatapp-7lh7.onrender.com:10000",
       secure: false,
       }
     },

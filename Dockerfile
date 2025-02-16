@@ -33,7 +33,7 @@ COPY backend backend
 COPY . .
 
 # Expone el puerto de la aplicación
-EXPOSE 4000
+EXPOSE 8080
 
 # Comando para ejecutar la aplicación
 CMD ["npm", "run", "server"]
