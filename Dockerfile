@@ -26,7 +26,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependencias
-RUN npm install && npm run build
+RUN npm install 
+RUN npm run build
 
 COPY backend backend
 # Copiar el resto del código
