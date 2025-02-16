@@ -12,10 +12,10 @@ export default defineConfig({
   plugins: [react()],
   server: { 
     port: 3000,
-    https: false, // 🔹 Deshabilitar HTTPS
+    https: false,
     proxy: {
       "/api": {
-        target: "http://chatapp-7lh7.onrender.com:10000", // 🔹 Cambié https por http
+        target: "http://chatapp-7lh7.onrender.com:10000", 
         changeOrigin: true,
         secure: false,
       }
