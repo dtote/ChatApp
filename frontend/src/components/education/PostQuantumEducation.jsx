@@ -6,47 +6,39 @@ const postQuantumUnits = [
     id: 1, 
     title: "Introducción a la Criptografía Post-Cuantica", 
     resources: [
-      { type: "Video", link: "https://link-a-video.com" },
+      { type: "Video", link: "https://www.youtube.com/watch?v=Z2RjZB6dVyw" },
+      { type: "Video", link: "https://www.youtube.com/watch?v=DlUft80yUec" },
+      { type: "Video", link: "https://www.youtube.com/watch?v=QZBkhmqyBTA" },
+      { type: "Video", link: "https://www.youtube.com/watch?v=MBdKvBA5vrw" },
       { type: "Imagen", link: "https://link-a-imagen.com" },
-      { type: "PDF", link: "https://link-a-pdf.com" },
+      { type: "Cuaderno", link: "https://www.geogebra.org/m/cm2e42fk" },
+      { type: "Cuaderno", link: "https://www.geogebra.org/m/nyzt7puf" },
+      { type: "PDF", link: "https://drive.google.com/file/d/1iT1q6c2HRXchnYtzntcxPTdAqjOvtoDq/view?usp=drive_link" },
+      { type: "PDF", link: "https://drive.google.com/file/d/1vlA2A9E0xaVINI_xTcDRdYow0vlC-van/view?usp=drive_link" },
     ]
   },
   { 
     id: 2, 
-    title: "Algoritmos de Firma Crystals Dilithium", 
+    title: "Algoritmos de Firma Crystals Dilithium, ML-DSA", 
     resources: [
       { type: "Video", link: "https://link-a-video-dilithium.com" },
       { type: "Imagen", link: "https://link-a-imagen-dilithium.com" },
-      { type: "PDF", link: "https://link-a-pdf-dilithium.com" },
+      { type: "PDF", link: "https://drive.google.com/file/d/14b-M3DWwsa4R3U7Orbr0qf4_Mj6ycvFA/view?usp=drive_link" },
+      { type: "PDF", link: "https://drive.google.com/file/d/13K86XWKNU154hld3mnSQGtxpOR_oB8By/view?usp=drive_link"}
     ]
   },
   { 
     id: 3, 
     title: "ML-KEM: Un Enfoque en la Criptografía Post-Cuantica", 
     resources: [
-      { type: "Video", link: "https://link-a-video-mlkem.com" },
+      { type: "Video", link: "https://www.youtube.com/watch?v=832mo7IVJug&t=5s" },
       { type: "Imagen", link: "https://link-a-imagen-mlkem.com" },
-      { type: "PDF", link: "https://link-a-pdf-mlkem.com" },
+      { type: "PDF", link: "https://drive.google.com/file/d/1czpSih6WvrG8QzKTrx1_DWIBLideeZOb/view?usp=drive_link" },
+      { type: "PDF", link: "https://drive.google.com/file/d/1nw1FaFaqGhAAKHuxRH-7HbMh3uHdBiuC/view?usp=drive_link"  },
+      { type: "PDF", link: "https://drive.google.com/file/d/1O3apCrbSYn5flzrCjlqHlxB1BlC4ySaA/view?usp=drive_link"},
+      { type: "PDF", link: "https://drive.google.com/file/d/1EEaJYUQZZEuYxKgBqU9y9ZyhlhQwHo-9/view?usp=drive_link"},
     ]
-  },
-  { 
-    id: 4, 
-    title: "Teoría Cuántica y sus Implicaciones en la Criptografía", 
-    resources: [
-      { type: "Video", link: "https://link-a-video-teoria.com" },
-      { type: "Imagen", link: "https://link-a-imagen-teoria.com" },
-      { type: "PDF", link: "https://link-a-pdf-teoria.com" },
-    ]
-  },
-  { 
-    id: 5, 
-    title: "Construcción de Protocolos Post-Cuanticos", 
-    resources: [
-      { type: "Video", link: "https://link-a-video-protocolos.com" },
-      { type: "Imagen", link: "https://link-a-imagen-protocolos.com" },
-      { type: "PDF", link: "https://link-a-pdf-protocolos.com" },
-    ]
-  },
+  }
 ];
 
 const PostQuantumEducation = () => {

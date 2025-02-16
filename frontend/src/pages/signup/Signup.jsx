@@ -32,26 +32,46 @@ const Signup = () => {
   const captureImage = async () => {
     const canvas = faceapi.createCanvasFromMedia(videoRef.current);
     document.body.append(canvas);
-    await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-    toast.success('Modelos cargados correctamente');
-    const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+  
+    console.log('Cargando modelos...');
     
-    if (detections.length > 0) {
-      const imageBlob = await new Promise((resolve) => {
-        canvas.toBlob(resolve, 'image/jpeg'); // Captura la imagen en un blob
-      });
-      setFaceImage(imageBlob); // Guarda la imagen en el estado
-    } else {
-      toast.error('No se detectó ninguna cara.');
+    try {
+      // Asegúrate de cargar todos los modelos de manera síncrona
+      await faceapi.nets.ssdMobilenetv1.loadFromUri('./models');
+      await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('./models');
+      await faceapi.nets.ageGenderNet.loadFromUri('./models');
+      
+      toast.success('Modelos cargados correctamente');
+      
+      // Después de la carga, realiza la detección
+      const detections = await faceapi.detectAllFaces(videoRef.current)
+        .withFaceLandmarks()  // Detecta los puntos de referencia del rostro
+        .withFaceDescriptors() // Obtiene descriptores faciales
+        .withAgeAndGender(); // Obtiene estimación de edad y género
+      
+      console.log('Detecciones:', detections);
+      
+      if (detections.length > 0) {
+        const imageBlob = await new Promise((resolve) => {
+          canvas.toBlob(resolve, 'image/jpeg'); // Captura la imagen en un blob
+        });
+        setFaceImage(imageBlob); // Guarda la imagen en el estado
+        console.log('Imagen facial capturada:', imageBlob);
+      } else {
+        toast.error('No se detectó ninguna cara.');
+      }
+    } catch (error) {
+      console.error('Error al cargar los modelos o al detectar las caras:', error);
+      toast.error('Error al cargar los modelos o al detectar las caras.');
     }
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(inputs);
-    console.log(faceImage);
+    console.log("Inputs:", inputs);
+    console.log("Face Image:", faceImage);
     await signup({ ...inputs, faceImage }); // Incluye la imagen facial en la firma
   };
 
