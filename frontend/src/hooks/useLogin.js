@@ -16,7 +16,9 @@ const useLogin = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include"
       });
+
 
       // Verifica el código de estado HTTP antes de proceder
       if (!res.ok) {
