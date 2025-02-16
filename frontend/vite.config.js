@@ -15,9 +15,9 @@ export default defineConfig({
     https: false,
     proxy: {
       "/api": {
-        target: "http://chatapp-7lh7.onrender.com", 
+        target: "https://chatapp-7lh7.onrender.com", 
         changeOrigin: true,
-        secure: false,
+        secure: true,
       }
     },
     mimeTypes: {
