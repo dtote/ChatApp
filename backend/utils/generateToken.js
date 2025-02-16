@@ -23,7 +23,7 @@ const generateTokenAndSetCookie = (userId, res) => {
   res.cookie('jwt', token, {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
     httpOnly: true, // Prevenir ataques XSS
-    sameSite: "strict", // Prevenir ataques CSRF
+    sameSite: "None", // Prevenir ataques CSRF
     secure: false // La cookie solo funciona en HTTPS
     });
 }
