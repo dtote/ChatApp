@@ -22,19 +22,19 @@ RUN apt-get update && apt-get install -y \
 # Crear y establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos necesarios
+# Copiar y construir el frontend
+COPY frontend frontend
+WORKDIR /app/frontend
+RUN npm install && npm run build
+
+# Volver al backend y copiar archivos necesarios
+WORKDIR /app
 COPY package*.json ./
+RUN npm install
 
-# Instalar dependencias
-RUN npm install 
-RUN npm run build
-
-COPY backend backend
-# Copiar el resto del código
-COPY . .
-
-# Expone el puerto de la aplicación
+# Exponer el puerto
 EXPOSE 8080
 
-# Comando para ejecutar la aplicación
+# Comando para iniciar el backend
 CMD ["npm", "run", "server"]
+
