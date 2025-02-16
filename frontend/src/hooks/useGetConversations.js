@@ -9,16 +9,7 @@ const useGetConversations = () => {
 		const getConversations = async () => {
 			setLoading(true);
 			try {
-				const token = localStorage.getItem("token"); // Obtener el token almacenado
-
-    		const res = await fetch("/api/users", {
-    		  method: "GET",
-    		  headers: {
-    		    "Content-Type": "application/json",
-    		    "Authorization": `Bearer ${token}`, // Agregar el token al header
-    		  },
-    		});
-				
+				const res = await fetch("/api/users");
 				const data = await res.json();
 				if (data.error) {
 					throw new Error(data.error);
