@@ -9,8 +9,8 @@ const useGetConversations = () => {
 		const getConversations = async () => {
 			setLoading(true);
 			try {
-				const token = localStorage.getItem("token");
-				
+				const token = localStorage.getItem("chat-user");
+
 				const res = await fetch("https://chatapp-7lh7.onrender.com/api/users", {
 				  method: "GET",
 				  headers: {
