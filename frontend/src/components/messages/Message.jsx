@@ -10,7 +10,7 @@ import './Message.css';
 
 const decryptMessage = async (ciphertext, sharedSecret, selectedKeySize) => {
   try {
-    const response = await axios.post('/api/decrypt', {
+    const response = await axios.post('https://chatapp-7lh7.onrender.com/api/decrypt', {
       kem_name: selectedKeySize,
       ciphertext: ciphertext,
       shared_secret: sharedSecret,

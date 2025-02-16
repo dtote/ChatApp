@@ -7,7 +7,7 @@ const CreateCommunityForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post("/api/communities", { name, description })
+    axios.post("https://chatapp-7lh7.onrender.com/api/communities", { name, description })
       .then(response => {
         console.log("Community created:", response.data);
       })

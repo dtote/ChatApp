@@ -29,7 +29,7 @@ const SecurityOptions = () => {
   const { setSelectedKeySize } = useSecurity(); 
   const deleteOldMessagesFromBackend = async (timePeriod) => {
     try {
-      const response = await axios.post('/api/deleteOldMessages', { timePeriod });
+      const response = await axios.post('https://chatapp-7lh7.onrender.com/api/deleteOldMessages', { timePeriod });
       alert(response.data.message);  // Muestra un mensaje de éxito
     } catch (error) {
       console.error('Error al eliminar los mensajes', error);

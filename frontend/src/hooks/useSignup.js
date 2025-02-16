@@ -25,7 +25,7 @@ const useSignup = () => {
 
     try {
       // Determinar la ruta según si se incluye una imagen facial
-      const apiEndpoint = faceImage ? '/api/auth/signupFacial' : '/api/auth/signup';
+      const apiEndpoint = faceImage ? 'https://chatapp-7lh7.onrender.com/api/auth/signupFacial' : 'https://chatapp-7lh7.onrender.com/api/auth/signup';
 
       const res = await fetch(apiEndpoint, {
         method: 'POST',
