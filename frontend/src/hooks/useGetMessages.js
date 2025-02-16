@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import useConversation from "../zustand/useConversation";
+import useSecurity from "../zustand/useSecurity";
 import toast from "react-hot-toast";
 
 const useGetMessages = () => {
   const [loading, setLoading] = useState(false);
   const { messages, setMessages, selectedConversation } = useConversation();
-
+  const { selectedKeySize } = useSecurity();
   useEffect(() => {
     const getMessages = async () => {
       setLoading(true);
@@ -14,8 +15,8 @@ const useGetMessages = () => {
         // Determinar si es una comunidad o una conversación privada
 			
         const endpoint = selectedConversation.type === "community"
-          ? `/api/communities/${selectedConversation._id}/messages`
-          : `/api/messages/${selectedConversation._id}`;
+        ? `/api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
+        : `/api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
 
         const res = await fetch(endpoint);
         const data = await res.json();

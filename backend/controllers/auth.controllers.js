@@ -6,15 +6,26 @@ import axios from "axios";  // Importa axios para hacer solicitudes HTTP a Flask
 import bcrypt from 'bcrypt';
 import faceapi from 'face-api.js';
 import { createCanvas, loadImage } from 'canvas';
+import { JSDOM } from 'jsdom';
 
 const upload = multer({ dest: 'uploads/' }); // Guardar imágenes en el directorio uploads
+
+// Configurar entorno DOM falso en Node.js
+const dom = new JSDOM(`<!DOCTYPE html>`);
+global.window = dom.window;
+global.document = dom.window.document;
+global.HTMLCanvasElement = dom.window.HTMLCanvasElement;
+global.HTMLImageElement = dom.window.HTMLImageElement;
 
 const loadFaceApiModels = async () => {
   const MODEL_URL = './models'; // Cambia esta ruta si los modelos están en otra ubicación
   await faceapi.nets.ssdMobilenetv1.loadFromDisk(MODEL_URL);
   await faceapi.nets.faceLandmark68Net.loadFromDisk(MODEL_URL);
   await faceapi.nets.faceRecognitionNet.loadFromDisk(MODEL_URL);
+  await faceapi.nets.tinyFaceDetector.loadFromDisk(MODEL_URL);
+  console.log('Face API models loaded');
 };
+
 // Registrar un nuevo usuario con reconocimiento facial
 export const signupFacial = async (req, res) => {
   const { username, password, gender,email } = req.body;
@@ -38,7 +49,7 @@ export const signupFacial = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt); // Hashear la contraseña
 
     // Obtener claves públicas y privadas generadas por Flask
-    const { data: keys } = await axios.post('http://127.0.0.1:5001/generate_keys', {
+    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
@@ -103,7 +114,7 @@ export const signup = async (req, res) => {
     }
 
     // Obtener claves públicas y privadas generadas por Flask
-    const { data: keys } = await axios.post('http://127.0.0.1:5001/generate_keys', {
+    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
@@ -169,7 +180,7 @@ export const login = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-// Autenticación facial
+
 export const loginFacial = async (req, res) => {
   try {
     const { username } = req.body;
@@ -190,40 +201,55 @@ export const loginFacial = async (req, res) => {
       return res.status(400).json({ message: 'No face ID stored for user' });
     }
 
-    // Cargar modelos de face-api.js (solo cargar una vez)
+    // Cargar modelos de face-api.js (si no se han cargado previamente)
     await loadFaceApiModels();
 
-    // Cargar la imagen usando node-canvas
-   
+    // Cargar la imagen con node-canvas
     const img = await loadImage(req.file.path);
-    const localCanvas = createCanvas(img.width, img.height);
+
+    // Redimensionar la imagen antes de crear el canvas
+    const MAX_WIDTH = 640;
+    const MAX_HEIGHT = 480;
+    const scale = Math.min(MAX_WIDTH / img.width, MAX_HEIGHT / img.height);
+    const newWidth = img.width * scale;
+    const newHeight = img.height * scale;
+
+    // Crear el canvas con la nueva dimensión
+    const localCanvas = createCanvas(newWidth, newHeight);
     const ctx = localCanvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
 
-    // Detectar caras y obtener el descriptor facial
-    const detections = await faceapi.detectSingleFace(localCanvas, new faceapi.TinyFaceDetectorOptions())
-                        
+    ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
-    if (detections) {
-      const landmarks = await faceapi.detectFaceLandmarks(localCanvas);
-      const descriptor = await faceapi.computeFaceDescriptor(localCanvas);
-      // Verificar cada paso
-      console.log({ detections, landmarks, descriptor });
-    } else {
+    // const htmlCanvas = Object.assign(document.createElement('canvas'), {
+    //     width: localCanvas.width,
+    //     height: localCanvas.height,
+    // });
+
+    // const ctx1 = htmlCanvas.getContext('2d');
+    // ctx1.drawImage(localCanvas, 0, 0);
+    
+    // // Asegúrate de que el contexto esté correctamente establecido
+    // if (!ctx1) {
+    //   console.error('No se pudo obtener el contexto 2d del canvas');
+    // } else {
+    //   console.log('Contexto 2D correctamente establecido');
+    // }
+
+
+    const input = await faceapi.toNetInput(localCanvas);
+    console.log('Input para face-api.js:', input);
+    // Usar face-api.js directamente sobre el canvas
+    const detections = await faceapi.detectSingleFace(input, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+
+    if (!detections) {
       return res.status(401).json({ message: 'No face detected' });
     }
 
-    // Obtener el descriptor facial de la imagen cargada
-    const faceImage = detections.descriptor;
-
-    // Convertir el faceId almacenado del usuario a un Float32Array
+    // Comparar el descriptor facial con el almacenado en la base de datos
     const storedFaceDescriptor = new Float32Array(user.faceId);
-
-    // Comparar los descriptores faciales
     const faceMatcher = new faceapi.FaceMatcher([storedFaceDescriptor]);
-    const bestMatch = faceMatcher.findBestMatch(faceImage);
+    const bestMatch = faceMatcher.findBestMatch(detections.descriptor);
 
-    // Verificar si la distancia de coincidencia es aceptable (umbral de 0.6)
     if (bestMatch.distance < 0.6) {
       // Si la coincidencia es buena, generar un token JWT para el usuario
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -237,8 +263,6 @@ export const loginFacial = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
-
-
 
 export const logout = async (req, res) => {
   try {

@@ -7,7 +7,7 @@ import { shared } from "@tensorflow/tfjs-node";
 // Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, selectedKeySize } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;  // ID del remitente (autenticado)
     const file = req.file;  // Archivo PDF adjunto
@@ -22,8 +22,8 @@ export const sendMessage = async (req, res) => {
 	
 
     // Cifrar el mensaje usando la API de cifrado
-    const encryptionResponse = await axios.post('http://127.0.0.1:5001/encrypt', {
-      kem_name: "ML-KEM-512",
+    const encryptionResponse = await axios.post('https://kyber-api-1.onrender.com/encrypt', {
+      kem_name: selectedKeySize,
       message: message,
       public_key: receiver.publicKey,  // clave pública en base64
     });
@@ -60,16 +60,35 @@ export const sendMessage = async (req, res) => {
 
     // Descifrar el mensaje para mostrarlo en el chat del remitente
 
-    const decryptionResponse = await axios.post('http://127.0.0.1:5001/decrypt', {
-      kem_name: "ML-KEM-512",
+    try {
+      const encryptionResponse = await axios.post('https://kyber-api-1.onrender.com/encrypt', {
+        kem_name: selectedKeySize,
+        message: message,
+        public_key: receiver.publicKey,  // clave pública en base64
+      });
+    
+      //console.log("Respuesta de la API:", encryptionResponse.data);
+    } catch (error) {
+      if (error.response) {
+        console.error("Error en la respuesta:", error.response.status, error.response.data);
+      } else if (error.request) {
+        console.error("No hubo respuesta de la API:", error.request);
+      } else {
+        console.error("Error en la configuración de la petición:", error.message);
+      }
+    }
+    
+    const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
+      kem_name: selectedKeySize,
       ciphertext: ciphertext,  // mensaje cifrado
       shared_secret: shared_secret,  // clave privada del receptor
     });
 
+
     const decrypted_message = decryptionResponse.data.original_message;
 
-    console.log("Decrypted message:", decrypted_message);
-    console.log("Fecha Actual:", new Date());
+    //console.log("Decrypted message:", decrypted_message);
+    //console.log("Fecha Actual:", new Date());
     // Crear el objeto de mensaje completo para devolverlo
     const messageResponse = {
       _id: newMessage._id,
@@ -84,7 +103,7 @@ export const sendMessage = async (req, res) => {
 
     // Funcionalidad de SOCKET IO
     const receiverSocketId = getReceiverSocketId(receiverId);
-    console.log("Receiver Socket ID:", receiverSocketId);
+    //console.log("Receiver Socket ID:", receiverSocketId);
     if (receiverSocketId) {
       const messageResponse2 = {
         _id: newMessage._id,
@@ -110,6 +129,7 @@ export const sendMessage = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
+    const { selectedKeySize } = req.query
     const senderId = req.user._id;
 
     // Obtener la conversación entre el remitente y el receptor
@@ -125,6 +145,7 @@ export const getMessages = async (req, res) => {
       return res.status(400).json({ error: "Receiver not found or missing secret key." });
     }
 
+   
     // Descifrar cada mensaje y devolver también la URL del archivo PDF (si existe)
     const decryptedMessages = await Promise.all(conversation.messages.map(async (msg) => {
       try {
@@ -133,17 +154,31 @@ export const getMessages = async (req, res) => {
         // console.log("Secret key:", secretKeyBase64);
         //console.log("Mensaje:", msg);
         // Enviar solicitud a la API para descifrar el mensaje
-        // console.log("Sending decryption request with data:", {
-        //   kem_name: "ML-KEM-512",
-        //   ciphertext: msg.message,  // mensaje cifrado
-        //   shared_secret: msg.sharedSecret,  // clave secreta en base64
-        // });
-        const decryptionResponse = await axios.post('http://127.0.0.1:5001/decrypt', {
-          kem_name: "ML-KEM-512",
+        console.log("Sending decryption request with data:", {
+          kem_name: selectedKeySize,
           ciphertext: msg.message,  // mensaje cifrado
-          shared_secret: msg.sharedSecret     // clave secreta en base64
+          shared_secret: msg.sharedSecret,  // clave secreta en base64
         });
 
+        try {
+          const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
+            kem_name: selectedKeySize,
+            ciphertext: msg.message,  // mensaje cifrado
+            shared_secret: msg.sharedSecret     // clave secreta en base64
+          });
+  
+        
+          console.log("Respuesta de la API:", decryptionResponse.data);
+        } catch (error) {
+          if (error.response) {
+            console.error("Error en la respuesta:", error.response.status, error.response.data);
+          } else if (error.request) {
+            console.error("No hubo respuesta de la API:", error.request);
+          } else {
+            console.error("Error en la configuración de la petición:", error.message);
+          }
+        }
+        
         //console.log("Decryption response:", decryptionResponse.data);
         // Devolver el mensaje descifrado junto con el archivo PDF (si existe)
         return {
@@ -152,8 +187,8 @@ export const getMessages = async (req, res) => {
           fileUrl: msg.fileUrl || null  // devolver la URL del archivo PDF si existe
         };
       } catch (error) {
-        const decryptionResponse1 = await axios.post('http://127.0.0.1:5001/decrypt', {
-          kem_name: "ML-KEM-512",
+        const decryptionResponse1 = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
+          kem_name: selectedKeySize,
           ciphertext: msg.message,  // mensaje cifrado
           shared_secret: msg.sharedSecret       // clave secreta en base64
         });
