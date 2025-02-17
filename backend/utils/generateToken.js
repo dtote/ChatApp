@@ -24,7 +24,7 @@ const generateTokenAndSetCookie = (userId, res) => {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
     httpOnly: true, // Prevenir ataques XSS
     sameSite: "None", // Prevenir ataques CSRF
-    secure: process.env.NODE_ENV === "production" // La cookie solo funciona en HTTPS
+    secure: process.env.NODE_ENV === "production" ? true : false // La cookie solo funciona en HTTPS
     });
 }
 
