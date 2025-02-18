@@ -23,7 +23,7 @@ dotenv.config();
 const PORT = process.env.PORT || 4000;
 const __dirname = path.resolve();
 
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
 // Configuración de CORS (Ahora HTTP)

@@ -35,7 +35,7 @@ const Message = ({ message }) => {
   const [showPopup, setShowPopup] = useState(false); // Estado para controlar la visibilidad del popup
   const [urlStatus, setUrlStatus] = useState({});
   const [profilePic, setProfilePic] = useState(
-    fromMe ? authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
+    fromMe ? "https://chatapp-7lh7.onrender.com" + authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
   );
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
   const pdfUrl = `https://chatapp-7lh7.onrender.com/${message.fileUrl}`;
