@@ -6,7 +6,7 @@ const useSignup = () => {
   const [loading, setLoading] = useState(false);
   const { authUser, setAuthUser } = useAuthContext();
 
-  const signup = async ({ username, email, password, confirmPassword, gender, faceImage }) => {
+  const signup = async ({ username, email, password, confirmPassword, gender, faceDescriptor }) => {
     const success = handleInputErrors({ username, email, password, confirmPassword, gender });
     if (!success) return;
 
@@ -17,19 +17,18 @@ const useSignup = () => {
     formData.append('confirmpassword', confirmPassword);
     formData.append('gender', gender);
 
-    if (faceImage) {
-      formData.append('faceImage', faceImage); // Agregar la imagen facial al FormData
+    if (faceDescriptor) {
+      formData.append('faceDescriptor', JSON.stringify(faceDescriptor));
     }
 
-    setLoading(true); // Iniciar carga
+    setLoading(true);
 
     try {
-      // Determinar la ruta según si se incluye una imagen facial
-      const apiEndpoint = faceImage ? 'https://chatapp-7lh7.onrender.com/api/auth/signupFacial' : 'https://chatapp-7lh7.onrender.com/api/auth/signup';
-
+      const apiEndpoint = faceDescriptor ? 'https://chatapp-7lh7.onrender.com/api/auth/signupFacial' : 'https://chatapp-7lh7.onrender.com/api/auth/signup';
+      
       const res = await fetch(apiEndpoint, {
         method: 'POST',
-        body: formData, // Enviar el FormData
+        body: formData,
       });
 
       const data = await res.json();
@@ -42,12 +41,11 @@ const useSignup = () => {
         setAuthUser(data);
         toast.success('Signup successful');
       }
-
     } catch (error) {
-      console.error(error); // Registrar el error en consola
+      console.error(error);
       toast.error('Error en el registro. Por favor intenta nuevamente.');
     } finally {
-      setLoading(false); // Finalizar carga
+      setLoading(false);
     }
   };
 

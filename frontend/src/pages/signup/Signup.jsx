@@ -13,7 +13,7 @@ const Signup = () => {
     confirmPassword: '',
     gender: ''
   });
-  const [faceImage, setFaceImage] = useState(null); // Para almacenar la imagen facial
+  const [faceDescriptor, setFaceDescriptor] = useState(null); // Para almacenar la imagen facial
   const videoRef = useRef(null);
   const { loading, signup } = useSignup();
 
@@ -29,50 +29,48 @@ const Signup = () => {
       .catch(err => console.error(err));
   };
 
-  const captureImage = async () => {
-    const canvas = faceapi.createCanvasFromMedia(videoRef.current);
-    document.body.append(canvas);
-  
-    console.log('Cargando modelos...');
-    
+
+const captureImage = async () => {
     try {
-      // Asegúrate de cargar todos los modelos de manera síncrona
       await faceapi.nets.ssdMobilenetv1.loadFromUri('./models');
       await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
       await faceapi.nets.faceRecognitionNet.loadFromUri('./models');
-      await faceapi.nets.ageGenderNet.loadFromUri('./models');
       
       toast.success('Modelos cargados correctamente');
       
-      // Después de la carga, realiza la detección
       const detections = await faceapi.detectAllFaces(videoRef.current)
-        .withFaceLandmarks()  // Detecta los puntos de referencia del rostro
-        .withFaceDescriptors() // Obtiene descriptores faciales
-        .withAgeAndGender(); // Obtiene estimación de edad y género
-      
-      console.log('Detecciones:', detections);
+        .withFaceLandmarks()
+        .withFaceDescriptors();
       
       if (detections.length > 0) {
-        const imageBlob = await new Promise((resolve) => {
-          canvas.toBlob(resolve, 'image/jpeg'); // Captura la imagen en un blob
-        });
-        setFaceImage(imageBlob); // Guarda la imagen en el estado
-        console.log('Imagen facial capturada:', imageBlob);
+        setFaceDescriptor(detections[0].descriptor);
+        console.log('Descriptor Facial:', detections[0].descriptor);
+        toast.success('Cara detectada correctamente');
       } else {
         toast.error('No se detectó ninguna cara.');
       }
     } catch (error) {
-      console.error('Error al cargar los modelos o al detectar las caras:', error);
-      toast.error('Error al cargar los modelos o al detectar las caras.');
+      console.error('Error al detectar la cara:', error);
+      toast.error('Error al detectar la cara.');
     }
   };
   
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Inputs:", inputs);
-    console.log("Face Image:", faceImage);
-    await signup({ ...inputs, faceImage }); // Incluye la imagen facial en la firma
+    if (!faceDescriptor) {
+      toast.error('Debes capturar tu cara antes de registrarte.');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('username', inputs.username);
+    formData.append('email', inputs.email);
+    formData.append('password', inputs.password);
+    formData.append('gender', inputs.gender);
+    formData.append('faceDescriptor', JSON.stringify(faceDescriptor));
+    
+    await signup(formData);
   };
 
   return (

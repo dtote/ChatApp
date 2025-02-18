@@ -25,9 +25,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-  faceId: { 
-    type: String,
-    default: ""
+  faceDescriptor: {
+    type: Array,
   },
   communities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Community' }],  // Comunidades a las que pertenece
   publicKey: {

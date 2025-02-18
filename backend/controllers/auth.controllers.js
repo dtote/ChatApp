@@ -28,62 +28,49 @@ const loadFaceApiModels = async () => {
 
 // Registrar un nuevo usuario con reconocimiento facial
 export const signupFacial = async (req, res) => {
-  const { username, password, gender,email } = req.body;
-  const profilePicFile = req.file; // Archivo cargado
-
-  // Verificar que el archivo de imagen facial está presente
-  if (!req.file) {
-    return res.status(400).json({ message: 'Face image is required' });
-  }
-
-  const faceId = req.file.filename; // Usar el nombre del archivo como ID facial
+  const { username, password, gender, email, faceDescriptor } = req.body;
+  const profilePicFile = req.file;
 
   try {
-    // Asegurarse de que la contraseña no esté vacía
     if (!password) {
       return res.status(400).json({ message: 'Password is required' });
     }
+    if (!faceDescriptor) {
+      return res.status(400).json({ message: 'Face descriptor is required' });
+    }
 
-    // Generar un salt y hashear la contraseña
-    const salt = await bcrypt.genSalt(10); // Puedes ajustar el número de rondas
-    const hashedPassword = await bcrypt.hash(password, salt); // Hashear la contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Obtener claves públicas y privadas generadas por Flask
     const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
-    let profilePic;
-    // Si se envió una imagen, actualizar la ruta
-    if (profilePicFile) {
-     profilePic = `/uploads/${profilePicFile.filename}`; // Ruta relativa
-    }
-    
-    // Crear el nuevo usuario
+    let profilePic = gender === "male" 
+    ? `https://avatar.iran.liara.run/public/boy?username=${username}`
+    : `https://avatar.iran.liara.run/public/girl?username=${username}`;
+
     const newUser = new User({
       username,
       password: hashedPassword,
       email,
       gender,
       profilePic,
-      faceId,
+      faceDescriptor: JSON.parse(faceDescriptor),
       publicKey: keys.public_key,
       secretKey: keys.secret_key,
     });
 
-    // Generate JWT token here
     generateTokenAndSetCookie(newUser._id, res);
-
-    // Guardar el usuario en la base de datos
     await newUser.save();
 
-    // Enviar una respuesta exitosa
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 export const signup = async (req, res) => {
   try {
