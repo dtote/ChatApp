@@ -14,7 +14,7 @@ const useGetConversations = () => {
 					headers: {
 						"Content-Type": "application/json"
 					},
-					credentials: "include" // ⚠️ Esto permite enviar cookies en solicitudes CORS
+					credentials: "include"
 				});
 				
 				const data = await res.json();

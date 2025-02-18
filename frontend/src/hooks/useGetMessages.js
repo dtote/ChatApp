@@ -18,7 +18,9 @@ const useGetMessages = () => {
         ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
         : `https://chatapp-7lh7.onrender.com/api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
 
-        const res = await fetch(endpoint);
+        const res = await fetch(endpoint, {
+          credentials: "include",
+        });
         const data = await res.json();
 
         if (data.error) throw new Error(data.error);

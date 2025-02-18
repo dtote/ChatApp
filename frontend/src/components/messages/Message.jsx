@@ -30,13 +30,18 @@ const Message = ({ message }) => {
   const formattedTime = extractTime(message.createdAt);
   const chatClassName = fromMe ? "chat-end" : "chat-start";
   const bubbleBgColor = fromMe ? "bg-blue-500" : "";
+  const [showEncrypted, setShowEncrypted] = useState(false);
   const [messages, setMessages] = useState([message]);
+  const [showPopup, setShowPopup] = useState(false); // Estado para controlar la visibilidad del popup
   const [urlStatus, setUrlStatus] = useState({});
   const [profilePic, setProfilePic] = useState(
     fromMe ? authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
   );
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
-  const pdfUrl = `https://localhost:4000${message.fileUrl}`;
+  const pdfUrl = `https://chatapp-7lh7.onrender.com/${message.fileUrl}`;
+  
+  console.log("Imagen del usuario autenticado:", authUser.profilePic);
+
   const { selectedKeySize } = useSecurity(state => state);
   const [userData, setUserData] = useState({
     email: "",
@@ -48,6 +53,10 @@ const Message = ({ message }) => {
   useEffect(() => {
     if (!fromMe) {
       fetchProfilePic(message.senderId);
+    }
+
+    if (showPopup) {
+      fetchUserData(message.senderId); // Llamada al abrir el popup
     }
 
     if (socket) {
@@ -76,15 +85,38 @@ const Message = ({ message }) => {
 
   const fetchProfilePic = async (senderId) => {
     try {
-      const response = await fetch(`https://localhost:4000/api/users/${senderId}/profile-pic`);
+      const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${senderId}/profile-pic`, {
+        credentials: "include",
+      });
       if (response.ok) {
         const data = await response.json();
         setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
+        console.log("Imagen de perfil:", data.profilePic);
       }
     } catch (error) {
       console.error("Error en la solicitud fetch:", error);
     }
   };
+
+  const fetchUserData = async (userId) => {
+    try {
+      const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${userId}/popup-data`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserData({
+          email: data.email,
+          username: data.username,
+          publicKey: data.publicKey,
+          sharedElements: "Elementos compartidos" // Puedes cambiarlo si es dinámico
+        });
+      } else {
+        console.error("Error al obtener los datos del usuario");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud fetch:", error);
+    }
+  };
+
 
   const checkUrlSafety = (url) => {
     const normalizedUrl = url.toLowerCase();
@@ -106,56 +138,83 @@ const Message = ({ message }) => {
 
   return (
     <>
-      <div className={`chat ${chatClassName}`}>
-        <div className='chat-image avatar'>
+      <div className={`chat ${chatClassName}`} onDoubleClick={() => setShowEncrypted(!showEncrypted)}>
+        <div className='chat-image avatar' onClick={() => setShowPopup(true)}>
           <div className='w-10 rounded-full'>
             <img alt='Perfil' src={profilePic} />
           </div>
         </div>
         <div className={`chat-bubble text-white ${bubbleBgColor}`}>
-          {
-            
-            (
-              console.log("Mensajes a imprimir:", message),
-              message.message || '').split(urlPattern).map((part, index) => {
-            const urlMatch = part.match(urlPattern);
-            if (urlMatch) {
-              const url = urlMatch[0];
-              return (
-                <span key={index}>
-                  {urlStatus[url] !== undefined ? (
-                    <>
-                      {urlStatus[url] ? (
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-green-500">
-                          {url}
-                        </a>
+               {showEncrypted ? (
+            <span className="text-yellow-500">{handleEncryptMessage()}</span>
+          ) : (
+            <>
+              {(message.message || '').split(urlPattern).map((part, index) => {
+                const urlMatch = part.match(urlPattern);
+                if (urlMatch) {
+                  const url = urlMatch[0];
+                  return (
+                    <span key={index}>
+                      {urlStatus[url] !== undefined ? (
+                        <>
+                          {urlStatus[url] ? (
+                            <a href={url} key={`url-${index}`} target="_blank" rel="noopener noreferrer" className="text-green-500">
+                              {url}
+                            </a>
+                          ) : (
+                            <a href={url} key={`url-${index}`} target="_blank" rel="noopener noreferrer" className="red">
+                              {url}
+                            </a>
+                          )}
+                          {urlStatus[url] ? (
+                            <FaLock className="inline-block text-green-500 ml-1" />
+                          ) : (
+                            <FaLockOpen className="inline-block red ml-1" />
+                          )}
+                        </>
                       ) : (
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="red">
-                          {url}
-                        </a>
+                        <span>{url}</span>
                       )}
-                      {urlStatus[url] ? (
-                        <FaLock className="inline-block text-green-500 ml-1" />
-                      ) : (
-                        <FaLockOpen className="inline-block red ml-1" />
-                      )}
-                    </>
-                  ) : (
-                    <span>{url}</span>
-                  )}
-                </span>
-              );
-            }
-            return part;
-          })}
-          {message.fileUrl && message.fileUrl.endsWith('.pdf') && (
-            <div className="iframe-container mt-2">
-              <iframe src={pdfUrl} width="100%" height="300px" />
-            </div>
+                    </span>
+                  );
+                }
+                return part;
+              })}
+              { message.fileUrl && message.fileUrl.endsWith('.pdf') && (
+                <div className="iframe-container mt-2">
+                  <iframe src={pdfUrl} width="100%" height="300px" />
+                </div>
+              )}
+            </>
           )}
         </div>
         <div className='chat-footer opacity-50 text-xs flex gap-1 items-center'>{formattedTime}</div>
       </div>
+
+      {showPopup && (
+        <div className="bg-white fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded shadow-lg max-w-md mx-auto">
+            <h2 className="text-center text-2xl font-bold mb-4">Información del Usuario</h2>
+            <div className="text-center flex justify-center mb-4">
+              <img
+                src={profilePic}
+                alt="Foto de Perfil"
+                className="w-10 h-10 rounded-full"
+              />
+            </div>
+            <p className="text-center"><strong>Email:</strong> {userData.email}</p>
+            <p className="text-center"><strong>Apodo:</strong> {userData.username}</p>
+            <p className="text-center ajustText"><strong>Clave pública:</strong> {userData.publicKey}</p>
+            <p className="text-center"><strong>Elementos compartidos:</strong> {userData.sharedElements || 'No hay elemento compartidos'}</p>
+            <button
+              className="text-center mt-4 bg-blue-500 text-white py-2 px-4 rounded"
+              onClick={() => setShowPopup(false)}
+            >
+            Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

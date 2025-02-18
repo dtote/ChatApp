@@ -33,6 +33,7 @@ const useSendMessage = () => {
       const res = await fetch(endpoint, {
         method: "POST",
         body: formData, // Enviar como FormData
+        credentials: "include"
       });
 
       const data = await res.json();
