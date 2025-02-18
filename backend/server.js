@@ -30,8 +30,7 @@ app.use(express.static(path.join(__dirname, "/frontend/dist")));
 app.use(cors({
   origin: ['http://localhost:3000', 'https://iridescent-sunburst-e41f4b.netlify.app/'], // Cambié https por http
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 
 app.use(express.json());
