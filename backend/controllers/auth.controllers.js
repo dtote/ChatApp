@@ -169,81 +169,41 @@ export const login = async (req, res) => {
 
 export const loginFacial = async (req, res) => {
   try {
-    const { username } = req.body;
+    // Obtener el descriptor facial del body
+    const { faceDescriptor } = req.body;
 
-    // Verificar que se haya subido un archivo
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+    // Verificar que se haya enviado el descriptor facial
+    if (!faceDescriptor) {
+      return res.status(400).json({ message: 'Face descriptor not provided' });
     }
 
-    // Buscar el usuario en la base de datos por el nombre de usuario
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    // Convertir el descriptor facial de JSON a Float32Array
+    const inputDescriptor = new Float32Array(JSON.parse(faceDescriptor));
 
-    // Verificar que el usuario tiene un faceId almacenado
-    if (!user.faceId || user.faceId.length === 0) {
-      return res.status(400).json({ message: 'No face ID stored for user' });
-    }
+    // Obtener todos los usuarios de la base de datos
+    const users = await User.find({ faceDescriptor: { $exists: true, $ne: null } }); // Asegúrate de que el modelo de usuario esté correctamente definido
 
-    // Cargar modelos de face-api.js (si no se han cargado previamente)
-    await loadFaceApiModels();
+    // Comparar el descriptor facial con los almacenados en la base de datos
+    const faceMatcher = new faceapi.FaceMatcher(users.map(user => new Float32Array(user.faceId)));
+    const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
 
-    // Cargar la imagen con node-canvas
-    const img = await loadImage(req.file.path);
+    if (bestMatch.distance < 0.6) { // Ajusta este umbral según tus necesidades
+      const matchedUser = users[bestMatch.index];
 
-    // Redimensionar la imagen antes de crear el canvas
-    const MAX_WIDTH = 640;
-    const MAX_HEIGHT = 480;
-    const scale = Math.min(MAX_WIDTH / img.width, MAX_HEIGHT / img.height);
-    const newWidth = img.width * scale;
-    const newHeight = img.height * scale;
-
-    // Crear el canvas con la nueva dimensión
-    const localCanvas = createCanvas(newWidth, newHeight);
-    const ctx = localCanvas.getContext('2d');
-
-    ctx.drawImage(img, 0, 0, newWidth, newHeight);
-
-    // const htmlCanvas = Object.assign(document.createElement('canvas'), {
-    //     width: localCanvas.width,
-    //     height: localCanvas.height,
-    // });
-
-    // const ctx1 = htmlCanvas.getContext('2d');
-    // ctx1.drawImage(localCanvas, 0, 0);
-    
-    // // Asegúrate de que el contexto esté correctamente establecido
-    // if (!ctx1) {
-    //   console.error('No se pudo obtener el contexto 2d del canvas');
-    // } else {
-    //   console.log('Contexto 2D correctamente establecido');
-    // }
-
-
-    const input = await faceapi.toNetInput(localCanvas);
-    console.log('Input para face-api.js:', input);
-    // Usar face-api.js directamente sobre el canvas
-    const detections = await faceapi.detectSingleFace(input, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-
-    if (!detections) {
-      return res.status(401).json({ message: 'No face detected' });
-    }
-
-    // Comparar el descriptor facial con el almacenado en la base de datos
-    const storedFaceDescriptor = new Float32Array(user.faceId);
-    const faceMatcher = new faceapi.FaceMatcher([storedFaceDescriptor]);
-    const bestMatch = faceMatcher.findBestMatch(detections.descriptor);
-
-    if (bestMatch.distance < 0.6) {
       // Si la coincidencia es buena, generar un token JWT para el usuario
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-      return res.json({ token });
+      generateTokenAndSetCookie(matchedUser._id, res);
+
+      return res.status(200).json({
+        _id: matchedUser._id,
+        username: matchedUser.username,
+        email: matchedUser.email,
+        profilePic: matchedUser.profilePic,
+        message: "User logged in successfully",
+        publicKey: matchedUser.publicKey
+      });
     } else {
       return res.status(401).json({ message: 'Face authentication failed' });
     }
-
   } catch (error) {
     console.error('Error in loginFacial:', error);
     res.status(500).json({ message: 'Internal Server Error' });

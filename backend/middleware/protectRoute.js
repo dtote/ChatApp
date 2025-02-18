@@ -14,12 +14,12 @@ export const protectRoute = async (req, res, next) => {
   
     const { userId } = jwt.verify(token, process.env.JWT_SECRET);
   
-    console.log("User ID:", userId);
+    //console.log("User ID:", userId);
 
     const user = await User.findById(userId).select("-password");
 
-    console.log("User:", user);
-    
+    //console.log("User:", user);
+
     req.user = user;
 
     next();

@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import * as faceapi from 'face-api.js';
+import React, { useState, useRef, useEffect } from 'react';
 import * as faceapi from 'face-api.js';
 import { Link } from 'react-router-dom';
 import useLogin from '../../hooks/useLogin';
@@ -12,6 +14,19 @@ const Login = () => {
   const canvasRef = useRef(null); // Canvas para capturar la imagen
   const { loading, login } = useLogin();
 
+  useEffect(() => {
+    // Cargar los modelos de face-api.js
+    const loadModels = async () => {
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+        faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+      ]);
+    };
+
+    loadModels();
+  }, []);
+
   // Función para iniciar el video
   const startVideo = () => {
     navigator.mediaDevices.getUserMedia({ video: {} })
@@ -24,7 +39,6 @@ const Login = () => {
   // Función para capturar la imagen y enviar al backend
   const captureImage = async () => {
     try {
-      // Crear un canvas para capturar un frame del video
       const canvas = canvasRef.current;
       const video = videoRef.current;
 
@@ -34,13 +48,19 @@ const Login = () => {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Convertir el contenido del canvas a un archivo Blob
-      const imageBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg'));
+      // Obtener el descriptor facial
+      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
+      if (!detection) {
+        throw new Error('No se detectó ninguna cara');
+      }
+      const faceDescriptor = await faceapi.computeFaceDescriptor(video, detection);
 
-      // Crear un FormData y añadir la imagen capturada
+      // Crear un FormData y añadir el descriptor
       const formData = new FormData();
-      formData.append('faceImage', imageBlob, 'capture.jpg');
-      formData.append('username', username);
+      if (!username) {
+        formData.append('username', username); // Mantener el username para el inicio de sesión
+      }
+      formData.append('faceDescriptor', JSON.stringify(Array.from(faceDescriptor))); // Convertir a JSON
 
       // Enviar los datos al backend
       const response = await fetch('/api/auth/loginFacial', {
@@ -113,18 +133,6 @@ const Login = () => {
               <label className='label p-2'>
                 <span className='text-base label-text'>Facial Login</span>
               </label>
-              <div>
-                <label className='label p-2'>
-                  <span className='text-base label-text'>Username</span>
-                </label>
-                <input
-                  type='text'
-                  placeholder='Enter username'
-                  className='w-full input input-bordered h-10'
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
               <video ref={videoRef} autoPlay className='w-full h-40 mb-4' />
               <canvas ref={canvasRef} className='hidden' /> {/* Canvas oculto */}
               <button type='button' onClick={startVideo} className='btn btn-block'>
