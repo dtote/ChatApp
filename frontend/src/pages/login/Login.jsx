@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as faceapi from 'face-api.js';
-import React, { useState, useRef, useEffect } from 'react';
-import * as faceapi from 'face-api.js';
 import { Link } from 'react-router-dom';
 import useLogin from '../../hooks/useLogin';
 import { toast } from 'react-hot-toast';
@@ -39,15 +37,12 @@ const Login = () => {
   // Función para capturar la imagen y enviar al backend
   const captureImage = async () => {
     try {
-      const canvas = canvasRef.current;
+      // Cargar los modelos de face-api.js
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+      await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+      
       const video = videoRef.current;
-
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
       // Obtener el descriptor facial
       const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
       if (!detection) {
