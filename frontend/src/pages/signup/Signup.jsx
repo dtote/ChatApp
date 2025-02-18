@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import GenderCheckbox from './GenderCheckBox.jsx';
 import { Link } from 'react-router-dom';
 import useSignup from '../../hooks/useSignup.js';
+import '@tensorflow/tfjs';
 import * as faceapi from 'face-api.js';
 import { toast } from 'react-hot-toast';
 
@@ -32,16 +33,15 @@ const Signup = () => {
 
 const captureImage = async () => {
     try {
-      await faceapi.nets.ssdMobilenetv1.loadFromUri('./models');
-      await faceapi.nets.faceLandmark68Net.loadFromUri('./models');
-      await faceapi.nets.faceRecognitionNet.loadFromUri('./models');
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+      await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
       
       toast.success('Modelos cargados correctamente');
       
-      const detections = await faceapi.detectAllFaces(videoRef.current)
+      const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
         .withFaceDescriptors();
-      
       if (detections.length > 0) {
         setFaceDescriptor(detections[0].descriptor);
         console.log('Descriptor Facial:', detections[0].descriptor);
@@ -63,14 +63,11 @@ const captureImage = async () => {
       return;
     }
     
-    const formData = new FormData();
-    formData.append('username', inputs.username);
-    formData.append('email', inputs.email);
-    formData.append('password', inputs.password);
-    formData.append('gender', inputs.gender);
-    formData.append('faceDescriptor', JSON.stringify(faceDescriptor));
-    
-    await signup(formData);
+    const { username, email, password, gender } = inputs;
+  
+    const confirmPassword = inputs.password; 
+  
+    await signup({ username, email, password, confirmPassword, gender, faceDescriptor });
   };
 
   return (

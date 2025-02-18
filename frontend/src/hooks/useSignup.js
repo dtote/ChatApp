@@ -9,7 +9,7 @@ const useSignup = () => {
   const signup = async ({ username, email, password, confirmPassword, gender, faceDescriptor }) => {
     const success = handleInputErrors({ username, email, password, confirmPassword, gender });
     if (!success) return;
-
+    
     const formData = new FormData();
     formData.append('username', username);
     formData.append('email', email);

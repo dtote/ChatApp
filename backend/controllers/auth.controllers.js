@@ -29,7 +29,6 @@ const loadFaceApiModels = async () => {
 // Registrar un nuevo usuario con reconocimiento facial
 export const signupFacial = async (req, res) => {
   const { username, password, gender, email, faceDescriptor } = req.body;
-  const profilePicFile = req.file;
 
   try {
     if (!password) {
