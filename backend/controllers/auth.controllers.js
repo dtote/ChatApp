@@ -190,23 +190,15 @@ export const loginFacial = async (req, res) => {
 
     console.log('Users:', users); 
 
-    for (let user of users) {
-      if (Array.isArray(user.faceDescriptor[0])) {
-          console.log('El faceDescriptor es un array.');
-      } else if (user.faceDescriptor[0] instanceof Float32Array) {
-          console.log('El faceDescriptor es un Float32Array.');
-      } else {
-          console.log('El faceDescriptor es de un tipo desconocido.');
-      }
-      console.log(new Float32Array(user.faceDescriptor[0]).length);
-      if (new Float32Array(user.faceDescriptor[0]).length !== 128) {
-        return res.status(400).json({ message: 'Invalid face descriptor length in the database' });
-      }
-    }
     
     // Comparar el descriptor facial con los almacenados en la base de datos
-    const faceMatcher = new faceapi.FaceMatcher(users.map(user => new Float32Array(user.faceDescriptor[0])));
-   
+// Asegúrate de extraer el descriptor correctamente de cada usuario
+const faceMatcher = new faceapi.FaceMatcher(users.map(user => {
+  // Extraer el primer descriptor del usuario y convertirlo a Float32Array
+  const descriptorValues = Object.values(user.faceDescriptor[0]);
+  return new Float32Array(descriptorValues); // Convertir a Float32Array
+}));
+
     console.log('Face matcher:', faceMatcher);
     const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
     console.log('Best match:', bestMatch);
