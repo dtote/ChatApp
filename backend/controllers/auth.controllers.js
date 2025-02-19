@@ -178,7 +178,7 @@ export const loginFacial = async (req, res) => {
     }
 
     // Convertir el descriptor facial de JSON a Float32Array
-    const inputDescriptor = new Float32Array(JSON.parse(faceDescriptor));
+    const inputDescriptor = JSON.parse(faceDescriptor);
 
     console.log('Input descriptor:', inputDescriptor);
     // Obtener todos los usuarios de la base de datos
