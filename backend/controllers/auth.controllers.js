@@ -198,7 +198,7 @@ export const loginFacial = async (req, res) => {
       } else {
           console.log('El faceDescriptor es de un tipo desconocido.');
       }
-      if (user.faceDescriptor.length !== 128) {
+      if (new Float32Array(user.faceDescriptor).length !== 128) {
         return res.status(400).json({ message: 'Invalid face descriptor length in the database' });
       }
     }
