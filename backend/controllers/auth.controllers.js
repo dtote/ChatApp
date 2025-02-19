@@ -213,12 +213,12 @@ export const loginFacial = async (req, res) => {
     console.log('Input descriptor:', inputDescriptor.length);
     console.log('Label descriptos face descriptor length:', labeledDescriptors[0].descriptors[0].length);
     // Crear FaceMatcher
-    const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors);
+    const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.8);
     const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
 
     console.log('Best match:', bestMatch);
 
-    if (bestMatch.distance < 0.80) {
+    if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.80) {
       // Buscar el usuario que coincide con la etiqueta (su _id)
       const matchedUser = users.find(user => user._id.toString() === bestMatch.label);
 
