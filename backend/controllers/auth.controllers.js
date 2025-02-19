@@ -208,6 +208,9 @@ export const loginFacial = async (req, res) => {
       return res.status(400).json({ message: 'No valid face descriptors found' });
     }
 
+    console.log('Labeled descriptors:', labeledDescriptors);
+    console.log('Input descriptor:', inputDescriptor.length);
+    console.log('Label descriptos face descriptor length:', labeledDescriptors[0].descriptors[0].length);
     // Crear FaceMatcher
     const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors);
     const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
