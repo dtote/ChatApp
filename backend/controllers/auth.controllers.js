@@ -192,17 +192,15 @@ export const loginFacial = async (req, res) => {
 
     
     // Comparar el descriptor facial con los almacenados en la base de datos
-// Asegúrate de extraer el descriptor correctamente de cada usuario
-const faceMatcher = new faceapi.FaceMatcher(users.map(user => {
-  // Extraer el primer descriptor del usuario y convertirlo a Float32Array
-  const descriptorValues = Object.values(user.faceDescriptor[0]);
-  return new Float32Array(descriptorValues); // Convertir a Float32Array
-}));
+    const faceMatcher = new faceapi.FaceMatcher(users.map(user => {
+      const descriptorValues = Object.values(user.faceDescriptor[0]);
+      return new Float32Array(descriptorValues); // Convertir a Float32Array
+    }));
 
     console.log('Face matcher:', faceMatcher);
     const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
     console.log('Best match:', bestMatch);
-    if (bestMatch.distance < 0.6) { // Ajusta este umbral según tus necesidades
+    if (bestMatch.distance < 0.75) { // Ajusta este umbral según tus necesidades
       const matchedUser = users[bestMatch.index];
       console.log('Matched user:', matchedUser);
       // Si la coincidencia es buena, generar un token JWT para el usuario
