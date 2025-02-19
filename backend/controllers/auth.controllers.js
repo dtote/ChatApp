@@ -200,7 +200,7 @@ export const loginFacial = async (req, res) => {
     console.log('Face matcher:', faceMatcher);
     const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
     console.log('Best match:', bestMatch);
-    if (bestMatch.distance < 0.75) { // Ajusta este umbral según tus necesidades
+    if (bestMatch.distance < 0.76) { // Ajusta este umbral según tus necesidades
       const matchedUser = users[bestMatch.index];
       console.log('Matched user:', matchedUser);
       // Si la coincidencia es buena, generar un token JWT para el usuario
