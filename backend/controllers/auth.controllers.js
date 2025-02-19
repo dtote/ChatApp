@@ -184,7 +184,7 @@ export const loginFacial = async (req, res) => {
     // Obtener todos los usuarios de la base de datos
     const users = await User.find({ faceDescriptor: { $exists: true, $ne: null } }); // Asegúrate de que el modelo de usuario esté correctamente definido
 
-    if (faceDescriptor.length !== 128) {
+    if (inputDescriptor.length !== 128) {
       return res.status(400).json({ message: 'Invalid face descriptor length' });
     }
 
