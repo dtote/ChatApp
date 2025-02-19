@@ -180,32 +180,53 @@ export const loginFacial = async (req, res) => {
     // Convertir el descriptor facial de JSON a Float32Array
     const inputDescriptor = new Float32Array(JSON.parse(faceDescriptor));
 
-    console.log('Input descriptor:', inputDescriptor.length);
-    // Obtener todos los usuarios de la base de datos
-    const users = await User.find({ faceDescriptor: { $exists: true, $ne: null } }); // Asegúrate de que el modelo de usuario esté correctamente definido
-
     if (inputDescriptor.length !== 128) {
       return res.status(400).json({ message: 'Invalid face descriptor length' });
     }
 
-    console.log('Users:', users); 
+    // Obtener todos los usuarios de la base de datos
+    const users = await User.find({ faceDescriptor: { $exists: true, $ne: null } });
 
-    
-    // Comparar el descriptor facial con los almacenados en la base de datos
-    const faceMatcher = new faceapi.FaceMatcher(users.map(user => {
-      const descriptorValues = Object.values(user.faceDescriptor[0]);
-      return new Float32Array(descriptorValues); // Convertir a Float32Array
-    }));
+    if (!users.length) {
+      return res.status(404).json({ message: 'No users found with face descriptors' });
+    }
 
-    console.log('Face matcher:', faceMatcher);
+    // Crear descriptores etiquetados
+    const labeledDescriptors = users.map(user => {
+      if (!user.faceDescriptor || !Array.isArray(user.faceDescriptor[0])) {
+        console.error(`Invalid descriptor for user: ${user._id}`);
+        return null;
+      }
+      return new faceapi.LabeledFaceDescriptors(
+        user._id.toString(), // Usa el ID del usuario como etiqueta
+        [new Float32Array(Object.values(user.faceDescriptor[0]))]
+      );
+    }).filter(desc => desc !== null);
+
+    // Si no hay descriptores válidos, detener el proceso
+    if (!labeledDescriptors.length) {
+      return res.status(400).json({ message: 'No valid face descriptors found' });
+    }
+
+    // Crear FaceMatcher
+    const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors);
     const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
+
     console.log('Best match:', bestMatch);
-    if (bestMatch.distance < 0.80) { // Ajusta este umbral según tus necesidades
-      const matchedUser = users[bestMatch.index];
+
+    if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.80) {
+      // Buscar el usuario que coincide con la etiqueta (su _id)
+      const matchedUser = users.find(user => user._id.toString() === bestMatch.label);
+
+      if (!matchedUser) {
+        return res.status(401).json({ message: 'No matching user found' });
+      }
+
       console.log('Matched user:', matchedUser);
-      // Si la coincidencia es buena, generar un token JWT para el usuario
+
+      // Generar token JWT para el usuario
       generateTokenAndSetCookie(matchedUser._id, res);
-  
+
       return res.status(200).json({
         _id: matchedUser._id,
         username: matchedUser.username,
@@ -217,11 +238,13 @@ export const loginFacial = async (req, res) => {
     } else {
       return res.status(401).json({ message: 'Face authentication failed' });
     }
+
   } catch (error) {
     console.error('Error in loginFacial:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 export const logout = async (req, res) => {
   try {
