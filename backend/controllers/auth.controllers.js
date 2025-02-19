@@ -193,10 +193,10 @@ export const loginFacial = async (req, res) => {
 
     // Crear descriptores etiquetados
     const labeledDescriptors = users.map(user => {
-      if (!user.faceDescriptor || !Array.isArray(user.faceDescriptor) || !user.faceDescriptor[0].values || !Array.isArray(user.faceDescriptor[0].values)) {
-        console.error(`Invalid descriptor for user: ${user._id}`);
-        return null;
-      }
+      // if (!user.faceDescriptor || !Array.isArray(user.faceDescriptor) || !user.faceDescriptor[0].values || !Array.isArray(user.faceDescriptor[0].values)) {
+      //   console.error(`Invalid descriptor for user: ${user._id}`);
+      //   return null;
+      // }
       return new faceapi.LabeledFaceDescriptors(
         user._id.toString(), // Usa el ID del usuario como etiqueta
         [new Float32Array(user.faceDescriptor[0].values)] // Asumiendo que 'values' es el array que necesitas
