@@ -197,9 +197,10 @@ export const loginFacial = async (req, res) => {
       //   console.error(`Invalid descriptor for user: ${user._id}`);
       //   return null;
       // }
+      const descriptorValues = Object.values(user.faceDescriptor[0]),
       return new faceapi.LabeledFaceDescriptors(
         user._id.toString(), // Usa el ID del usuario como etiqueta
-        [new Float32Array(user.faceDescriptor[0].values)] // Asumiendo que 'values' es el array que necesitas
+        [new Float32Array(descriptorValues)] // Asumiendo que 'values' es el array que necesitas
       );
     }).filter(desc => desc !== null);
 
