@@ -41,15 +41,15 @@ const Login = () => {
       await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
       await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
       await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-      
+
       const video = videoRef.current;
       // Obtener el descriptor facial
-      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
+      const detection = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
       if (!detection) {
         throw new Error('No se detectó ninguna cara');
       }
       const faceDescriptor = await faceapi.computeFaceDescriptor(video, detection);
-
+      console.log('Face Descriptor:', faceDescriptor.length);
       // Crear un FormData y añadir el descriptor
       const formData = new FormData();
       if (!username) {

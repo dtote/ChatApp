@@ -184,7 +184,24 @@ export const loginFacial = async (req, res) => {
     // Obtener todos los usuarios de la base de datos
     const users = await User.find({ faceDescriptor: { $exists: true, $ne: null } }); // Asegúrate de que el modelo de usuario esté correctamente definido
 
+    if (faceDescriptor.length !== 128) {
+      return res.status(400).json({ message: 'Invalid face descriptor length' });
+    }
+
     console.log('Users:', users); 
+
+    for (let user of users) {
+      if (Array.isArray(user.faceDescriptor)) {
+          console.log('El faceDescriptor es un array.');
+      } else if (user.faceDescriptor instanceof Float32Array) {
+          console.log('El faceDescriptor es un Float32Array.');
+      } else {
+          console.log('El faceDescriptor es de un tipo desconocido.');
+      }
+      if (user.faceDescriptor.length !== 128) {
+        return res.status(400).json({ message: 'Invalid face descriptor length in the database' });
+      }
+    }
     // Comparar el descriptor facial con los almacenados en la base de datos
     const faceMatcher = new faceapi.FaceMatcher(users.map(user => new Float32Array(user.faceDescriptor)));
    
