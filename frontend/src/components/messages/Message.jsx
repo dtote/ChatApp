@@ -22,6 +22,34 @@ const decryptMessage = async (ciphertext, sharedSecret, selectedKeySize) => {
   }
 };
 
+const PublicKeyDisplay = ({ publicKey }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(publicKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Error al copiar la clave:", err);
+    }
+  };
+
+  return (
+    <div className="text-center">
+      <p
+        onClick={handleCopy}
+        className="cursor-pointer text-sm text-gray-700 bg-gray-100 p-2 rounded hover:bg-gray-200 max-w-xs mx-auto break-words"
+        title="Haz clic para copiar la clave completa"
+      >
+        <strong>Clave pública:</strong> {publicKey?.slice(0, 20)}...
+      </p>
+      {copied && <p className="text-green-500 text-sm mt-1">¡Clave copiada!</p>}
+    </div>
+  );
+};
+
+
 const Message = ({ message }) => {
   const { authUser } = useAuthContext();
   const { selectedConversation } = useConversation();
@@ -204,7 +232,7 @@ const Message = ({ message }) => {
             </div>
             <p className="text-center"><strong>Email:</strong> {userData.email}</p>
             <p className="text-center"><strong>Apodo:</strong> {userData.username}</p>
-            <p className="text-center ajustText"><strong>Clave pública:</strong> {userData.publicKey}</p>
+            <PublicKeyDisplay publicKey={userData.publicKey} />
             <p className="text-center"><strong>Elementos compartidos:</strong> {userData.sharedElements || 'No hay elemento compartidos'}</p>
             <button
               className="text-center mt-4 bg-blue-500 text-white py-2 px-4 rounded"
