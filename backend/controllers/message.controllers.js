@@ -7,6 +7,12 @@ import { shared } from "@tensorflow/tfjs-node";
 // Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
   try {
+    console.log("🌐 RUTA LLAMADA:", req.method, req.originalUrl);
+    console.log("🧍 Usuario autenticado:", req.user);
+    console.log("📨 Params:", req.params);
+    console.log("📨 Query:", req.query);
+    console.log("📨 Body:", req.body);
+
     const { message, selectedKeySize } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;  // ID del remitente (autenticado)
@@ -128,6 +134,12 @@ export const sendMessage = async (req, res) => {
 
 export const getMessages = async (req, res) => {
   try {
+    console.log("🌐 RUTA LLAMADA:", req.method, req.originalUrl);
+    console.log("🧍 Usuario autenticado:", req.user);
+    console.log("📨 Params:", req.params);
+    console.log("📨 Query:", req.query);
+    console.log("📨 Body:", req.body);
+    
     const { id: userToChatId } = req.params;
     const { selectedKeySize } = req.query
     const senderId = req.user._id;

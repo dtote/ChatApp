@@ -9,7 +9,7 @@ const useGetCommunities = () => {
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        const response = await axios.get("https://chatapp-7lh7.onrender.com/api/communities");
+        const response = await axios.get("api/communities");
         setCommunities(response.data);
         setLoading(false);
       } catch (error) {

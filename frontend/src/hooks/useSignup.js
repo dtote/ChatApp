@@ -24,7 +24,7 @@ const useSignup = () => {
     setLoading(true);
 
     try {
-      const apiEndpoint = faceDescriptor ? 'https://chatapp-7lh7.onrender.com/api/auth/signupFacial' : 'https://chatapp-7lh7.onrender.com/api/auth/signup';
+      const apiEndpoint = faceDescriptor ? 'api/auth/signupFacial' : 'api/auth/signup';
       
       const res = await fetch(apiEndpoint, {
         method: 'POST',

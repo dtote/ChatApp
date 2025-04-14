@@ -8,19 +8,19 @@ const CommunityDetail = () => {
   const [userId, setUserId] = useState(""); 
 
   useEffect(() => {
-    axios.get(`https://chatapp-7lh7.onrender.com/api/communities/${id}`)
+    axios.get(`api/communities/${id}`)
       .then(response => setCommunity(response.data))
       .catch(error => console.error("Error fetching community:", error));
   }, [id]);
 
   const joinCommunity = () => {
-    axios.post(`https://chatapp-7lh7.onrender.com/api/communities/${id}/join`, { userId })
+    axios.post(`api/communities/${id}/join`, { userId })
       .then(response => setCommunity(response.data))
       .catch(error => console.error("Error joining community:", error));
   };
 
   const leaveCommunity = () => {
-    axios.post(`https://chatapp-7lh7.onrender.com/api/communities/${id}/leave`, { userId })
+    axios.post(`api/communities/${id}/leave`, { userId })
       .then(response => setCommunity(response.data))
       .catch(error => console.error("Error leaving community:", error));
   };
