@@ -27,7 +27,8 @@ export default defineConfig({
   allowedHosts: [
     'chatapp-1-eebi.onrender.com',  
     'localhost',                    
-    '0.0.0.0'                      
+    '0.0.0.0',
+    '*'                      
   ],
   resolve: {
     alias: {
