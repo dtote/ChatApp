@@ -15,8 +15,8 @@ const useGetMessages = () => {
         // Determinar si es una comunidad o una conversación privada
 			
         const endpoint = selectedConversation.type === "community"
-        ? `api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
-        : `api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
+        ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
+        : `https://chatapp-7lh7.onrender.com/api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
 
         const res = await fetch(endpoint, {
           credentials: "include",

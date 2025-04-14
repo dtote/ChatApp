@@ -10,7 +10,7 @@ import './Message.css';
 
 const decryptMessage = async (ciphertext, sharedSecret, selectedKeySize) => {
   try {
-    const response = await axios.post('api/decrypt', {
+    const response = await axios.post('https://chatapp-7lh7.onrender.com/api/decrypt', {
       kem_name: selectedKeySize,
       ciphertext: ciphertext,
       shared_secret: sharedSecret,
@@ -113,7 +113,7 @@ const Message = ({ message }) => {
 
   const fetchProfilePic = async (senderId) => {
     try {
-      const response = await fetch(`api/users/${senderId}/profile-pic`, {
+      const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${senderId}/profile-pic`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -128,7 +128,7 @@ const Message = ({ message }) => {
 
   const fetchUserData = async (userId) => {
     try {
-      const response = await fetch(`api/users/${userId}/popup-data`);
+      const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${userId}/popup-data`);
       if (response.ok) {
         const data = await response.json();
         setUserData({

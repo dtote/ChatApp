@@ -59,7 +59,7 @@ const Login = () => {
       formData.append('faceDescriptor', JSON.stringify(Array.from(faceDescriptor))); // Convertir a JSON
 
       // Enviar los datos al backend
-      const response = await fetch('/api/auth/loginFacial', {
+      const response = await fetch('https://chatapp-7lh7.onrender.com//api/auth/loginFacial', {
         method: 'POST',
         body: formData, // Enviar FormData directamente
       });
