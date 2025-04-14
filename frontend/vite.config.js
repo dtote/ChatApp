@@ -25,12 +25,7 @@ export default defineConfig({
       'application/javascript': ['js', 'mjs']
     }
   },
-  allowedHosts: [
-    'chatapp-1-eebi.onrender.com',  
-    'localhost',                    
-    '0.0.0.0',
-    '*'                      
-  ],
+  allowedHosts: ['*'],
   resolve: {
     alias: {
       crypto: 'crypto-browserify'
