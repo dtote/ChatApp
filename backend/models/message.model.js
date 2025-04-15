@@ -11,6 +11,14 @@ const messageSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  signature: {
+    type: String,
+    required: true,
+  },
+  publicKeyDSA: {
+    type: String,
+    required: true,
+  },
   message: {
     type: String,
     required: true,
@@ -22,7 +30,8 @@ const messageSchema = new mongoose.Schema({
   fileUrl: {
     type: String,  // URL donde se almacena el PDF
     default: null,
-  }
+  },
+  verified: { type: Boolean, default: false },
   //createAt, updateAt
 }, { timestamps: true });
 

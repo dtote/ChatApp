@@ -30,11 +30,19 @@ const userSchema = new mongoose.Schema({
   },
   communities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Community' }],  // Comunidades a las que pertenece
   publicKey: {
-    type: String,  // Clave pública generada por el sistema Kyber
+    type: String,  
     required: true
   },
   secretKey: {
-    type: String,  // Clave secreta generada por el sistema Kyber
+    type: String,  
+    required: true
+  },
+  publicKeyDSA: {
+    type: String,
+    required: true
+  },
+  secretKeyDSA: {
+    type: String,  
     required: true
   },
 }, { timestamps: true });

@@ -104,6 +104,12 @@ export const signup = async (req, res) => {
       kem_name: "ML-KEM-512",
     });
 
+    const dsaResponse = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
+      ml_dsa_variant: "ML-DSA-44",
+    });
+
+    const { public_key: public_key2, private_key: private_key2 } = dsaResponse.data;
+
     // Crear nuevo usuario
     const newUser = new User({
       username,
@@ -113,6 +119,8 @@ export const signup = async (req, res) => {
       profilePic,
       publicKey: keys.public_key,
       secretKey: keys.secret_key,
+      publicKeyDSA: public_key2,
+      secretKeyDSA: private_key2,
     });
 
     if (newUser) {
@@ -126,6 +134,7 @@ export const signup = async (req, res) => {
         email: newUser.email,
         profilePic: newUser.profilePic,
         publicKey: newUser.publicKey,
+        publicKeyDSA: newUser.publicKeyDSA,
         message: "User registered successfully"
       });
     } else {

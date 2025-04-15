@@ -7,12 +7,6 @@ import { shared } from "@tensorflow/tfjs-node";
 // Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
   try {
-    console.log("🌐 RUTA LLAMADA:", req.method, req.originalUrl);
-    console.log("🧍 Usuario autenticado:", req.user);
-    console.log("📨 Params:", req.params);
-    console.log("📨 Query:", req.query);
-    console.log("📨 Body:", req.body);
-
     const { message, selectedKeySize } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;  // ID del remitente (autenticado)
@@ -26,6 +20,13 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ error: "Receiver not found or missing public key." });
     }
 	
+    // Firmar el mensaje
+    const signResponse = await axios.post('http://127.0.0.1:5001/sign', {
+      message,
+      ml_dsa_variant: "ML-DSA-44",
+      private_key: req.user.secretKeyDSA  
+    });
+    const { signature } = signResponse.data;
 
     // Cifrar el mensaje usando la API de cifrado
     const encryptionResponse = await axios.post('https://kyber-api-1.onrender.com/encrypt', {
@@ -54,7 +55,10 @@ export const sendMessage = async (req, res) => {
       receiverId,
       message: ciphertext, // mensaje cifrado
       sharedSecret: shared_secret, // clave secreta compartida
-      fileUrl: file ? `/uploads/${file.filename}` : null  // URL del archivo PDF (si se adjunta)
+      signature, // Guardar la firma
+      publicKeyDSA: req.user.publicKeyDSA, // Guardar la clave pública DSA
+      fileUrl: file ? `/uploads/${file.filename}` : null, // URL del archivo PDF (si se adjunta)
+      verified: false
     });
 
     // Guardar el nuevo mensaje y actualizar la conversación
@@ -134,12 +138,6 @@ export const sendMessage = async (req, res) => {
 
 export const getMessages = async (req, res) => {
   try {
-    console.log("🌐 RUTA LLAMADA:", req.method, req.originalUrl);
-    console.log("🧍 Usuario autenticado:", req.user);
-    console.log("📨 Params:", req.params);
-    console.log("📨 Query:", req.query);
-    console.log("📨 Body:", req.body);
-    
     const { id: userToChatId } = req.params;
     const { selectedKeySize } = req.query
     const senderId = req.user._id;
@@ -161,62 +159,47 @@ export const getMessages = async (req, res) => {
     // Descifrar cada mensaje y devolver también la URL del archivo PDF (si existe)
     const decryptedMessages = await Promise.all(conversation.messages.map(async (msg) => {
       try {
-        // console.log("Decrypting message:", msg.message);
-        // console.log("M value:", msg.M);
-        // console.log("Secret key:", secretKeyBase64);
-        //console.log("Mensaje:", msg);
-        // Enviar solicitud a la API para descifrar el mensaje
-        console.log("Sending decryption request with data:", {
+        // Descifrar el mensaje (solo el texto plano)
+        const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
           kem_name: selectedKeySize,
-          ciphertext: msg.message,  // mensaje cifrado
-          shared_secret: msg.sharedSecret,  // clave secreta en base64
+          ciphertext: msg.message,
+          shared_secret: msg.sharedSecret
         });
 
-        try {
-          const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
-            kem_name: selectedKeySize,
-            ciphertext: msg.message,  // mensaje cifrado
-            shared_secret: msg.sharedSecret     // clave secreta en base64
-          });
-  
-        
-          console.log("Respuesta de la API:", decryptionResponse.data);
-        } catch (error) {
-          if (error.response) {
-            console.error("Error en la respuesta:", error.response.status, error.response.data);
-          } else if (error.request) {
-            console.error("No hubo respuesta de la API:", error.request);
-          } else {
-            console.error("Error en la configuración de la petición:", error.message);
-          }
-        }
-        
-        //console.log("Decryption response:", decryptionResponse.data);
-        // Devolver el mensaje descifrado junto con el archivo PDF (si existe)
+        const decryptedText = decryptionResponse.data.original_message;
+
+        // Verificar la firma digital con ML-DSA
+        const verifyResponse = await axios.post('https://kyber-api-1.onrender.com/verify', {
+          message: decryptedText,
+          signature: msg.signature,
+          public_key: msg.publicKeyDSA,
+          ml_dsa_variant: "ML-DSA-44"
+        });
+
+        console.log("Verificación ML-DSA:", verifyResponse.data);
+        const verified = verifyResponse.data.verified;
+
+        msg.verified = !!verified;
+        await msg.save();
+
         return {
           ...msg._doc,
-          message: decryptionResponse.data.original_message,  // mensaje descifrado
-          fileUrl: msg.fileUrl || null  // devolver la URL del archivo PDF si existe
+          message: decryptedText,
+          verified: msg.verified,
+          fileUrl: msg.fileUrl || null
         };
       } catch (error) {
-        const decryptionResponse1 = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
-          kem_name: selectedKeySize,
-          ciphertext: msg.message,  // mensaje cifrado
-          shared_secret: msg.sharedSecret       // clave secreta en base64
-        });
-        
+        console.error("Error verificando mensaje:", error.message);
+
         return {
           ...msg._doc,
-          message: decryptionResponse1.data.original_message,  // mensaje descifrado
-          fileUrl: msg.fileUrl || null  // devolver la URL del archivo PDF si existe
+          message: "[Mensaje no verificado]",
+          verified: false,
+          fileUrl: msg.fileUrl || null
         };
-        // console.log("Error decrypting message: ", error.message);
-        // return {
-          // ...msg._doc,
-          // fileUrl: msg.fileUrl || null  // en caso de error, devolver el mensaje con el archivo adjunto (si lo hay)
-        // };
       }
     }));
+
 
     res.status(200).json(decryptedMessages);
   } catch (error) {

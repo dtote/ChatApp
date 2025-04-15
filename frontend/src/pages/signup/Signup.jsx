@@ -58,10 +58,10 @@ const captureImage = async () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!faceDescriptor) {
-      toast.error('Debes capturar tu cara antes de registrarte.');
-      return;
-    }
+    // if (!faceDescriptor) {
+    //   toast.error('Debes capturar tu cara antes de registrarte.');
+    //   return;
+    // }
     
     const { username, email, password, gender } = inputs;
   
