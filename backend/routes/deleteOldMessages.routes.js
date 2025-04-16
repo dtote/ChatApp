@@ -5,17 +5,16 @@ const router = express.Router();
 
 // Ruta para borrar mensajes según el tiempo seleccionado
 router.post('/', async (req, res) => {
-  const { timePeriod } = req.body; // Recibe el parámetro timePeriod del frontend
-
+  const { timePeriod } = req.body;
   try {
     if (!timePeriod) {
-      return res.status(400).send({ message: 'Falta el parámetro de tiempo.' });
+      return res.status(400).send({ message: 'Missing time period parameter.' });
     }
 
     await deleteMessagesByTime(timePeriod);
-    res.status(200).send({ message: `Mensajes eliminados correctamente para el período: ${timePeriod}` });
+    res.status(200).send({ message: `Messages successfully deleted for the period: ${timePeriod}` });
   } catch (error) {
-    res.status(500).send({ message: 'Hubo un error al eliminar los mensajes.' });
+    res.status(500).send({ message: 'An error occurred while deleting the messages.' });
   }
 });
 
