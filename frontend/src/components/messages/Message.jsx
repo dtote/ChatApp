@@ -49,7 +49,6 @@ const PublicKeyDisplay = ({ publicKey }) => {
   );
 };
 
-
 const Message = ({ message }) => {
   const { authUser } = useAuthContext();
   const { selectedConversation } = useConversation();
@@ -60,15 +59,12 @@ const Message = ({ message }) => {
   const bubbleBgColor = fromMe ? "bg-blue-500" : "";
   const [showEncrypted, setShowEncrypted] = useState(false);
   const [messages, setMessages] = useState([message]);
-  const [showPopup, setShowPopup] = useState(false); // Estado para controlar la visibilidad del popup
+  const [showPopup, setShowPopup] = useState(false);
   const [urlStatus, setUrlStatus] = useState({});
-  const [profilePic, setProfilePic] = useState(
-    fromMe ? "https://chatapp-7lh7.onrender.com" + authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
-  );
+  const profilePic = fromMe ? authUser.profilePic : selectedConversation?.profilePic;
+
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
   const pdfUrl = `https://chatapp-7lh7.onrender.com${message.fileUrl}`;
-  
-  console.log("Imagen del usuario autenticado:", authUser.profilePic);
 
   const { selectedKeySize } = useSecurity(state => state);
   const [userData, setUserData] = useState({
@@ -78,22 +74,91 @@ const Message = ({ message }) => {
     sharedElements: "Elementos compartidos"
   });
 
+  let isPoll = false;
+  let pollQuestion = '';
+  let pollOptions = [];
+
+  try {
+    if (typeof message.message === 'string' && message.message.includes('"type":"poll"')) {
+      const jsonStart = message.message.indexOf('{');
+      const jsonEnd = message.message.lastIndexOf('}') + 1;
+      const jsonStr = message.message.slice(jsonStart, jsonEnd);
+      const parsedPoll = JSON.parse(jsonStr);
+
+      if (parsedPoll && parsedPoll.type === 'poll' && parsedPoll.question && parsedPoll.options) {
+        isPoll = true;
+        pollQuestion = parsedPoll.question;
+        pollOptions = parsedPoll.options;
+      }
+    }
+  } catch (err) {
+    console.error("No se pudo analizar la encuesta:", err);
+  }
+  const [pollOptionsState, setPollOptionsState] = useState(pollOptions);
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const handleVote = async () => {
+    if (selectedOption !== null) {
+      try {
+        const response = await axios.post('https://chatapp-7lh7.onrender.com/api/poll/vote', {
+          pollId: message._id,
+          optionIndex: selectedOption,
+        });
+
+        setPollOptionsState(response.data.options);
+
+  
+        if (response.status === 200) {
+          pollOptions = response.data.options;
+        }
+      } catch (error) {
+        console.error("Error al registrar el voto:", error);
+      }
+    }
+  };
+  
   useEffect(() => {
     if (!fromMe) {
       fetchProfilePic(message.senderId);
     }
 
     if (showPopup) {
-      fetchUserData(message.senderId); // Llamada al abrir el popup
+      fetchUserData(message.senderId);
     }
+
+    const initializePoll = async () => {
+      if (isPoll && message._id) {
+        try {
+          const pollExists = await axios.get(`https://chatapp-7lh7.onrender.com/api/poll/${message._id}`);
+          if (pollExists.status === 200) {
+            // Si existe, actualizamos las opciones por si tienen votos
+            pollOptions = pollExists.data.options;
+          }
+        } catch (err) {
+          if (err.response && err.response.status === 404) {
+            // No existe, así que la creamos
+            await axios.post('https://chatapp-7lh7.onrender.com/api/poll', {
+              pollId: message._id,
+              question: pollQuestion,
+              options: pollOptions.map(opt => opt.option || opt), // por si vienen como strings o objetos
+            });
+
+            setPollOptionsState(pollOptions);
+
+          } else {
+            console.error("Error al verificar o crear la encuesta:", err);
+          }
+        }
+      }
+    };
 
     if (socket) {
       socket.on("newMessage", async (newMsg) => {
         const decryptedMessage = await decryptMessage(newMsg.message, newMsg.sharedSecret, selectedKeySize);
         if (decryptedMessage) {
           setMessages((prev) => [
-            ...prev.filter(msg => msg._id !== newMsg._id), 
-            { ...newMsg, message: decryptedMessage }, 
+            ...prev.filter(msg => msg._id !== newMsg._id),
+            { ...newMsg, message: decryptedMessage },
           ]);
         } else {
           console.error("No se pudo descifrar el mensaje");
@@ -101,15 +166,9 @@ const Message = ({ message }) => {
       });
     }
 
-    if (typeof message.message === 'string') {
-      const urls = message.message.match(urlPattern);
-      if (urls) {
-        urls.forEach((url) => {
-          checkUrlSafety(url);
-        });
-      }
-    }
-  }, [showPopup, message.senderId, selectedConversation?.type, socket, message.message, selectedKeySize]);
+    initializePoll();
+
+  }, [isPoll, showPopup, message.senderId, selectedConversation?.type, socket, message.message, selectedKeySize]);
 
   const fetchProfilePic = async (senderId) => {
     try {
@@ -119,7 +178,6 @@ const Message = ({ message }) => {
       if (response.ok) {
         const data = await response.json();
         setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
-        console.log("Imagen de perfil:", data.profilePic);
       }
     } catch (error) {
       console.error("Error en la solicitud fetch:", error);
@@ -135,7 +193,7 @@ const Message = ({ message }) => {
           email: data.email,
           username: data.username,
           publicKey: data.publicKey,
-          sharedElements: "Elementos compartidos" // Puedes cambiarlo si es dinámico
+          sharedElements: "Elementos compartidos"
         });
       } else {
         console.error("Error al obtener los datos del usuario");
@@ -145,93 +203,50 @@ const Message = ({ message }) => {
     }
   };
 
-
-  const checkUrlSafety = (url) => {
-    const normalizedUrl = url.toLowerCase();
-    const isHttps = normalizedUrl.startsWith('https://');
-    const containsDangerousKeywords = ['troyano', 'malware', 'virus', 'phishing', 'scam'].some(keyword => normalizedUrl.includes(keyword));
-    const urlFormatValid = /^(https?:\/\/)?([\da-z.-]+\.[a-z.]{2,6})([/\w .-]*)*\/?$/.test(normalizedUrl);
-    const isSafe = isHttps && !containsDangerousKeywords && urlFormatValid;
-    setUrlStatus((prev) => ({
-      ...prev,
-      [url]: isSafe ? true : false,
-    }));
-  };
-
-  const handleEncryptMessage = () => {
-    const encryptedMessage = btoa(message.message);
-    const signedMessage = `${encryptedMessage}.signedBy-${authUser.username}`;
-    return signedMessage;
-  };
-
   return (
     <>
       <div className={`chat ${chatClassName}`} onDoubleClick={() => setShowEncrypted(!showEncrypted)}>
-        <div className='chat-image avatar' onClick={() => setShowPopup(true)}>
-          <div className='w-10 rounded-full'>
-            <img alt='Perfil' src={profilePic} />
+        <div className="chat-image avatar" onClick={() => setShowPopup(true)}>
+          <div className="w-10 rounded-full">
+            <img alt="Perfil" src={profilePic} />
           </div>
         </div>
         <div className={`chat-bubble text-white ${bubbleBgColor}`}>
-               {showEncrypted ? (
-            <span className="text-yellow-500">{handleEncryptMessage()}</span>
+          {showEncrypted ? (
+            <span className="text-yellow-500">{message.message}</span>
+          ) : isPoll ? (
+            <form className="w-full bg-white p-4 rounded shadow-md mt-2">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">{pollQuestion}</h3>
+              <div className="flex flex-col gap-2">
+                {pollOptionsState.map((option, idx) => (
+                  <label key={idx} className="flex items-center gap-2 text-gray-700">
+                    <input 
+                      type="radio" 
+                      className="form-checkbox h-4 w-4 text-blue-600" 
+                      value={idx}
+                      onChange={(e) =>  setSelectedOption(parseInt(e.target.value))}
+                    />
+                    <span> {option.option}</span>
+                    <span className="ml-auto">{option.votes} votos</span>
+                  </label>
+                ) )}
+              </div>
+              <button
+                type="button"
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded shadow"
+                onClick={handleVote}
+              >
+                Enviar voto
+              </button>
+            </form>
           ) : (
-            <>
-              {(message.message || '').split(urlPattern).map((part, index) => {
-                const urlMatch = part.match(urlPattern);
-                if (urlMatch) {
-                  const url = urlMatch[0];
-                  return (
-                    <span key={index}>
-                      {urlStatus[url] !== undefined ? (
-                        <>
-                          {urlStatus[url] ? (
-                            <a href={url} key={`url-${index}`} target="_blank" rel="noopener noreferrer" className="text-green-500">
-                              {url}
-                            </a>
-                          ) : (
-                            <a href={url} key={`url-${index}`} target="_blank" rel="noopener noreferrer" className="red">
-                              {url}
-                            </a>
-                          )}
-                          {urlStatus[url] ? (
-                            <FaLock className="inline-block text-green-500 ml-1" />
-                          ) : (
-                            <FaLockOpen className="inline-block red ml-1" />
-                          )}
-                        </>
-                      ) : (
-                        <span>{url}</span>
-                      )}
-                    </span>
-                  );
-                }
-                return part;
-              })}
-               { message.fileUrl && (
-                  <div className="mt-2">
-                  {message.fileUrl.endsWith(".pdf") && (
-                    <iframe src={`http://localhost:8080${message.fileUrl}`} width="100%" height="300px" />
-                  )}
-                  {/\.(jpg|jpeg|png|gif)$/i.test(message.fileUrl) && (
-                    <img src={`http://localhost:8080${message.fileUrl}`} alt="Imagen" className="max-w-xs rounded" />
-                  )}
-                  {/\.(mp4|webm)$/i.test(message.fileUrl) && (
-                    <video controls className="max-w-xs rounded">
-                      <source src={`http://localhost:8080${message.fileUrl}`} />
-                      Tu navegador no soporta el video.
-                    </video>
-                  )}
-                </div>
-              )}
-            </>
+            <span>{message.message}</span>
           )}
         </div>
-        <div className='chat-footer opacity-50 text-xs flex gap-1 items-center'>{formattedTime}</div>
+        <div className="chat-footer opacity-50 text-xs flex gap-1 items-center">{formattedTime}</div>
       </div>
-
       {showPopup && (
-        <div className="bg-white fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg max-w-md mx-auto">
             <h2 className="text-center text-2xl font-bold mb-4">Información del Usuario</h2>
             <div className="text-center flex justify-center mb-4">
@@ -249,7 +264,7 @@ const Message = ({ message }) => {
               className="text-center mt-4 bg-blue-500 text-white py-2 px-4 rounded"
               onClick={() => setShowPopup(false)}
             >
-            Cerrar
+              Cerrar
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-/ server.js
+// server.js
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
@@ -12,6 +12,7 @@ import deleteOldMessages from "./routes/deleteOldMessages.routes.js";
 import communityRoutes from "./routes/community.routes.js";
 import encrypt from "./routes/encrypt.routes.js";
 import decrypt2 from "./routes/decrypt.routes.js";
+import pollRoutes from "./routes/polls.routes.js";
 import cron from "node-cron";
 import cors from "cors";
 import fs from "fs";
@@ -30,12 +31,19 @@ const httpServer = http.createServer(app);
 initializeSocket(httpServer);
 
 // Middlewares
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.pdf')) {
+      res.removeHeader('X-Frame-Options');
+    }
+  }
+}));
+
 app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
 app.use(cors({
   origin: [
-    'http://localhost:3001',
+    'http://localhost:3000',
     'https://iridescent-sunburst-e41f4b.netlify.app',
     'https://chatapp-1-eebi.onrender.com',
     'http://0.0.0.0:8080'
@@ -55,7 +63,8 @@ app.use('/api/communities', communityRoutes);
 app.use('/api/encrypt', encrypt);
 app.use('/api/decrypt', decrypt2);
 app.use('/api/checkUrlSafety', checkUrlSafety);
-app.use('/api/deleteOldMessages', deleteOldMessages)
+app.use('/api/deleteOldMessages', deleteOldMessages);
+app.use('/api/poll', pollRoutes);
 
 // Ruta comodín frontend
 app.get("*", (req, res) => {

@@ -3,7 +3,6 @@ import deleteMessagesByTime from '../services/messageCleanupService.js';
 
 const router = express.Router();
 
-// Ruta para borrar mensajes según el tiempo seleccionado
 router.post('/', async (req, res) => {
   const { timePeriod } = req.body;
   try {
