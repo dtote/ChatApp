@@ -66,7 +66,7 @@ const Message = ({ message }) => {
     fromMe ? "https://chatapp-7lh7.onrender.com" + authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
   );
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
-  const pdfUrl = `${message.fileUrl}`;
+  const pdfUrl = `https://chatapp-7lh7.onrender.com${message.fileUrl}`;
   
   console.log("Imagen del usuario autenticado:", authUser.profilePic);
 
@@ -109,7 +109,7 @@ const Message = ({ message }) => {
         });
       }
     }
-  }, [message.senderId, selectedConversation?.type, socket, message.message, selectedKeySize]);
+  }, [showPopup, message.senderId, selectedConversation?.type, socket, message.message, selectedKeySize]);
 
   const fetchProfilePic = async (senderId) => {
     try {
