@@ -53,13 +53,30 @@ const MessageInput = () => {
           <div className="absolute custom-popup bottom-[270px] bg-gray-700 text-white rounded-lg shadow-lg p-4 w-60 z-50">
             <ul>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
-                <FaFile className="mr-4 text-blue-500 text-xl" />
-                <span className="group-hover:text-gray-400 text-lg">Archivo</span>
-                <input type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
+                <label htmlFor="file-input" className="flex items-center cursor-pointer">
+                  <FaFile className="mr-4 text-blue-500 text-xl" />
+                  <span className="group-hover:text-gray-400 text-lg">Archivo</span>
+                </label>
+                <input 
+                  id="file-input" 
+                  type="file" 
+                  accept=".pdf" 
+                  onChange={handleFileChange} 
+                  className="hidden" 
+                />
               </li>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
-                <FaImage className="mr-4 text-blue-400 text-xl" />
-                <span className="group-hover:text-gray-400 text-lg">Fotos y videos</span>
+                <label htmlFor="image-input" className="flex items-center cursor-pointer">
+                  <FaImage className="mr-4 text-blue-400 text-xl" />
+                  <span className="group-hover:text-gray-400 text-lg">Fotos y videos</span>
+                </label>
+                <input
+                  id="image-input"
+                  type="file"
+                  accept="image/*,video/*,application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </li>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
                 <FaUser className="mr-4 text-orange-400 text-xl" />

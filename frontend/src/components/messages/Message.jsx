@@ -208,9 +208,20 @@ const Message = ({ message }) => {
                 }
                 return part;
               })}
-              { message.fileUrl && message.fileUrl.endsWith('.pdf') && (
-                <div className="iframe-container mt-2">
-                  <iframe src={pdfUrl} width="100%" height="300px" />
+               { message.fileUrl && (
+                  <div className="mt-2">
+                  {message.fileUrl.endsWith(".pdf") && (
+                    <iframe src={`http://localhost:8080${message.fileUrl}`} width="100%" height="300px" />
+                  )}
+                  {/\.(jpg|jpeg|png|gif)$/i.test(message.fileUrl) && (
+                    <img src={`http://localhost:8080${message.fileUrl}`} alt="Imagen" className="max-w-xs rounded" />
+                  )}
+                  {/\.(mp4|webm)$/i.test(message.fileUrl) && (
+                    <video controls className="max-w-xs rounded">
+                      <source src={`http://localhost:8080${message.fileUrl}`} />
+                      Tu navegador no soporta el video.
+                    </video>
+                  )}
                 </div>
               )}
             </>
