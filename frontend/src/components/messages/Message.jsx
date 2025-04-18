@@ -170,20 +170,6 @@ const Message = ({ message }) => {
 
   }, [isPoll, showPopup, message.senderId, selectedConversation?.type, socket, message.message, selectedKeySize]);
 
-  const fetchProfilePic = async (senderId) => {
-    try {
-      const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${senderId}/profile-pic`, {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
-      }
-    } catch (error) {
-      console.error("Error en la solicitud fetch:", error);
-    }
-  };
-
   const fetchUserData = async (userId) => {
     try {
       const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${userId}/popup-data`);
