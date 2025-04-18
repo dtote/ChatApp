@@ -3,7 +3,6 @@ import Message from "../models/message.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
 import axios from 'axios';
 import User from "../models/user.model.js";
-import { shared } from "@tensorflow/tfjs-node";
 // Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
   try {
@@ -21,7 +20,7 @@ export const sendMessage = async (req, res) => {
     }
 	
     // Firmar el mensaje
-    const signResponse = await axios.post('http://127.0.0.1:5001/sign', {
+    const signResponse = await axios.post('https://kyber-api-1.onrender.com/sign', {
       message,
       ml_dsa_variant: "ML-DSA-44",
       private_key: req.user.secretKeyDSA  
