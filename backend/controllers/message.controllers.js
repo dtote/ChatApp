@@ -207,4 +207,28 @@ export const getMessages = async (req, res) => {
   }
 };
 
+export const reactMessage = async (req, res) => {
+  const { emoji, userId } = req.body;
+  const messageId = req.params.id;
+
+  const message = await Message.findById(messageId);
+  if (!message) return res.status(404).send("Mensaje no encontrado");
+
+  const existingReaction = message.reactions.find(
+    (r) => r.userId === userId && r.emoji === emoji
+  );
+
+  if (existingReaction) {
+    // Quitar reacción (toggle)
+    message.reactions = message.reactions.filter(
+      (r) => !(r.userId === userId && r.emoji === emoji)
+    );
+  } else {
+    // Añadir reacción
+    message.reactions.push({ emoji, userId });
+  }
+
+  await message.save();
+  res.send(message.reactions);
+};
 

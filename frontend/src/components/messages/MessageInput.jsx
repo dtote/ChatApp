@@ -2,7 +2,7 @@ import { useState } from "react";
 import { BsSend } from "react-icons/bs";
 import { FaPlus, FaTimes, FaFile, FaImage, FaUser, FaPoll } from "react-icons/fa";
 import useSendMessage from "../../hooks/useSendMessage";
-import useSecurity from "../../zustand/useSecurity";
+import useSecurity from "../../zustand/useSecurity.js";
 import './MessageInput.css';
 
 const MessageInput = () => {
@@ -113,9 +113,10 @@ const MessageInput = () => {
           </div>
         )}
 
+        {/* Formulario de encuesta */}
         {showPollForm && (
           <div className="absolute bottom-[270px] bg-gray-800 text-white rounded-lg shadow-lg p-4 w-full max-w-md z-50">
-            <h3 className="text-lg font-bold mb-2">Create Survey</h3>
+            <h3 className="text-lg font-bold mb-2">Crear Encuesta</h3>
             <input
               type="text"
               className="w-full mb-2 p-2 rounded bg-gray-700 text-white border border-gray-600"
@@ -139,14 +140,14 @@ const MessageInput = () => {
                 className="text-sm bg-green-600 px-3 py-1 rounded hover:bg-green-700"
                 onClick={handleAddOption}
               >
-                Add option
+                Añadir opción
               </button>
               <button
                 type="button"
                 className="text-sm bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
                 onClick={handlePollSubmit}
               >
-                Send survey
+                Enviar encuesta
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import exp from 'constants';
 import express from 'express';
-import {sendMessage, getMessages} from '../controllers/message.controllers.js';
+import {sendMessage, getMessages, reactMessage} from '../controllers/message.controllers.js';
 import multer from "multer";
 import {protectRoute} from '../middleware/protectRoute.js';
 
@@ -22,5 +22,6 @@ const router = express.Router();
 
 router.get("/:id", protectRoute, getMessages);
 router.post("/send/:id", protectRoute, upload.single('file'), sendMessage); 
+router.post("/:id/react", reactMessage);
 
 export default router;

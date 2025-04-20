@@ -3,9 +3,11 @@ import { useAuthContext } from "../../context/AuthContext";
 import useConversation from "../../zustand/useConversation.js";
 import { useSocketContext } from "../../context/SocketContext"; 
 import { FaLock, FaLockOpen } from "react-icons/fa"; 
-import { extractTime } from "../../utils/extractTime.js";
-import useSecurity from '../../zustand/useSecurity.js'
+import extractTime  from "../../utils/extractTime.js";
+import useSecurity from '../../zustand/useSecurity.js';
 import axios from 'axios';
+import Picker from '@emoji-mart/react';
+import data from '@emoji-mart/data'; 
 import './Message.css';
 
 const decryptMessage = async (ciphertext, sharedSecret, selectedKeySize) => {
@@ -80,9 +82,7 @@ const Message = ({ message }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [urlStatus, setUrlStatus] = useState({});
   const profilePic = fromMe ? authUser.profilePic : selectedConversation?.profilePic;
-
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
-
   const { selectedKeySize } = useSecurity(state => state);
   const [userData, setUserData] = useState({
     email: "",
@@ -90,10 +90,33 @@ const Message = ({ message }) => {
     publicKey: "",
     sharedElements: "Elementos compartidos"
   });
+  const [reactions, setReactions] = useState(message.reactions || []);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const handleToggleEmojiPicker = () => {
+    setShowEmojiPicker(prev => !prev);
+  };
+  
+  const handleReact = async (emojiObj) => {
+    const emoji = emojiObj.native;
+  
+    try {
+      const response = await axios.post(`https://chatapp-7lh7.onrender.com/api/messages/${message._id}/react`, {
+        emoji,
+        userId: authUser._id,
+      });
+    
+      setReactions(response.data); // actualizar con las reacciones actuales
+      setShowEmojiPicker(false);
+    } catch (error) {
+      console.error("Error al reaccionar al mensaje:", error);
+    }
+  };
 
   let isPoll = false;
   let pollQuestion = '';
   let pollOptions = [];
+
 
   try {
     if (typeof message.message === 'string' && message.message.includes('"type":"poll"')) {
@@ -106,6 +129,7 @@ const Message = ({ message }) => {
         isPoll = true;
         pollQuestion = parsedPoll.question;
         pollOptions = parsedPoll.options;
+        
       }
     }
   } catch (err) {
@@ -117,15 +141,19 @@ const Message = ({ message }) => {
 
   const handleVote = async () => {
     if (selectedOption !== null) {
+      const voteValue = 1;  
+      const userId = authUser._id; 
+      
       try {
         const response = await axios.post('https://chatapp-7lh7.onrender.com/api/poll/vote', {
-          pollId: message._id,
-          optionIndex: selectedOption,
+          pollId: message._id,  
+          optionIndex: selectedOption, 
+          userId,  
+          voteValue,  
         });
-
-        setPollOptionsState(response.data.options);
+  
         if (response.status === 200) {
-          pollOptions = response.data.options;
+          setPollOptionsState(response.data.options); 
         }
       } catch (error) {
         console.error("Error al registrar el voto:", error);
@@ -153,13 +181,19 @@ const Message = ({ message }) => {
     const initializePoll = async () => {
       if (isPoll && message._id) {
         try {
-          const pollExists = await axios.get(`https://chatapp-7lh7.onrender.com/api/poll/${message._id}`);
+          const pollExists = await axios.get(`https://chatapp-7lh7.onrender.com/api/poll/poll/${message._id}`);
           if (pollExists.status === 200) {
             pollOptions = pollExists.data.options;
+            
+            const newPollOptions = pollExists.data.options;
+          
+            if (JSON.stringify(pollOptionsState) !== JSON.stringify(newPollOptions)) {
+              setPollOptionsState(newPollOptions);
+            }
           }
         } catch (err) {
-          if (err.response && err.response.status === 404) {
-            await axios.post('https://chatapp-7lh7.onrender.com/api/poll', {
+          if (err.response) {
+            await axios.post('https://chatapp-7lh7.onrender.com/api/poll/poll', {
               pollId: message._id,
               question: pollQuestion,
               options: pollOptions.map(opt => opt.option || opt),
@@ -193,7 +227,7 @@ const Message = ({ message }) => {
         socket.off("newMessage", handleNewMessage); // evitar múltiples suscripciones
       };
     }
-  }, [isPoll, showPopup, message.senderId, urlPattern, urlStatus, setUrlStatus, selectedConversation?.type, socket, message.message, selectedKeySize]);
+  }, [isPoll, showPopup, message.senderId, urlPattern, urlStatus, pollOptions, pollQuestion, setUrlStatus, selectedConversation?.type, socket, message.message, selectedKeySize]);
 
   const fetchUserData = async (userId) => {
     try {
@@ -238,7 +272,7 @@ const Message = ({ message }) => {
                       onChange={(e) =>  setSelectedOption(parseInt(e.target.value))}
                     />
                     <span>{option.option}</span>
-                    <span className="ml-auto">{option.votes} votes</span>
+                    <span className="ml-auto">{Array.isArray(option.votes) ? option.votes.length : 0} votes</span>
                   </label>
                 ))}
               </div>
@@ -319,6 +353,25 @@ const Message = ({ message }) => {
             })
           }
         </div>
+        <div className="flex items-center gap-2 mt-1 ml-12">
+          {reactions.map((reaction, index) => (
+            <span key={index} className="text-lg">
+              {reaction.emoji}
+            </span>
+          ))}
+          <button
+            className="text-sm text-white bg-gray-600 px-2 py-1 rounded hover:bg-gray-700"
+            onClick={handleToggleEmojiPicker}
+          >
+            +
+          </button>
+        </div>
+        {showEmojiPicker && (
+          <div className="absolute z-50 mt-2 ml-12">
+            <Picker data={data} onEmojiSelect={handleReact} theme="light" />
+          </div>
+        )}
+
         <div className="chat-footer opacity-50 text-xs flex gap-1 items-center">{formattedTime}</div>
       </div>
 

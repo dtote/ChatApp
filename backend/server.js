@@ -13,6 +13,7 @@ import communityRoutes from "./routes/community.routes.js";
 import encrypt from "./routes/encrypt.routes.js";
 import decrypt2 from "./routes/decrypt.routes.js";
 import pollRoutes from "./routes/polls.routes.js";
+import conversationRoutes from "./routes/conversation.routes.js";
 import cron from "node-cron";
 import cors from "cors";
 import fs from "fs";
@@ -65,6 +66,7 @@ app.use('/api/decrypt', decrypt2);
 app.use('/api/checkUrlSafety', checkUrlSafety);
 app.use('/api/deleteOldMessages', deleteOldMessages);
 app.use('/api/poll', pollRoutes);
+app.use('/api/conversation', conversationRoutes);
 
 // Ruta comodín frontend
 app.get("*", (req, res) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 
 const useGetCommunities = () => {
@@ -6,23 +6,24 @@ const useGetCommunities = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchCommunities = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("https://chatapp-7lh7.onrender.com/api/communities");
+      setCommunities(response.data);
+    } catch (error) {
+      console.error("Error fetching communities:", error);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        const response = await axios.get("https://chatapp-7lh7.onrender.com/api/communities");
-        setCommunities(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching communities:", error);
-        setError(error);
-        setLoading(false);
-      }
-    };
-
     fetchCommunities();
-  }, []); // El array vacío asegura que el hook se ejecute solo al montar el componente.
+  }, [fetchCommunities]);
 
-  return { loading, communities, error };
+  return { loading, communities, error, refetch: fetchCommunities };
 };
 
 export default useGetCommunities;
