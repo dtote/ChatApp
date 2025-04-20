@@ -7,20 +7,32 @@ const useGetMessages = () => {
   const [loading, setLoading] = useState(false);
   const { messages, setMessages, selectedConversation } = useConversation();
   const { selectedKeySize } = useSecurity();
+
   useEffect(() => {
     const getMessages = async () => {
       setLoading(true);
 
+      const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
+
+      if (!token) {
+        toast.error("No authentication token found");
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Determinar si es una comunidad o una conversación privada
-			
-        const endpoint = selectedConversation.type === "community"
-        ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
-        : `https://chatapp-7lh7.onrender.com/api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
+        const endpoint =
+          selectedConversation.type === "community"
+            ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
+            : `https://chatapp-7lh7.onrender.com/api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
 
         const res = await fetch(endpoint, {
-          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
         });
+
         const data = await res.json();
 
         if (data.error) throw new Error(data.error);
@@ -34,7 +46,7 @@ const useGetMessages = () => {
     };
 
     if (selectedConversation?._id) getMessages();
-  }, [selectedConversation?._id, selectedConversation?.type, setMessages]);
+  }, [selectedConversation?._id, selectedConversation?.type, selectedKeySize, setMessages]);
 
   return { messages, loading };
 };

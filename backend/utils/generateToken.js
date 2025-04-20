@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import { keygen, sign } from './crystalsDilithium.js';
 
 const generateTokenAndSetCookie = (userId, res) => {
   // console.log('pk', pk);
@@ -16,6 +15,8 @@ const generateTokenAndSetCookie = (userId, res) => {
     sameSite: "None", // Prevenir ataques CSRF
     secure: process.env.NODE_ENV === "production" ? true : false // La cookie solo funciona en HTTPS
     });
+    
+  return token;
 }
 
 export default generateTokenAndSetCookie;

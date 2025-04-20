@@ -19,29 +19,32 @@ const useLogin = () => {
         credentials: "include"
       });
 
-
-      // Verifica el código de estado HTTP antes de proceder
       if (!res.ok) {
         const errorMessage = `Error ${res.status}: ${res.statusText}`;
         toast.error(errorMessage);
         throw new Error(errorMessage);
       }
 
-      // Verifica si hay cuerpo de respuesta antes de parsear
-      const responseText = await res.text(); // Leer como texto primero
+      const responseText = await res.text();
       let data = {};
       if (responseText) {
-        data = JSON.parse(responseText); // Intentar parsear solo si no está vacío
+        data = JSON.parse(responseText);
       }
 
       if (data.error) {
         throw new Error(data.error);
       }
 
+      // ✅ Guardar token y datos del usuario en localStorage
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
       localStorage.setItem("chat-user", JSON.stringify(data));
-      setAuthUser(data);
-      toast.success('Login successful!');
 
+      // ✅ Setear el contexto de usuario
+      setAuthUser(data);
+
+      toast.success('Login successful!');
     } catch (error) {
       console.log('Error:', error);
       toast.error(error.message || 'An error occurred during login');

@@ -9,31 +9,35 @@ const useSendMessage = () => {
   const sendMessage = async (formData, selectedKeySize) => {
     setLoading(true);
 
+    const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
+
+    if (!token) {
+      toast.error("No authentication token found");
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log("Selected Key Size: ", selectedKeySize);
 
       // Cifrar el mensaje antes de enviarlo
-      const originalMessage = formData.get('message');
+      const originalMessage = formData.get("message");
       const encryptedMessage = originalMessage;
 
-      // Reemplazar el mensaje con la versión cifrada
-      formData.set('message', encryptedMessage);
-      formData.append('selectedKeySize', selectedKeySize); // Agregar el tamaño de la clave
+      formData.set("message", encryptedMessage);
+      formData.append("selectedKeySize", selectedKeySize);
 
-      // Determinar el endpoint
-      const endpoint = selectedConversation.type === "community"
-        ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages`
-        : `https://chatapp-7lh7.onrender.com/api/messages/send/${selectedConversation._id}`;
-
-      // Debugging: Ver contenido de formData antes de enviarlo
-      // for (let pair of formData.entries()) {
-      //   console.log(pair[0] + ': ' + pair[1]);
-      // }
+      const endpoint =
+        selectedConversation.type === "community"
+          ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages`
+          : `https://chatapp-7lh7.onrender.com/api/messages/send/${selectedConversation._id}`;
 
       const res = await fetch(endpoint, {
         method: "POST",
-        body: formData, // Enviar como FormData
-        credentials: "include"
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
 
       const data = await res.json();

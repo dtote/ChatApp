@@ -7,7 +7,6 @@ import bcrypt from 'bcrypt';
 import faceapi from 'face-api.js';
 import { createCanvas, loadImage } from 'canvas';
 import { JSDOM } from 'jsdom';
-
 const upload = multer({ dest: 'uploads/' }); // Guardar imágenes en el directorio uploads
 
 // Configurar entorno DOM falso en Node.js
@@ -60,10 +59,10 @@ export const signupFacial = async (req, res) => {
       secretKey: keys.secret_key,
     });
 
-    generateTokenAndSetCookie(newUser._id, res);
+    const token = generateTokenAndSetCookie(newUser._id, res);
     await newUser.save();
 
-    res.status(201).json({ message: 'User registered successfully' });
+    res.status(201).json({ message: 'User registered successfully', token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -125,7 +124,7 @@ export const signup = async (req, res) => {
 
     if (newUser) {
       // Generar y asignar el token JWT
-      generateTokenAndSetCookie(newUser._id, res);
+      const token = generateTokenAndSetCookie(newUser._id, res);
       await newUser.save();
 
       res.status(201).json({
@@ -135,7 +134,8 @@ export const signup = async (req, res) => {
         profilePic: newUser.profilePic,
         publicKey: newUser.publicKey,
         publicKeyDSA: newUser.publicKeyDSA,
-        message: "User registered successfully"
+        message: "User registered successfully",
+        token
       });
     } else {
       res.status(400).json({ error: "Invalid user data" });
@@ -159,7 +159,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    generateTokenAndSetCookie(user._id, res);
+    const token = generateTokenAndSetCookie(user._id, res);
 
     res.status(200).json({
       _id: user._id,
@@ -167,7 +167,8 @@ export const login = async (req, res) => {
       email: user.email,
       profilePic: user.profilePic,
       message: "User logged in successfully",
-      publicKey: user.publicKey
+      publicKey: user.publicKey,
+      token
     });
 
   } catch (error) {
@@ -238,7 +239,7 @@ export const loginFacial = async (req, res) => {
       console.log('Matched user:', matchedUser);
 
       // Generar token JWT para el usuario
-      generateTokenAndSetCookie(matchedUser._id, res);
+      const token = generateTokenAndSetCookie(matchedUser._id, res);
 
       return res.status(200).json({
         _id: matchedUser._id,
@@ -246,7 +247,8 @@ export const loginFacial = async (req, res) => {
         email: matchedUser.email,
         profilePic: matchedUser.profilePic,
         message: "User logged in successfully",
-        publicKey: matchedUser.publicKey
+        publicKey: matchedUser.publicKey,
+        token
       });
     } else {
       return res.status(401).json({ message: 'Face authentication failed' });
