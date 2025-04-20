@@ -11,7 +11,7 @@ let io;
 export const initializeSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: ["http://localhost:3000"],
+      origin: ["https://chatapp-1-eebi.onrender.com"],
       methods: ["GET", "POST"],
       credentials: true,
       transports: ["websocket"],
