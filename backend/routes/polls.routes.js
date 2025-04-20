@@ -1,3 +1,8 @@
+import express from 'express';
+import Poll from '../models/polls.model.js';
+
+const router = express.Router();
+
 // Endpoint para crear una encuesta
 router.post('/poll', async (req, res) => {
   const { pollId, question, options } = req.body; // Recibe ID opcional, pregunta y opciones
