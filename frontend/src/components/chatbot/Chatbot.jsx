@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import "./ChatBot.css"
+import "./Chatbot.css"
 
 const SYSTEM_PROMPT = `
 Eres un asistente experto integrado en una aplicación de mensajería instantánea altamente segura, desarrollada con tecnologías web modernas y criptografía post-cuántica. Tu objetivo es ayudar a los usuarios a comprender y utilizar correctamente la aplicación, así como educarlos en temas relacionados con la criptografía moderna.
