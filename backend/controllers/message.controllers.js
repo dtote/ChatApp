@@ -133,6 +133,9 @@ export const getMessages = async (req, res) => {
 
         const decryptedText = decryptionResponse.data.original_message;
 
+        // justo antes de verificar:
+        console.log("Mensaje original:", JSON.stringify(decryptedText));
+        console.log("Firma:", msg.signature);
         // Verificar la firma digital con ML-DSA
         const verifyResponse = await axios.post('https://kyber-api-1.onrender.com/verify', {
           message: decryptedText,
@@ -155,7 +158,11 @@ export const getMessages = async (req, res) => {
         };
       } catch (error) {
         logDetailedError("Error al verificar mensajes", error);
-
+        console.log("⚠️ Error al verificar mensaje:");
+        if (error.response) {
+          console.log("Status:", error.response.status);
+          console.log("Data:", error.response.data);
+        }
         return {
           ...msg._doc,
           message: "[Mensaje no verificado]",
