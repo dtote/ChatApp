@@ -154,7 +154,7 @@ export const getMessages = async (req, res) => {
           fileUrl: msg.fileUrl || null
         };
       } catch (error) {
-        console.error("Error verificando mensaje:", error.message);
+        logDetailedError("Error al verificar mensajes", error);
 
         return {
           ...msg._doc,
