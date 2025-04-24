@@ -3,6 +3,8 @@ import Message from "../models/message.model.js";
 import { getReceiverSocketId, io } from "../socket/socket.js";
 import axios from 'axios';
 import User from "../models/user.model.js";
+import { logDetailedError } from "../utils/logErrorDetails.js";
+
 // Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
   try {
@@ -94,7 +96,7 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json({ ...newMessage._doc, message: decryptionResponse.data.original_message });
   } catch (error) {
-    console.log("Error in sendMessage controller: ", error.message);
+    logDetailedError("sendMessage", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -166,7 +168,7 @@ export const getMessages = async (req, res) => {
 
     res.status(200).json(decryptedMessages);
   } catch (error) {
-    console.error("Error in getMessages:", error.message);
+    logDetailedError("GetMessage", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
