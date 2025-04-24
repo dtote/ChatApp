@@ -1,0 +1,5 @@
+/* Agregar al archivo CSS */
+.custom-popup {
+  margin-top: -10px; /* Ajustar el valor para mover el menú hacia arriba */
+  bottom: 50px; /* Ajustar según tus necesidades, o quitarlo si usas margin-top */
+}
