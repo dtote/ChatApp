@@ -3,7 +3,7 @@ import MessageContainer from '../../components/messages/MessageContainer';
 import SecurityOptions from '../../components/security/SecurityOptions';
 import PostQuantumEducation from '../../components/education/PostQuantumEducation';
 import './Home.css';
-import ChatBot from '../../components/chatbot/ChatBot';
+import ChatBot from '../../components/chatbot/Chatbot';
 import { useState, useEffect } from 'react';
 
 const Home = () => {
