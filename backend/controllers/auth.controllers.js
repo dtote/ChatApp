@@ -44,7 +44,7 @@ export const signupFacial = async (req, res) => {
       kem_name: "ML-KEM-512",
     });
 
-    const { data: dsaKeys } = await axios.post('http://127.0.0.1:5001/generate_ml_dsa_keys', {
+    const { data: dsaKeys } = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
       ml_dsa_variant: "ML-DSA-44",
     });
 
