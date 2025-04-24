@@ -36,4 +36,4 @@ COPY . .
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación
-CMD ["npm", "run", "server"]
+CMD ["npm", "run", "start"]
