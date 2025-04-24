@@ -229,14 +229,14 @@ export const loginFacial = async (req, res) => {
       return res.status(400).json({ message: 'No valid face descriptors found' });
     }
 
-    //console.log('Labeled descriptors:', labeledDescriptors);
-    //console.log('Input descriptor:', inputDescriptor.length);
-    //console.log('Label descriptos face descriptor length:', labeledDescriptors[0].descriptors[0].length);
+    console.log('Labeled descriptors:', labeledDescriptors);
+    console.log('Input descriptor:', inputDescriptor.length);
+    console.log('Label descriptos face descriptor length:', labeledDescriptors[0].descriptors[0].length);
     // Crear FaceMatcher
     const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
     const bestMatch = faceMatcher.findBestMatch(inputDescriptor);
 
-    //console.log('Best match:', bestMatch);
+    console.log('Best match:', bestMatch);
 
     if (bestMatch.label !== 'unknown' && bestMatch.distance < 0.6) {
       // Buscar el usuario que coincide con la etiqueta (su _id)
@@ -246,7 +246,7 @@ export const loginFacial = async (req, res) => {
         return res.status(401).json({ message: 'No matching user found' });
       }
 
-      //console.log('Matched user:', matchedUser);
+      console.log('Matched user:', matchedUser);
 
       // Generar token JWT para el usuario
       const token = generateTokenAndSetCookie(matchedUser._id, res);
