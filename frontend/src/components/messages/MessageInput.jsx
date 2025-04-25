@@ -22,6 +22,8 @@ const MessageInput = () => {
 
     const formData = new FormData();
     formData.append("message", message);
+    formData.append("selectedKeySize", selectedKeySize);
+
 
     if (file) {
       formData.append("file", file);
@@ -116,11 +118,11 @@ const MessageInput = () => {
         {/* Formulario de encuesta */}
         {showPollForm && (
           <div className="absolute bottom-[270px] bg-gray-800 text-white rounded-lg shadow-lg p-4 w-full max-w-md z-50">
-            <h3 className="text-lg font-bold mb-2">Crear Encuesta</h3>
+            <h3 className="text-lg font-bold mb-2">Create Poll</h3>
             <input
               type="text"
               className="w-full mb-2 p-2 rounded bg-gray-700 text-white border border-gray-600"
-              placeholder="Pregunta de la encuesta"
+              placeholder="Questions Poll"
               value={pollQuestion}
               onChange={(e) => setPollQuestion(e.target.value)}
             />
@@ -129,7 +131,7 @@ const MessageInput = () => {
                 key={i}
                 type="text"
                 className="w-full mb-2 p-2 rounded bg-gray-700 text-white border border-gray-600"
-                placeholder={`Opción ${i + 1}`}
+                placeholder={`Option ${i + 1}`}
                 value={opt}
                 onChange={(e) => handleOptionChange(e.target.value, i)}
               />
@@ -140,14 +142,14 @@ const MessageInput = () => {
                 className="text-sm bg-green-600 px-3 py-1 rounded hover:bg-green-700"
                 onClick={handleAddOption}
               >
-                Añadir opción
+                Add Option
               </button>
               <button
                 type="button"
                 className="text-sm bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
                 onClick={handlePollSubmit}
               >
-                Enviar encuesta
+                Send Poll
               </button>
             </div>
           </div>
