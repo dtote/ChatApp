@@ -15,6 +15,7 @@ import decrypt2 from "./routes/decrypt.routes.js";
 import pollRoutes from "./routes/polls.routes.js";
 import summaryRoutes from "./routes/summary.routes.js";
 import conversationRoutes from "./routes/conversation.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
 import cron from "node-cron";
 import cors from "cors";
 import fs from "fs";
@@ -69,6 +70,7 @@ app.use('/api/deleteOldMessages', deleteOldMessages);
 app.use('/api/poll', pollRoutes);
 app.use('/api/summary', summaryRoutes);
 app.use('/api/conversation', conversationRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Ruta comodín frontend
 app.get("*", (req, res) => {
