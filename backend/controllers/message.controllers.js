@@ -43,7 +43,7 @@ export const sendMessage = async (req, res) => {
     const { signature } = signResponse.data;
 
     const encryptionResponse = await encryptWithRetry({
-      kem_name: selectedKeySize,
+      kem_name: "ML-KEM-512",
       message,
       public_key: receiver.publicKey
     });
@@ -120,7 +120,7 @@ export const getMessages = async (req, res) => {
     const decryptedMessages = await Promise.all(conversation.messages.map(async (msg) => {
       try {
         const decryptionResponse = await decryptWithRetry({
-          kem_name: selectedKeySize,
+          kem_name: "ML-KEM-512",
           ciphertext: msg.message,
           shared_secret: msg.sharedSecret
         });
