@@ -42,6 +42,9 @@ export const sendMessage = async (req, res) => {
 
     const { signature } = signResponse.data;
 
+    console.log("🔏 Mensaje firmado:", message);
+    console.log("🔏 Firma generada:", signature);
+
     const encryptionResponse = await encryptWithRetry({
       kem_name: "ML-KEM-512",
       message,
@@ -126,6 +129,10 @@ export const getMessages = async (req, res) => {
         });
 
         const decryptedText = decryptionResponse.data.original_message;
+
+        console.log("🔓 Mensaje descifrado:", decryptedText);
+        console.log("🔎 Firma recibida:", msg.signature);
+        console.log("🔎 Clave pública usada:", msg.publicKeyDSA);
 
         const verifyResponse = await verifyWithRetry({
           message: decryptedText,
