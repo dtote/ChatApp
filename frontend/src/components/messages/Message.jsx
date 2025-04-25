@@ -349,25 +349,25 @@ const Message = ({ message }) => {
               {/* Mostrar archivo según su tipo */}
               {message.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                 <img
-                  src={`https://chatapp-7lh7.onrender.com${message.fileUrl}`}
+                  src={`${message.fileUrl}`}
                   alt="imagen enviada"
                   className="max-w-xs rounded shadow"
                 />
               ) : message.fileUrl.match(/\.(mp4|webm|ogg)$/i) ? (
                 <video
-                  src={`https://chatapp-7lh7.onrender.com${message.fileUrl}`}
+                  src={`${message.fileUrl}`}
                   controls
                   className="max-w-xs rounded shadow"
                 />
               ) : message.fileUrl.match(/\.pdf$/i) ? (
                 <iframe
-                  src={`https://chatapp-7lh7.onrender.com${message.fileUrl}`}
+                  src={`${message.fileUrl}`}
                   title="PDF enviado"
                   className="w-full h-64 rounded shadow"
                 />
               ) : (
                 <a
-                  href={`https://chatapp-7lh7.onrender.com${message.fileUrl}`}
+                  href={`${message.fileUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-200 underline"
