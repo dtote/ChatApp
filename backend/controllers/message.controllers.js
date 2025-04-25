@@ -5,102 +5,89 @@ import axios from 'axios';
 import User from "../models/user.model.js";
 import { logDetailedError } from "../utils/logErrorDetails.js";
 
-async function verifyWithRetry(data, retries = 3) {
+const axiosRetry = async (url, data, retries = 3) => {
   for (let i = 0; i < retries; i++) {
     try {
-      return await axios.post('https://kyber-api-1.onrender.com/verify', data);
+      return await axios.post(url, data);
     } catch (error) {
       if (i === retries - 1) throw error;
-      await new Promise(r => setTimeout(r, 1000)); // espera antes de reintentar
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
-}
+};
+
+const signWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/sign', data);
+const encryptWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/encrypt', data);
+const decryptWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/decrypt', data);
+const verifyWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/verify', data);
 
 
-// Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
   try {
     const { message, selectedKeySize } = req.body;
     const { id: receiverId } = req.params;
-    const senderId = req.user._id;  // ID del remitente (autenticado)
-    const file = req.file;  // Archivo PDF adjunto
-    // console.log(receiverId);
-    // console.log(message);
-    // console.log(senderId);
-    // Obtener la clave pública del receptor desde la base de datos
+    const senderId = req.user._id;
+    const file = req.file;
+
     const receiver = await User.findById(receiverId);
     if (!receiver || !receiver.publicKey) {
       return res.status(400).json({ error: "Receiver not found or missing public key." });
     }
-	
-    // Firmar el mensaje
-    const signResponse = await axios.post('https://kyber-api-1.onrender.com/sign', {
+
+    const signResponse = await signWithRetry({
       message,
       ml_dsa_variant: "ML-DSA-44",
-      private_key: req.user.secretKeyDSA  
+      private_key: req.user.secretKeyDSA
     });
+
     const { signature } = signResponse.data;
 
-    // Cifrar el mensaje usando la API de cifrado
-    const encryptionResponse = await axios.post('https://kyber-api-1.onrender.com/encrypt', {
+    const encryptionResponse = await encryptWithRetry({
       kem_name: selectedKeySize,
-      message: message,
-      public_key: receiver.publicKey,  // clave pública en base64
+      message,
+      public_key: receiver.publicKey
     });
 
     const { ciphertext, shared_secret } = encryptionResponse.data;
-    //console.log("Encrypted message:", ciphertext);
-    //console.log("Shared secret:", shared_secret);
-    // Verificar si ya existe una conversación entre los participantes
+
     let conversation = await Conversation.findOne({
       participants: { $all: [senderId, receiverId] },
     });
 
     if (!conversation) {
-      conversation = await Conversation.create({
-        participants: [senderId, receiverId],
-      });
+      conversation = await Conversation.create({ participants: [senderId, receiverId] });
     }
 
-    // Crear el nuevo mensaje con el archivo adjunto (si existe)
     const newMessage = new Message({
       senderId,
       receiverId,
-      message: ciphertext, // mensaje cifrado
-      sharedSecret: shared_secret, // clave secreta compartida
-      signature, // Guardar la firma
-      publicKeyDSA: req.user.publicKeyDSA, // Guardar la clave pública DSA
-      fileUrl: file ? `/uploads/${file.filename}` : null, // URL del archivo PDF (si se adjunta)
+      message: ciphertext,
+      sharedSecret: shared_secret,
+      signature,
+      publicKeyDSA: req.user.publicKeyDSA,
+      fileUrl: file ? `/uploads/${file.filename}` : null,
       verified: false
     });
 
-    // Guardar el nuevo mensaje y actualizar la conversación
-    if (newMessage) {
-      conversation.messages.push(newMessage._id);
-    }
+    if (newMessage) conversation.messages.push(newMessage._id);
 
     await Promise.all([conversation.save(), newMessage.save()]);
 
-
-    // Funcionalidad de SOCKET IO
     const receiverSocketId = getReceiverSocketId(receiverId);
-    //console.log("Receiver Socket ID:", receiverSocketId);
     if (receiverSocketId) {
-      const messageResponse = {
+      io.to(receiverSocketId).emit("newMessage", {
         _id: newMessage._id,
         senderId: newMessage.senderId,
         receiverId: newMessage.receiverId,
-        message: ciphertext, // mensaje descifrado
-        sharedSecret: newMessage.sharedSecret, // clave secreta compartida
-        fileUrl: newMessage.fileUrl, // URL del archivo adjunto
-        createdAt: new Date(), // Fecha de creación (puedes ajustar si usas otro campo de tiempo)
+        message: ciphertext,
+        sharedSecret: newMessage.sharedSecret,
+        fileUrl: newMessage.fileUrl,
+        createdAt: new Date(),
         updatedAt: new Date(),
-      }
-      console.log("Emitting new message to receiver...");
-      io.to(receiverSocketId).emit("newMessage", messageResponse);
+      });
     }
 
-    const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
+    const decryptionResponse = await decryptWithRetry({
       kem_name: selectedKeySize,
       ciphertext: newMessage.message,
       shared_secret: newMessage.sharedSecret
@@ -116,28 +103,23 @@ export const sendMessage = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
-    const { selectedKeySize } = req.query
+    const { selectedKeySize } = req.query;
     const senderId = req.user._id;
 
-    // Obtener la conversación entre el remitente y el receptor
     const conversation = await Conversation.findOne({
       participants: { $all: [senderId, userToChatId] },
     }).populate("messages");
 
     if (!conversation) return res.status(200).json([]);
 
-    // Obtener la clave secreta del receptor (usuario que solicita los mensajes)
-    const receiver = await User.findById(userToChatId);  
+    const receiver = await User.findById(userToChatId);
     if (!receiver || !receiver.secretKey) {
       return res.status(400).json({ error: "Receiver not found or missing secret key." });
     }
 
-   
-    // Descifrar cada mensaje y devolver también la URL del archivo PDF (si existe)
     const decryptedMessages = await Promise.all(conversation.messages.map(async (msg) => {
       try {
-        // Descifrar el mensaje (solo el texto plano)
-        const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
+        const decryptionResponse = await decryptWithRetry({
           kem_name: selectedKeySize,
           ciphertext: msg.message,
           shared_secret: msg.sharedSecret
@@ -145,21 +127,14 @@ export const getMessages = async (req, res) => {
 
         const decryptedText = decryptionResponse.data.original_message;
 
-        // justo antes de verificar:
-        console.log("Mensaje original:", JSON.stringify(decryptedText));
-        console.log("Firma:", msg.signature);
-        // Verificar la firma digital con ML-DSA
         const verifyResponse = await verifyWithRetry({
           message: decryptedText,
           signature: msg.signature,
           public_key: msg.publicKeyDSA,
           ml_dsa_variant: "ML-DSA-44"
         });
-        
-        //console.log("Verificación ML-DSA:", verifyResponse.data);
-        const verified = verifyResponse.data.verified;
 
-        msg.verified = !!verified;
+        msg.verified = !!verifyResponse.data.verified;
         await msg.save();
 
         return {
@@ -170,11 +145,6 @@ export const getMessages = async (req, res) => {
         };
       } catch (error) {
         logDetailedError("Error al verificar mensajes", error);
-        console.log("⚠️ Error al verificar mensaje:");
-        if (error.response) {
-          console.log("Status:", error.response.status);
-          console.log("Data:", error.response.data);
-        }
         return {
           ...msg._doc,
           message: "[Mensaje no verificado]",
@@ -184,13 +154,13 @@ export const getMessages = async (req, res) => {
       }
     }));
 
-
     res.status(200).json(decryptedMessages);
   } catch (error) {
-    logDetailedError("GetMessage", error);
+    logDetailedError("getMessages", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 export const reactMessage = async (req, res) => {
   const { emoji, userId } = req.body;
