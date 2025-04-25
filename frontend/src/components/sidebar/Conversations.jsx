@@ -24,7 +24,7 @@ const Conversations = () => {
 
     setCreating(true);
     try {
-      const response = await axios.post('https://chatapp-7lh7.onrender.com/api/communities', {
+      const response = await axios.post('/api/communities', {
         name: form.name,
         description: form.description,
         image: form.image || '/default-community.png',

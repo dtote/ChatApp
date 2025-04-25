@@ -75,7 +75,7 @@ const SecurityOptions = () => {
 
   const deleteOldMessagesFromBackend = async (timePeriod) => {
     try {
-      const response = await axios.post('https://chatapp-7lh7.onrender.com/api/deleteOldMessages', { timePeriod });
+      const response = await axios.post('/api/deleteOldMessages', { timePeriod });
       alert(response.data.message); 
     } catch (error) {
       console.error('Error al eliminar los mensajes', error);
@@ -138,7 +138,7 @@ const SecurityOptions = () => {
   
 const handleSearchConversation = async () => {
   try {
-    const response = await axios.get(`https://chatapp-7lh7.onrender.com/api/conversation/search`, {
+    const response = await axios.get(`/api/conversation/search`, {
       params: { name: userOrCommunity },
       credentials: 'include',
       withCredentials: true

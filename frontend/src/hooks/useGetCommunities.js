@@ -9,7 +9,7 @@ const useGetCommunities = () => {
   const fetchCommunities = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("https://chatapp-7lh7.onrender.com/api/communities");
+      const response = await axios.get("/api/communities");
       setCommunities(response.data);
     } catch (error) {
       console.error("Error fetching communities:", error);

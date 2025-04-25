@@ -23,8 +23,8 @@ const useGetMessages = () => {
       try {
         const endpoint =
           selectedConversation.type === "community"
-            ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
-            : `https://chatapp-7lh7.onrender.com/api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
+            ? `/api/communities/${selectedConversation._id}/messages?selectedKeySize=${selectedKeySize}`
+            : `/api/messages/${selectedConversation._id}?selectedKeySize=${selectedKeySize}`;
 
         const res = await fetch(endpoint, {
           headers: {

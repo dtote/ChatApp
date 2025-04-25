@@ -75,7 +75,7 @@ const ChatBot = () => {
     setIsLoading(true);
   
     try {
-      const res = await axios.post("https://chatapp-7lh7.onrender.com/api/chat", {
+      const res = await axios.post("/api/chat", {
         systemPrompt: SYSTEM_PROMPT,
         messages: newMessages.map((msg) => ({
           role: msg.from === 'user' ? "user" : "assistant",

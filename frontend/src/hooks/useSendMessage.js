@@ -29,8 +29,8 @@ const useSendMessage = () => {
 
       const endpoint =
         selectedConversation.type === "community"
-          ? `https://chatapp-7lh7.onrender.com/api/communities/${selectedConversation._id}/messages`
-          : `https://chatapp-7lh7.onrender.com/api/messages/send/${selectedConversation._id}`;
+          ? `/api/communities/${selectedConversation._id}/messages`
+          : `/api/messages/send/${selectedConversation._id}`;
 
       const res = await fetch(endpoint, {
         method: "POST",

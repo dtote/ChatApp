@@ -12,7 +12,7 @@ import './Message.css';
 
 const decryptMessage = async (ciphertext, sharedSecret, selectedKeySize) => {
   try {
-    const response = await axios.post('https://chatapp-7lh7.onrender.com/api/decrypt', {
+    const response = await axios.post('/api/decrypt', {
       kem_name: selectedKeySize,
       ciphertext: ciphertext,
       shared_secret: sharedSecret,
@@ -105,7 +105,7 @@ const Message = ({ message }) => {
     const emoji = emojiObj.native;
   
     try {
-      const response = await axios.post(`https://chatapp-7lh7.onrender.com/api/messages/${message._id}/react`, {
+      const response = await axios.post(`/api/messages/${message._id}/react`, {
         emoji,
         userId: authUser._id,
       });
@@ -149,7 +149,7 @@ const Message = ({ message }) => {
       const userId = authUser._id; 
       
       try {
-        const response = await axios.post('https://chatapp-7lh7.onrender.com/api/poll/vote', {
+        const response = await axios.post('/api/poll/vote', {
           pollId: message._id,  
           optionIndex: selectedOption, 
           userId,  
@@ -205,7 +205,7 @@ const Message = ({ message }) => {
     const initializePoll = async () => {
       if (isPoll && message._id) {
         try {
-          const pollExists = await axios.get(`https://chatapp-7lh7.onrender.com/api/poll/poll/${message._id}`);
+          const pollExists = await axios.get(`/api/poll/poll/${message._id}`);
           if (pollExists.status === 200) {
             pollOptions = pollExists.data.options;
             
@@ -217,7 +217,7 @@ const Message = ({ message }) => {
           }
         } catch (err) {
           if (err.response) {
-            await axios.post('https://chatapp-7lh7.onrender.com/api/poll/poll', {
+            await axios.post('/api/poll/poll', {
               pollId: message._id,
               question: pollQuestion,
               options: pollOptions.map(opt => opt.option || opt),
@@ -258,7 +258,7 @@ const Message = ({ message }) => {
 
   const fetchProfilePic = async (senderId) => {
     try {
-      const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${senderId}/profile-pic`);
+      const response = await fetch(`/api/users/${senderId}/profile-pic`);
       if (response.ok) {
         const data = await response.json();
         setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
@@ -272,7 +272,7 @@ const Message = ({ message }) => {
 
   const fetchUserData = async (userId) => {
     try {
-      const response = await fetch(`https://chatapp-7lh7.onrender.com/api/users/${userId}/popup-data`);
+      const response = await fetch(`/api/users/${userId}/popup-data`);
       if (response.ok) {
         const data = await response.json();
         setUserData({

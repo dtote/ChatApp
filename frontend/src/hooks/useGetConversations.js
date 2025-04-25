@@ -18,7 +18,7 @@ const useGetConversations = () => {
 			}
 
 			try {
-				const res = await fetch("https://chatapp-7lh7.onrender.com/api/users", {
+				const res = await fetch("/api/users", {
 					method: "GET",
 					headers: {
 						"Content-Type": "application/json",

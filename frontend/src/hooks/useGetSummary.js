@@ -6,7 +6,7 @@ const useGetSummary = () => {
 
   const getSummary = async (conversationId, limit = 50) => {
     try {
-      const res = await axios.post(`https://chatapp-7lh7.onrender.com/api/summary?selectedKeySize=${selectedKeySize}`, { conversationId, limit });
+      const res = await axios.post(`/api/summary?selectedKeySize=${selectedKeySize}`, { conversationId, limit });
       return res.data.summary;
     } catch (error) {
       console.error("Error fetching summary:", error);
