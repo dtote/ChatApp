@@ -5,6 +5,18 @@ import axios from 'axios';
 import User from "../models/user.model.js";
 import { logDetailedError } from "../utils/logErrorDetails.js";
 
+async function verifyWithRetry(data, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await axios.post('https://kyber-api-1.onrender.com/verify', data);
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(r => setTimeout(r, 1000)); // espera antes de reintentar
+    }
+  }
+}
+
+
 // Controlador para enviar mensajes con PDF adjunto
 export const sendMessage = async (req, res) => {
   try {
@@ -137,13 +149,13 @@ export const getMessages = async (req, res) => {
         console.log("Mensaje original:", JSON.stringify(decryptedText));
         console.log("Firma:", msg.signature);
         // Verificar la firma digital con ML-DSA
-        const verifyResponse = await axios.post('https://kyber-api-1.onrender.com/verify', {
+        const verifyResponse = await verifyWithRetry({
           message: decryptedText,
           signature: msg.signature,
           public_key: msg.publicKeyDSA,
           ml_dsa_variant: "ML-DSA-44"
         });
-
+        
         //console.log("Verificación ML-DSA:", verifyResponse.data);
         const verified = verifyResponse.data.verified;
 
