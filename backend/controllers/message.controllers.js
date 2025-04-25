@@ -68,7 +68,7 @@ export const sendMessage = async (req, res) => {
       sharedSecret: shared_secret,
       signature,
       publicKeyDSA: req.user.publicKeyDSA,
-      fileUrl: file ? `/uploads/${file.filename}` : null,
+      fileUrl: file ? file.path : null,
       verified: false
     });
 
