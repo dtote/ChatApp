@@ -22,8 +22,6 @@ const MessageInput = () => {
 
     const formData = new FormData();
     formData.append("message", message);
-    formData.append("selectedKeySize", selectedKeySize);
-
 
     if (file) {
       formData.append("file", file);
