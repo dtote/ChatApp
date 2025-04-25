@@ -39,6 +39,7 @@
     "node-addon-api": "^8.1.0",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
+    "openai": "^4.96.0",
     "react-icons": "^5.5.0",
     "socket.io": "^4.7.5",
     "tfjs-image-recognition-base": "^0.6.0",
