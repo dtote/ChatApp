@@ -16,22 +16,10 @@ const securityOptions = [
     icon: <MdDeleteForever className="text-xl text-primary" />,
   },
   {
-    id: 2,
-    title: "Encryption Key Size",
-    details: "The larger the key size, the harder it is for attackers to decrypt the information.",
-    icon: <MdVpnKey className="text-xl text-primary" />,
-  },
-  {
     id: 3,
     title: "Lattice Public Keys",
     details: "Allows displaying a public key entered by the user in a lattice.",
     icon: <MdGridOn className="text-xl text-primary" />,
-  },
-  {
-    id: 4,
-    title: "Data Encryption",
-    details: "Encrypts sensitive information to protect it from unauthorized access.",
-    icon: <MdLockOutline className="text-xl text-primary" />,
   },
   {
     id: 5,
@@ -199,22 +187,6 @@ const handleSearchConversation = async () => {
                         <span className="label-text ml-2">{val}</span>
                       </label>
                     ))}
-                  </div>
-                )}
-  
-                {selectedOption.id === 2 && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold">Select the encryption scheme:</h4>
-                    {["ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"].map((val) => (
-                      <label className="label cursor-pointer" key={val}>
-                        <input type="radio" name="keySize" className="radio checked:bg-blue-500" value={val}
-                          checked={selectedKeySize === val}
-                          onChange={handleKeySizeChange}
-                        />
-                        <span className="label-text ml-2">{val}</span>
-                      </label>
-                    ))}
-                    <p><strong>Selected:</strong> {selectedKeySize}</p>
                   </div>
                 )}
   

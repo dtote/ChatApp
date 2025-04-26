@@ -1,0 +1,33 @@
+name: Run Tests on Deploy
+
+on:
+  push:
+    branches: [ main, develop ] # Puedes ajustar las ramas si quieres
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Usa la versión que tu proyecto soporta (Node 20 LTS es ideal)
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Set Environment Variables
+      run: |
+        echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> $GITHUB_ENV
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+        echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+        echo "HUGGINFACE_API_KEY=${{ secrets.HUGGINFACE_API_KEY }}" >> $GITHUB_ENV
+
+    - name: Run tests
+      run: npm test
