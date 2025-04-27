@@ -11,7 +11,6 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'chat_uploads',
     resource_type: 'auto',
-    upload_preset: 'chat_public_uploads',
     allowed_formats: ['jpg', 'png', 'pdf', 'mp4'], 
     public_id: (req, file) => file.fieldname + '-' + Date.now(),
   },

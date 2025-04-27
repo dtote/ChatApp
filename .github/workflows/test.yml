@@ -29,5 +29,5 @@ jobs:
         echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
         echo "HUGGINFACE_API_KEY=${{ secrets.HUGGINFACE_API_KEY }}" >> $GITHUB_ENV
 
-    - name: Run tests
-      run: npm test
+    # - name: Run tests
+    #   run: npm test

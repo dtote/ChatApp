@@ -61,7 +61,10 @@ export const sendMessage = async (req, res) => {
       conversation = await Conversation.create({ participants: [senderId, receiverId] });
     }
 
-    console.log("URL FILE: ", file.path);
+    if (file) {
+      console.log("URL FILE: ", file.path);
+    }
+    
     const newMessage = new Message({
       senderId,
       receiverId,

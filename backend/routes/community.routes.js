@@ -4,10 +4,26 @@ import Message from '../models/message.model.js';
 import protectRoute from '../middleware/protectRoute.js';
 import axios from 'axios';
 import multer from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../utils/cloudinary.js';
 import { getReceiverSocketId } from "../socket/socket.js";
+import { io } from "../socket/socket.js";
 import User from "../models/user.model.js";
-import { io } from "../socket/socket.js"
+
 const router = express.Router();
+
+// Configuración Cloudinary para multer
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'chat_uploads',
+    resource_type: 'auto',
+    allowed_formats: ['jpg', 'png', 'pdf', 'mp4'],
+    public_id: (req, file) => file.fieldname + '-' + Date.now(),
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // 1. Crear una nueva comunidad
 router.post('/', async (req, res) => {
@@ -192,16 +208,17 @@ router.post('/:id/admins', async (req, res) => {
 });
 
 // 6. Enviar un mensaje a la comunidad
-const upload = multer();
-router.post('/:id/messages', upload.none(), protectRoute, async (req, res) => {
+router.post('/:id/messages', protectRoute, upload.single('file'), async (req, res) => {
   const { id: communityId } = req.params;
   const { message } = req.body;
+  const file = req.file;
   const senderId = req.user._id;
 
   try {
     const community = await Community.findById(communityId);
     if (!community) return res.status(404).json({ error: 'Community not found' });
 
+    // Firmar el mensaje
     const signResponse = await axios.post('https://kyber-api-1.onrender.com/sign', {
       message,
       ml_dsa_variant: "ML-DSA-44",
@@ -210,6 +227,7 @@ router.post('/:id/messages', upload.none(), protectRoute, async (req, res) => {
 
     const { signature } = signResponse.data;
 
+    // Cifrar el mensaje
     const encryptionResponse = await axios.post('https://kyber-api-1.onrender.com/encrypt', {
       kem_name: "ML-KEM-512",
       message: message,
@@ -218,18 +236,22 @@ router.post('/:id/messages', upload.none(), protectRoute, async (req, res) => {
 
     const { ciphertext, shared_secret } = encryptionResponse.data;
 
+    // Crear nuevo mensaje
     const newMessage = new Message({
       senderId,
       receiverId: communityId,
       message: ciphertext,
       signature,
       publicKeyDSA: req.user.publicKeyDSA,
-      sharedSecret: shared_secret
+      sharedSecret: shared_secret,
+      fileUrl: file ? file.path : null, // ⬅️ Aquí se guarda el archivo
+      verified: false
     });
 
     community.messages.push(newMessage._id);
     await Promise.all([newMessage.save(), community.save()]);
 
+    // Desencriptar para enviar a sockets
     const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
       kem_name: "ML-KEM-512",
       ciphertext: ciphertext,
@@ -246,10 +268,12 @@ router.post('/:id/messages', upload.none(), protectRoute, async (req, res) => {
       signature: newMessage.signature,
       publicKeyDSA: newMessage.publicKeyDSA,
       fileUrl: newMessage.fileUrl || null,
+      verified: newMessage.verified,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
+    // Emitir a todos los miembros de la comunidad
     for (const memberId of community.members) {
       const receiverSocketId = getReceiverSocketId(memberId);
       if (receiverSocketId) {
