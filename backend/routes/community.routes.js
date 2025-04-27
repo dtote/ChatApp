@@ -18,7 +18,9 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'chat_uploads',
     resource_type: 'auto',
+    upload_preset: 'ml_default',
     allowed_formats: ['jpg', 'png', 'pdf', 'mp4'],
+    access_mode: 'public', // <- AGREGAR ESTA LÍNEA
     public_id: (req, file) => file.fieldname + '-' + Date.now(),
   },
 });
