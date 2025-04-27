@@ -80,6 +80,8 @@ const Message = ({ message }) => {
   const bubbleBgColor = fromMe ? "bg-blue-500" : "";
   const [showEncrypted, setShowEncrypted] = useState(false);
   const [messages, setMessages] = useState([message]);
+  const [currentMessage, setCurrentMessage] = useState(message);
+
   const [showPopup, setShowPopup] = useState(false);
   const [urlStatus, setUrlStatus] = useState({});
   const [profilePic, setProfilePic] = useState(
@@ -243,6 +245,9 @@ const Message = ({ message }) => {
             return [...filtered, { ...newMsg, message: decryptedMessage }];
           });
           
+          setCurrentMessage({ ...newMsg, message: decryptedMessage });
+          
+          
         } else {
           console.error("No se pudo descifrar el mensaje");
         }
@@ -376,7 +381,7 @@ const Message = ({ message }) => {
                 </a>
               )}
             </div>
-          ) : (message.message || '').split(urlPattern).map((part, index) => {
+          ) : (currentMessage.message || '').split(urlPattern).map((part, index) => {
               const urlMatch = part.match(urlPattern);
               if (urlMatch) {
                 const url = urlMatch[0];
