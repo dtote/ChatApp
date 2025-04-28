@@ -74,13 +74,19 @@ export const sendMessage = async (req, res) => {
     conversation.messages.push(newMessage._id);
     await conversation.save();
 
+    const decryptionResponse = await decryptWithRetry({
+      kem_name: selectedKeySize,
+      ciphertext: newMessage.message,
+      shared_secret: newMessage.sharedSecret
+    });
+
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", {
         _id: newMessage._id,
         senderId: newMessage.senderId,
         receiverId: newMessage.receiverId,
-        message: ciphertext,
+        message: decryptionResponse.data.original_message,
         sharedSecret: newMessage.sharedSecret,
         fileUrl: newMessage.fileUrl,
         createdAt: new Date(),
@@ -88,11 +94,7 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    const decryptionResponse = await decryptWithRetry({
-      kem_name: selectedKeySize,
-      ciphertext: newMessage.message,
-      shared_secret: newMessage.sharedSecret
-    });
+    
 
     res.status(201).json({ ...newMessage._doc, message: decryptionResponse.data.original_message });
   } catch (error) {
