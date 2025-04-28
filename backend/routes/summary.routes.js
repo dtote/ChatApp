@@ -1,8 +1,7 @@
-import express from "express";
-import Conversation from "../models/conversation.model.js";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import express from "express";
 import axios from "axios";
+import Conversation from "../models/conversation.model.js";
 
 dotenv.config();
 const router = express.Router();
@@ -14,57 +13,56 @@ router.post("/", async (req, res) => {
   try {
     const { conversationId, limit = 50 } = req.body;
     const { selectedKeySize } = req.query;
+
     console.log("Conversation id:", conversationId);
+
     const conversation = await Conversation.findById(conversationId)
       .populate({
-        path: 'messages',
+        path: "messages",
         options: {
-          sort: { createdAt: -1 }, 
+          sort: { createdAt: -1 },
           limit: limit,
-        }
+        },
       })
       .lean();
-    
+
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found." });
     }
 
-    // Concatenar todos los mensajes en un solo bloque de texto
-    let concatenatedMessages = '';
-
-    const decryptedMessages = await Promise.all(conversation.messages.map(async (msg) => {
-      try {
-        // Descifrar el mensaje (solo el texto plano)
-        const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
-          kem_name: selectedKeySize,
-          ciphertext: msg.message,
-          shared_secret: msg.sharedSecret
-        });
-      
-        const decryptedText = decryptionResponse.data.original_message;
-      
-        console.log("1: ", decryptedText);
-        concatenatedMessages += decryptedText + ' ';
-      
-        return decryptedText; 
-      } catch (error) {
-        console.error(`Error al procesar el mensaje: ${error}`);
-        return '';
-      }
+    // 🔵 Preparamos la lista de mensajes para desencriptar en lote
+    const messagesForDecryption = conversation.messages.map((msg) => ({
+      ciphertext: msg.message,
+      shared_secret: msg.sharedSecret,
     }));
-   
-      const response = await axios.post(
-        HUGGINGFACE_API_URL,
-        { inputs: concatenatedMessages },
-        {
-          headers: {
-            Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
 
-    const summary = response.data[0]?.summary_text || "No summary generated.";
+    // 🔵 Llamamos a la nueva API bulkDecrypt
+    const decryptionResponse = await axios.post("https://kyber-api-1.onrender.com/bulkDecrypt", {
+      kem_name: selectedKeySize || "ML-KEM-512",
+      messages: messagesForDecryption,
+    });
+
+    const decryptedResults = decryptionResponse.data.results;
+
+    // 🔵 Concatenamos todos los textos descifrados
+    let concatenatedMessages = "";
+    decryptedResults.forEach((result) => {
+      concatenatedMessages += result.original_message + " ";
+    });
+
+    // 🔵 Hacemos el resumen usando HuggingFace
+    const huggingfaceResponse = await axios.post(
+      HUGGINGFACE_API_URL,
+      { inputs: concatenatedMessages },
+      {
+        headers: {
+          Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const summary = huggingfaceResponse.data[0]?.summary_text || "No summary generated.";
     res.json({ summary });
   } catch (error) {
     console.error("Error summarizing conversation:", error?.response?.data || error.message);

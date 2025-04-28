@@ -42,9 +42,6 @@ export const sendMessage = async (req, res) => {
 
     const { signature } = signResponse.data;
 
-    console.log("🔏 Mensaje firmado:", message);
-    console.log("🔏 Firma generada:", signature);
-
     const encryptionResponse = await encryptWithRetry({
       kem_name: "ML-KEM-512",
       message,
@@ -61,11 +58,8 @@ export const sendMessage = async (req, res) => {
       conversation = await Conversation.create({ participants: [senderId, receiverId] });
     }
 
-    if (file) {
-      console.log("URL FILE: ", file.path);
-    }
-    
-    const newMessage = new Message({
+    console.log("Id de la conversacion:", conversation._id);
+    const newMessage = await Message.create({
       senderId,
       receiverId,
       message: ciphertext,
@@ -73,12 +67,12 @@ export const sendMessage = async (req, res) => {
       signature,
       publicKeyDSA: req.user.publicKeyDSA,
       fileUrl: file ? file.path : null,
-      verified: false
+      verified: false,
     });
 
-    if (newMessage) conversation.messages.push(newMessage._id);
-
-    await Promise.all([conversation.save(), newMessage.save()]);
+    // Ahora que el mensaje ya está guardado, puedes pushear su ID
+    conversation.messages.push(newMessage._id);
+    await conversation.save();
 
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
@@ -107,6 +101,7 @@ export const sendMessage = async (req, res) => {
   }
 };
 
+
 export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
@@ -115,7 +110,7 @@ export const getMessages = async (req, res) => {
 
     const conversation = await Conversation.findOne({
       participants: { $all: [senderId, userToChatId] },
-    }).populate("messages");
+    });
 
     if (!conversation) return res.status(200).json([]);
 
@@ -124,48 +119,49 @@ export const getMessages = async (req, res) => {
       return res.status(400).json({ error: "Receiver not found or missing secret key." });
     }
 
-    const decryptedMessages = await Promise.all(conversation.messages.map(async (msg) => {
-      try {
-        const decryptionResponse = await decryptWithRetry({
-          kem_name: "ML-KEM-512",
-          ciphertext: msg.message,
-          shared_secret: msg.sharedSecret
-        });
+    const messages = await Message.find({ _id: { $in: conversation.messages } })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
 
-        const decryptedText = decryptionResponse.data.original_message;
+    if (!messages.length) return res.status(200).json([]);
 
-        console.log("🔓 Mensaje descifrado:", decryptedText);
-        console.log("🔎 Firma recibida:", msg.signature);
-        console.log("🔎 Clave pública usada:", msg.publicKeyDSA);
-
-        const verifyResponse = await verifyWithRetry({
-          message: decryptedText,
-          signature: msg.signature,
-          public_key: msg.publicKeyDSA,
-          ml_dsa_variant: "ML-DSA-44"
-        });
-
-        msg.verified = !!verifyResponse.data.verified;
-        await msg.save();
-
-        return {
-          ...msg._doc,
-          message: decryptedText,
-          verified: msg.verified,
-          fileUrl: msg.fileUrl || null
-        };
-      } catch (error) {
-        logDetailedError("Error al verificar mensajes", error);
-        return {
-          ...msg._doc,
-          message: "[Mensaje no verificado]",
-          verified: false,
-          fileUrl: msg.fileUrl || null
-        };
-      }
+    // 1. Preparar el bulkDecrypt
+    const bulkDecryptInput = messages.map(msg => ({
+      ciphertext: msg.message,
+      shared_secret: msg.sharedSecret
     }));
 
-    res.status(200).json(decryptedMessages);
+    const bulkDecryptResponse = await axios.post('https://kyber-api-1.onrender.com/bulkDecrypt', {
+      kem_name: "ML-KEM-512",
+      messages: bulkDecryptInput
+    });
+
+    const decryptedMessagesArray = bulkDecryptResponse.data.results;
+
+    // 2. Preparar el bulkVerify
+    const bulkVerifyInput = decryptedMessagesArray.map((decrypted, index) => ({
+      message: decrypted.original_message,
+      signature: messages[index].signature,
+      public_key: messages[index].publicKeyDSA,
+      ml_dsa_variant: "ML-DSA-44"
+    }));
+
+    const bulkVerifyResponse = await axios.post('https://kyber-api-1.onrender.com/bulkVerify', {
+      messages: bulkVerifyInput
+    });
+
+    const verificationResults = bulkVerifyResponse.data.results;
+
+    // 3. Combinar descifrados + verificaciones
+    const finalMessages = messages.map((msg, index) => ({
+      ...msg,
+      message: decryptedMessagesArray[index].original_message,
+      verified: verificationResults[index].verified,
+      fileUrl: msg.fileUrl || null
+    }));
+
+    res.status(200).json(finalMessages.reverse());
   } catch (error) {
     logDetailedError("getMessages", error);
     res.status(500).json({ error: "Internal server error" });
