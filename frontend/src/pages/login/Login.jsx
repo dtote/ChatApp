@@ -24,6 +24,7 @@ const Login = () => {
         faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
         faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
         faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+        faceapi.nets.ssdMobilenetv1.loadFromUri('/models')
       ]);
     };
 
@@ -50,7 +51,7 @@ const Login = () => {
 
       const video = videoRef.current;
       // Obtener el descriptor facial
-      const detection = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+      const detection = await faceapi.detectAllFaces(video, new faceapi.ssdMobilenetv1());
       if (!detection) {
         throw new Error('No se detectó ninguna cara');
       }
