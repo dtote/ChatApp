@@ -28,9 +28,11 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm install
 
-COPY backend backend
 # Copiar el resto del código
 COPY . .
+
+# Realizar el build del frontend
+RUN npm run build
 
 # Expone el puerto de la aplicación
 EXPOSE 8080
