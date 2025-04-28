@@ -30,6 +30,7 @@ const MessageInput = () => {
     await sendMessage(formData, selectedKeySize);
     setMessage("");
     setFile(null);
+    setShowPopup(false);
   };
 
   const handlePollSubmit = async () => {
@@ -84,7 +85,7 @@ const MessageInput = () => {
         </button>
 
         {showPopup && !showPollForm && (
-          <div className="absolute custom-popup bottom-[270px] bg-gray-700 text-white rounded-lg shadow-lg p-4 w-60 z-50">
+          <div className="absolute custom-popup bottom-[50px] bg-gray-700 text-white rounded-lg shadow-lg p-4 w-60 z-50">
             <ul>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
                 <label htmlFor="file-input" className="flex items-center cursor-pointer">

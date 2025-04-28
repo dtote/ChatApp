@@ -150,8 +150,12 @@ const SecurityOptions = () => {
   
   return (
     <div className="fixed top-2 right-4 z-50">
-    <button className="btn btn-sm btn-accent" onClick={openModal}>
-      Security Options
+    <button
+      className="btn btn-sm btn-accent mt-4 flex items-center gap-2"
+      onClick={openModal}
+    >
+      <MdLockOutline className="text-2xl" />
+      <span className="hidden sm:inline-block">Security Options</span>
     </button>
   
     <input type="checkbox" id="security-modal" className="modal-toggle" checked={isOpen} readOnly />

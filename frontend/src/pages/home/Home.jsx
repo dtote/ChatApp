@@ -40,7 +40,7 @@ const Home = () => {
         <div
           className={`fixed top-0 left-0 h-screen w-[80vw] max-w-[300px] box-border bg-gray-400 bg-clip-padding backdrop-blur-lg bg-opacity-30 p-4 z-50 transform transition-transform duration-300 overflow-y-auto text-sm ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
-          <div className="flex justify-end">
+          <div className="flex justify-start">
             <button
               onClick={closeDrawer}
               className="btn btn-ghost text-xl"

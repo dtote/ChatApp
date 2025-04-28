@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FaComments, FaUsers } from 'react-icons/fa'; // ← Importamos iconos
 import Conversation from './Conversation.jsx';
 import useGetConversations from "../../hooks/useGetConversations.js";
 import useGetCommunities from "../../hooks/useGetCommunities.js";
@@ -31,7 +32,7 @@ const Conversations = () => {
       });
       setShowForm(false);
       setForm({ name: '', description: '', image: '' });
-      await refetchCommunities(); // Actualiza las comunidades
+      await refetchCommunities();
     } catch (error) {
       console.error('Error creating community', error);
     } finally {
@@ -40,14 +41,23 @@ const Conversations = () => {
   };
 
   return (
-    <div className='py-2 flex flex-col overflow-auto'>
-
+    <div className="py-2 flex flex-col overflow-auto">
       <div className="flex justify-around mb-4">
-        <button className={`btn ${view === 'conversations' ? 'btn-active' : ''}`} onClick={() => setView('conversations')}>
-          Conversations
+        <button 
+          className={`btn ${view === 'conversations' ? 'btn-active' : ''}`}
+          onClick={() => setView('conversations')}
+        >
+          {/* 👇 Texto para pantallas medianas/grandes, icono para pantallas pequeñas */}
+          <span className="hidden sm:inline">Conversations</span>
+          <span className="inline sm:hidden"><FaComments /></span>
         </button>
-        <button className={`btn ${view === 'communities' ? 'btn-active' : ''}`} onClick={() => setView('communities')}>
-          Communities
+
+        <button 
+          className={`btn ${view === 'communities' ? 'btn-active' : ''}`}
+          onClick={() => setView('communities')}
+        >
+          <span className="hidden sm:inline">Communities</span>
+          <span className="inline sm:hidden"><FaUsers /></span>
         </button>
       </div>
 
@@ -61,7 +71,7 @@ const Conversations = () => {
               lastIdx={idx === conversations.filteredUser.length - 1}
             />
           ))}
-          {loadingConversations && <span className='loading loading-spinner mx-auto'></span>}
+          {loadingConversations && <span className="loading loading-spinner mx-auto"></span>}
         </>
       )}
 
@@ -77,17 +87,17 @@ const Conversations = () => {
               })}
             >
               <div className="avatar">
-                <div className='w-12 rounded-full'>
+                <div className="w-12 rounded-full">
                   <img src={community.image} alt="community avatar" />
                 </div>
               </div>
-              <div className='flex flex-col flex-1'>
-                <p className='font-bold text-gray-200'>{community.name}</p>
-                <span className='text-sm text-gray-400'>{community.description}</span>
+              <div className="flex flex-col flex-1">
+                <p className="font-bold text-gray-200">{community.name}</p>
+                <span className="text-sm text-gray-400">{community.description}</span>
               </div>
             </div>
           ))}
-          {loadingCommunities && <span className='loading loading-spinner mx-auto'></span>}
+          {loadingCommunities && <span className="loading loading-spinner mx-auto"></span>}
 
           <div className="flex justify-center mt-4">
             <button onClick={() => setShowForm(!showForm)} className="btn btn-circle bg-blue-600 hover:bg-blue-700 text-white text-lg">

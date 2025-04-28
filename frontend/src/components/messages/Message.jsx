@@ -356,19 +356,19 @@ const Message = ({ message }) => {
                 <img
                   src={`${message.fileUrl}`}
                   alt="imagen enviada"
-                  className="max-w-xs rounded shadow"
+                  className="w-full max-w-full h-auto rounded shadow"
                 />
               ) : message.fileUrl.match(/\.(mp4|webm|ogg)$/i) ? (
                 <video
                   src={`${message.fileUrl}`}
                   controls
-                  className="max-w-xs rounded shadow"
+                  className="w-full max-w-full h-auto rounded shadow"
                 />
               ) : message.fileUrl.match(/\.pdf$/i) ? (
                 <iframe
                   src={`${message.fileUrl}`}
                   title="PDF enviado"
-                  className="w-full h-64 rounded shadow"
+                  className="w-full max-w-full h-[400px] rounded shadow"
                 />
               ) : (
                 <a
