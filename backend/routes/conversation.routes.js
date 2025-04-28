@@ -7,39 +7,41 @@ import {protectRoute} from '../middleware/protectRoute.js';
 
 const router = express.Router();
 
-// Proteger esta ruta
 router.get("/search", protectRoute, async (req, res) => {
+
   try {
     const { name } = req.query;
-    const authUserId = req.user._id; // ID del usuario autenticado
+    const userId = req.user._id;  // Asegúrate de tener auth middleware para req.user
 
     if (!name) {
       return res.status(400).json({ error: "Name is required" });
     }
 
-    // Buscar usuario o comunidad por nombre
     const user = await User.findOne({ username: name });
     const community = !user ? await Community.findOne({ name }) : null;
 
-    const participantId = user?._id || community?._id;
-
-    if (!participantId) {
+    if (!user && !community) {
       return res.status(404).json({ error: "No user or community found with that name" });
     }
 
-    // Buscar conversación donde estén ambos participantes
-    const conversation = await Conversation.findOne({
-      participants: { $all: [authUserId, participantId] },
-    });
+    if (user) {
+      const conversation = await Conversation.findOne({
+        participants: { $all: [userId, user._id] },
+      });
 
-    if (!conversation) {
-      return res.status(404).json({ error: "No conversation found with that participant" });
+      if (!conversation) {
+        return res.status(404).json({ error: "No conversation found with that user" });
+      }
+
+      return res.json({ conversationIds: [conversation._id], type: "user" });
     }
 
-    return res.json({ conversationId: conversation._id });
+    if (community) {
+      return res.json({ conversationIds: [community._id], type: "community" });
+    }
   } catch (error) {
     console.error("Error searching conversation:", error);
-    return res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 

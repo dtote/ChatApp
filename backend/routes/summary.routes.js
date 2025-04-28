@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import axios from "axios";
 import Conversation from "../models/conversation.model.js";
+import Community from "../models/community.model.js";
 
 dotenv.config();
 const router = express.Router();
@@ -11,27 +12,44 @@ const HUGGINGFACE_API_KEY = process.env.HUGGINFACE_API_KEY;
 
 router.post("/", async (req, res) => {
   try {
-    const { conversationId, limit = 50 } = req.body;
+    const { ids, type, limit = 50 } = req.body;
     const { selectedKeySize } = req.query;
 
-    console.log("Conversation id:", conversationId);
-
-    const conversation = await Conversation.findById(conversationId)
-      .populate({
-        path: "messages",
-        options: {
-          sort: { createdAt: -1 },
-          limit: limit,
-        },
-      })
-      .lean();
-
-    if (!conversation) {
-      return res.status(404).json({ error: "Conversation not found." });
+    if (!ids || ids.length === 0) {
+      return res.status(400).json({ error: "IDs are required." });
     }
 
-    // 🔵 Preparamos la lista de mensajes para desencriptar en lote
-    const messagesForDecryption = conversation.messages.map((msg) => ({
+    let messages = [];
+
+    if (type === "user") {
+      const conversations = await Conversation.find({ _id: { $in: ids } })
+        .populate({
+          path: "messages",
+          options: { sort: { createdAt: -1 }, limit: limit },
+        })
+        .lean();
+
+      conversations.forEach(conv => {
+        if (conv.messages) messages = messages.concat(conv.messages);
+      });
+    } else if (type === "community") {
+      const community = await Community.findById(ids[0])
+        .populate({
+          path: "messages",
+          options: { sort: { createdAt: -1 }, limit: limit },
+        })
+        .lean();
+
+      if (community && community.messages) {
+        messages = community.messages;
+      }
+    }
+
+    if (!messages.length) {
+      return res.status(404).json({ error: "No messages found." });
+    }
+
+    const messagesForDecryption = messages.map(msg => ({
       ciphertext: msg.message,
       shared_secret: msg.sharedSecret,
     }));
@@ -44,13 +62,11 @@ router.post("/", async (req, res) => {
 
     const decryptedResults = decryptionResponse.data.results;
 
-    // 🔵 Concatenamos todos los textos descifrados
     let concatenatedMessages = "";
-    decryptedResults.forEach((result) => {
+    decryptedResults.forEach(result => {
       concatenatedMessages += result.original_message + " ";
     });
 
-    // 🔵 Hacemos el resumen usando HuggingFace
     const huggingfaceResponse = await axios.post(
       HUGGINGFACE_API_URL,
       { inputs: concatenatedMessages },

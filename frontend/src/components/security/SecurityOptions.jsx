@@ -46,18 +46,6 @@ const SecurityOptions = () => {
 
   const getSummary = useGetSummary();
 
-  const handleGetSummary = async (conversationId) => {
-    setLoadingSummary(true);
-    try {
-      const summary = await getSummary(conversationId, 50);
-      if (summary) {
-        setSummaryText(summary);
-      }
-    } catch (error) {
-      console.error("Error al obtener el resumen:", error);
-    }
-    setLoadingSummary(false);
-  };
 
   const { setSelectedKeySize } = useSecurity(); 
 
@@ -122,28 +110,44 @@ const SecurityOptions = () => {
     setLatticePoints(points);
   };
 
-  // Función para buscar el ID de la conversación basado en el nombre de usuario o comunidad
   
-const handleSearchConversation = async () => {
-  try {
-    const response = await axios.get(`/api/conversation/search`, {
-      params: { name: userOrCommunity },
-      credentials: 'include',
-      withCredentials: true
-    });
-
-    if (response.data && response.data.conversationId) {
-      const convId = response.data.conversationId;
-      setConversation({ _id: convId });
-      handleGetSummary(convId); 
-    } else {
-      alert('No se encontró una conversación para ese nombre.');
+  const handleSearchConversation = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
+  
+      const response = await axios.get(`/api/conversation/search`, {
+        params: { name: userOrCommunity },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+  
+      if (response.data && response.data.conversationIds) {
+        const { conversationIds, type } = response.data;
+        setConversation({ ids: conversationIds, type: type });
+        handleGetSummary(conversationIds, type);
+      } else {
+        alert('No se encontró una conversación para ese nombre.');
+      }
+    } catch (error) {
+      console.error('Error al buscar la conversación:', error);
+      alert('Hubo un error al buscar la conversación.');
     }
-  } catch (error) {
-    console.error('Error al buscar la conversación:', error);
-    alert('Hubo un error al buscar la conversación.');
-  }
-};
+  };
+
+  const handleGetSummary = async (conversationIds, type) => {
+    setLoadingSummary(true);
+    try {
+      const summary = await getSummary(conversationIds, type, 50);
+      if (summary) {
+        setSummaryText(summary);
+      }
+    } catch (error) {
+      console.error("Error al obtener el resumen:", error);
+    }
+    setLoadingSummary(false);
+  };
+  
   return (
     <div className="fixed top-2 right-4 z-50">
     <button className="btn btn-sm btn-accent" onClick={openModal}>

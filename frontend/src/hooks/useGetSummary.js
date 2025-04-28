@@ -1,13 +1,19 @@
 import axios from "axios";
-import useSecurity from "../zustand/useSecurity";
 
 const useGetSummary = () => {
-  const { selectedKeySize } = useSecurity(); 
-
-  const getSummary = async (conversationId, limit = 50) => {
+  const getSummary = async (ids, type, limit = 50) => {
     try {
-      const res = await axios.post(`/api/summary?selectedKeySize=${selectedKeySize}`, { conversationId, limit });
-      return res.data.summary;
+      const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
+      const response = await axios.post(
+        "/api/summary",
+        { ids, type, limit },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data.summary;
     } catch (error) {
       console.error("Error fetching summary:", error);
       return null;
