@@ -10,30 +10,13 @@ import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data'; 
 import './Message.css';
 
-const decryptMessage = async (ciphertext, sharedSecret, selectedKeySize) => {
-  try {
-    const response = await axios.post('/api/decrypt', {
-      kem_name: selectedKeySize,
-      ciphertext: ciphertext,
-      shared_secret: sharedSecret,
-    });
-
-    return response.data?.decryptedMessage ?? null;
-  } catch (error) {
-    console.error("Error al descifrar el mensaje:", error?.response?.data || error.message);
-    return null;
-  }
-};
-
 const checkUrlSafety = async (url, setUrlStatus) => {
   const normalizedUrl = url.toLowerCase();
-
   const isHttps = normalizedUrl.startsWith('https://');
   const containsDangerousKeywords = ['troyano', 'malware', 'virus', 'phishing', 'scam'].some(keyword =>
     normalizedUrl.includes(keyword)
   );
   const urlFormatValid = /^(https?:\/\/)?([\da-z.-]+\.[a-z.]{2,6})([/\w .-]*)*\/?$/.test(normalizedUrl);
-
   const isSafe = isHttps && !containsDangerousKeywords && urlFormatValid;
 
   setUrlStatus(prev => ({
@@ -60,11 +43,11 @@ const PublicKeyDisplay = ({ publicKey }) => {
       <p
         onClick={handleCopy}
         className="cursor-pointer text-sm text-gray-700 bg-gray-100 p-2 rounded hover:bg-gray-200 max-w-xs mx-auto break-words"
-        title="Haz clic para copiar la clave completa"
+        title="Click to copy public key"
       >
         <strong>Public Key:</strong> {publicKey?.slice(0, 20)}...
       </p>
-      {copied && <p className="text-green-500 text-sm mt-1">¡Copied Key!</p>}
+      {copied && <p className="text-green-500 text-sm mt-1">Key copied!</p>}
     </div>
   );
 };
@@ -236,27 +219,9 @@ const Message = ({ message }) => {
     initializePoll();
 
     if (socket) {
-      const handleNewMessage = async (newMsg) => {
-        const decryptedMessage = await decryptMessage(newMsg.message, newMsg.sharedSecret, selectedKeySize, pollOptions, pollQuestion);
-        if (decryptedMessage) {
-          console.log("Decrypted: ", decryptedMessage);
-          setMessages((prev) => {
-            const filtered = prev.filter(msg => msg._id !== newMsg._id);
-            return [...filtered, { ...newMsg, message: decryptedMessage }];
-          });
-          
-          setCurrentMessage({ ...newMsg, message: decryptedMessage });
-          
-          
-        } else {
-          console.error("No se pudo descifrar el mensaje");
-        }
-      };
-
-      socket.on("newMessage", handleNewMessage);
+     
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
-        socket.off("newMessage", handleNewMessage);
       };
     }
   }, [isPoll, showEmojiPicker, showPopup, message.senderId, urlPattern, urlStatus, pollOptions, pollQuestion, setUrlStatus, selectedConversation?.type, socket, message.message, selectedKeySize]);
@@ -355,8 +320,8 @@ const Message = ({ message }) => {
               {message.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                 <img
                   src={`${message.fileUrl}`}
-                  alt="imagen enviada"
-                  className="w-full max-w-full h-auto rounded shadow"
+                  alt="Sent image"
+                  className="max-w-[300px] max-h-[300px] w-auto h-auto rounded-lg shadow"
                 />
               ) : message.fileUrl.match(/\.(mp4|webm|ogg)$/i) ? (
                 <video
@@ -451,12 +416,11 @@ const Message = ({ message }) => {
           <div className="bg-white p-4 rounded shadow-lg max-w-md mx-auto">
             <h2 className="text-center text-2xl font-bold mb-4">User Data</h2>
             <div className="text-center flex justify-center mb-4">
-            <img
-              src={`${message.fileUrl}`}
-              alt="Sent image"
-              className="max-w-[300px] max-h-[300px] w-auto h-auto rounded-lg shadow"
-            />
-
+              <img
+                src={profilePic}
+                alt="Foto de Perfil"
+                className="w-10 h-10 rounded-full"
+              />
             </div>
             <p className="text-center"><strong>Email:</strong> {userData.email}</p>
             <p className="text-center"><strong>Alias:</strong> {userData.username}</p>
