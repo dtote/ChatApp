@@ -64,12 +64,18 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="hidden lg:flex w-screen mt-16 rounded-lg overflow-hidden bg-gray-400 bg-clip-padding backdrop-filter backdrop-blur-lg bg-opacity-0 home-large">
-        <Sidebar className="w-full lg:w-auto" />
-        <MessageContainer className="flex-1 h-[600px] overflow-y-auto" />
-        <SecurityOptions className="w-full lg:w-aut" />
-        <ChatBot className="mt-[120px]"/>
+      <div className="hidden mt-20 lg:flex w-screen h-[80vh] overflow-hidden">
+        <div className="flex flex-col h-full">
+          <Sidebar />
+        </div>
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <MessageContainer className="flex-1 overflow-y-auto" />
+          <SecurityOptions />
+          <ChatBot className="mt-[120px]" />
+        </div>
       </div>
+
     </>
   );
 };
