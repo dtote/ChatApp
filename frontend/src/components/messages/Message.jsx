@@ -451,11 +451,12 @@ const Message = ({ message }) => {
           <div className="bg-white p-4 rounded shadow-lg max-w-md mx-auto">
             <h2 className="text-center text-2xl font-bold mb-4">User Data</h2>
             <div className="text-center flex justify-center mb-4">
-              <img
-                src={profilePic}
-                alt="Foto de Perfil"
-                className="w-10 h-10 rounded-full"
-              />
+            <img
+              src={`${message.fileUrl}`}
+              alt="Sent image"
+              className="max-w-[300px] max-h-[300px] w-auto h-auto rounded-lg shadow"
+            />
+
             </div>
             <p className="text-center"><strong>Email:</strong> {userData.email}</p>
             <p className="text-center"><strong>Alias:</strong> {userData.username}</p>

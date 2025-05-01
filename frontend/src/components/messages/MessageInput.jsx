@@ -97,13 +97,9 @@ const MessageInput = () => {
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
                 <label htmlFor="image-input" className="flex items-center cursor-pointer">
                   <FaImage className="mr-4 text-blue-400 text-xl" />
-                  <span className="group-hover:text-gray-400 text-lg">Fotos y videos</span>
+                  <span className="group-hover:text-gray-400 text-lg">Fotos</span>
                 </label>
-                <input id="image-input" type="file" accept="image/*,video/*,application/pdf" onChange={handleFileChange} className="hidden" />
-              </li>
-              <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
-                <FaUser className="mr-4 text-orange-400 text-xl" />
-                <span className="group-hover:text-gray-400 text-lg">Contacto</span>
+                <input id="image-input" type="file" accept="image/*,application/pdf" onChange={handleFileChange} className="hidden" />
               </li>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200"
                   onClick={() => setShowPollForm(true)}>
@@ -113,8 +109,6 @@ const MessageInput = () => {
             </ul>
           </div>
         )}
-
-        {/* Formulario de encuesta */}
         {showPollForm && (
           <div className="absolute bottom-[270px] bg-gray-800 text-white rounded-lg shadow-lg p-4 w-full max-w-md z-50">
             <h3 className="text-lg font-bold mb-2">Create Poll</h3>
