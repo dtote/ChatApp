@@ -1,11 +1,13 @@
 import bcryptjs from "bcryptjs";
 import User from "../models/user.model.js";
+import Session from "../models/session.model.js";
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 import multer from "multer";
 import axios from "axios";  // Importa axios para hacer solicitudes HTTP a Flask
 import bcrypt from 'bcrypt';
 import faceapi from 'face-api.js';
 import { createCanvas, loadImage } from 'canvas';
+import { UAParser } from 'ua-parser-js';
 import { JSDOM } from 'jsdom';
 const upload = multer({ dest: 'uploads/' }); // Guardar imágenes en el directorio uploads
 
@@ -40,11 +42,11 @@ export const signupFacial = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
+    const { data: keys } = await axios.post('http://127.0.0.1:5001/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
-    const { data: dsaKeys } = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
+    const { data: dsaKeys } = await axios.post('http://127.0.0.1:5001/generate_ml_dsa_keys', {
       ml_dsa_variant: "ML-DSA-44",
     });
 
@@ -105,11 +107,11 @@ export const signup = async (req, res) => {
     }
 
     // Obtener claves públicas y privadas generadas por Flask
-    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
+    const { data: keys } = await axios.post('http://127.0.0.1:5001/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
-    const dsaResponse = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
+    const dsaResponse = await axios.post('http://127.0.0.1:5001/generate_ml_dsa_keys', {
       ml_dsa_variant: "ML-DSA-44",
     });
 
@@ -158,7 +160,16 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({username});
-  
+    const userAgent = req.headers['user-agent'] || '';
+    const parser = new UAParser(userAgent);
+    const result = parser.getResult();
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+    const os = result.os.name;             
+    const browser = result.browser.name; 
+    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+    const geoData = await geoRes.json();
+    const country = geoData.country_name; 
+
     const isPaswordCorrect = await bcryptjs.compare(password, user?.password || "");
    
     if (!user || !isPaswordCorrect) {
@@ -167,6 +178,15 @@ export const login = async (req, res) => {
 
     const token = generateTokenAndSetCookie(user._id, res);
 
+    const newSession = await Session.create({
+      userId: user._id,
+      deviceInfo: userAgent,
+      os,
+      browser,
+      ip,
+      country
+    });
+    
     res.status(200).json({
       _id: user._id,
       username: user.username,
@@ -174,7 +194,8 @@ export const login = async (req, res) => {
       profilePic: user.profilePic,
       message: "User logged in successfully",
       publicKey: user.publicKey,
-      token
+      token,
+      sessionId: newSession._id,
     });
 
   } catch (error) {
@@ -187,6 +208,22 @@ export const loginFacial = async (req, res) => {
   try {
     // Obtener el descriptor facial del body
     const { faceDescriptor } = req.body;
+    const userAgent = req.headers['user-agent'] || '';
+    const parser = new UAParser(userAgent);
+    const result = parser.getResult();
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+    const os = result.os.name;
+    const browser = result.browser.name;
+
+    let country = "Unknown";
+    try {
+      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+      const geoData = await geoRes.json();
+      country = geoData.country_name || "Unknown";
+    } catch (err) {
+      console.warn("Geo lookup failed:", err.message);
+    }
+
 
     // Verificar que se haya enviado el descriptor facial
     if (!faceDescriptor) {
@@ -251,6 +288,16 @@ export const loginFacial = async (req, res) => {
       // Generar token JWT para el usuario
       const token = generateTokenAndSetCookie(matchedUser._id, res);
 
+     
+      const newSession = await Session.create({
+        userId: matchedUser._id,
+        deviceInfo: userAgent,
+        os,
+        browser,
+        ip,
+        country
+      });
+
       return res.status(200).json({
         _id: matchedUser._id,
         username: matchedUser.username,
@@ -258,7 +305,9 @@ export const loginFacial = async (req, res) => {
         profilePic: matchedUser.profilePic,
         message: "User logged in successfully",
         publicKey: matchedUser.publicKey,
-        token
+        token,
+        sessionId: newSession._id,
+
       });
     } else {
       return res.status(401).json({ message: 'Face authentication failed' });

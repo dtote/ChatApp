@@ -35,13 +35,16 @@ const useLogin = () => {
         throw new Error(data.error);
       }
 
-      // ✅ Guardar token y datos del usuario en localStorage
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
+
       localStorage.setItem("chat-user", JSON.stringify(data));
 
-      // ✅ Setear el contexto de usuario
+      if (data.sessionId) {
+        localStorage.setItem("sessionId", data.sessionId); 
+      }
+
       setAuthUser(data);
 
       toast.success('Login successful!');
@@ -58,7 +61,6 @@ const useLogin = () => {
 
 export default useLogin;
 
-// Manejo de validación de entradas
 function handleInputErrors(username, password) {
   if (!username || !password) {
     toast.error('Please fill out both fields');

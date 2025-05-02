@@ -21,6 +21,7 @@ import cors from "cors";
 import fs from "fs";
 import http from "http";
 import { initializeSocket } from "./socket/socket.js";
+import sessionRoutes from './routes/session.routes.js';
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -71,7 +72,7 @@ app.use('/api/poll', pollRoutes);
 app.use('/api/summary', summaryRoutes);
 app.use('/api/conversation', conversationRoutes);
 app.use('/api/chat', chatRoutes);
-
+app.use('/api/sessions', sessionRoutes);
 // Ruta comodín frontend
 app.get("*", (req, res) => {
   if (req.url.startsWith('/uploads')) return;
