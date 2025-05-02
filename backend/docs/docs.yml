@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Auth API
+  title: Chat App PQC API
   version: 1.0.0
   description: Authentication route documentation
 
