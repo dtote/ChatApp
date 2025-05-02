@@ -1,0 +1,836 @@
+openapi: 3.0.0
+info:
+  title: Auth API
+  version: 1.0.0
+  description: Authentication route documentation
+
+paths:
+  /api/auth/signup:
+    post:
+      summary: Traditional user registration
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                confirmpassword:
+                  type: string
+                gender:
+                  type: string
+                profilePic:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: User registered successfully
+        400:
+          description: Invalid data or user already exists
+
+  /api/auth/signupFacial:
+    post:
+      summary: Registration using facial descriptor
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                gender:
+                  type: string
+                faceDescriptor:
+                  type: string
+      responses:
+        201:
+          description: User registered successfully
+        400:
+          description: Invalid data
+
+  /api/auth/login:
+    post:
+      summary: User login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: User authenticated successfully
+        400:
+          description: Invalid credentials
+
+  /api/auth/loginFacial:
+    post:
+      summary: Login using facial recognition
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                faceImage:
+                  type: string
+                  format: binary
+                faceDescriptor:
+                  type: string
+      responses:
+        200:
+          description: Facial authentication successful
+        401:
+          description: Authentication failed
+        400:
+          description: Invalid input
+
+  /api/auth/logout:
+    post:
+      summary: Logout
+      tags: [Auth]
+      responses:
+        200:
+          description: Session closed successfully
+  /api/chat:
+    post:
+      summary: Generate a response from OpenAI based on user messages
+      tags: [Chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - messages
+                - systemPrompt
+              properties:
+                messages:
+                  type: array
+                  description: List of chat messages in OpenAI format
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [system, user, assistant]
+                      content:
+                        type: string
+                systemPrompt:
+                  type: string
+                  description: Initial system-level instruction for the AI
+      responses:
+        200:
+          description: AI response generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+        500:
+          description: Server error while generating the response
+  /api/checkUrlSafety:
+    get:
+      summary: Check if a URL is safe using Google Safe Browsing API
+      tags: [Security]
+      parameters:
+        - in: query
+          name: url
+          schema:
+            type: string
+          required: true
+          description: The URL to check for threats
+      responses:
+        200:
+          description: URL safety check completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  safe:
+                    type: boolean
+                    description: Whether the URL is considered safe
+                  message:
+                    type: string
+                    description: Human-readable safety message
+                  details:
+                    type: object
+                    description: Additional data from Google Safe Browsing (if unsafe)
+        500:
+          description: Server error while checking URL
+  /api/communities:
+    get:
+      summary: Get all communities
+      tags: [Community]
+      responses:
+        200:
+          description: List of communities
+        500:
+          description: Error fetching communities
+
+    post:
+      summary: Create a new community
+      tags: [Community]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+      responses:
+        201:
+          description: Community created successfully
+        500:
+          description: Error creating community
+
+  /api/communities/{id}:
+    get:
+      summary: Get community by ID
+      tags: [Community]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Community data
+        404:
+          description: Community not found
+        500:
+          description: Error fetching community
+
+    delete:
+      summary: Delete a community by ID
+      tags: [Community]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Community deleted
+        404:
+          description: Community not found
+        500:
+          description: Error deleting community
+
+  /api/communities/{id}/messages:
+    get:
+      summary: Get decrypted and verified messages for a community
+      tags: [Community]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Decrypted messages
+        400:
+          description: Missing private key
+        404:
+          description: Community not found
+        500:
+          description: Internal server error
+
+    post:
+      summary: Send a message to a community
+      tags: [Community]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        201:
+          description: Message sent
+        404:
+          description: Community not found
+        500:
+          description: Error sending message
+
+  /api/communities/{id}/join:
+    post:
+      summary: Join a community
+      tags: [Community]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Joined community
+        404:
+          description: Community not found
+        500:
+          description: Error joining community
+
+  /api/communities/{id}/leave:
+    post:
+      summary: Leave a community
+      tags: [Community]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Left community
+        404:
+          description: Community not found
+        500:
+          description: Error leaving community
+
+  /api/communities/{id}/admins:
+    post:
+      summary: Add an admin to a community
+      tags: [Community]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Admin added
+        404:
+          description: Community not found
+        500:
+          description: Error adding admin
+  /api/conversation/search:
+    get:
+      summary: Search for a conversation by user or community name
+      tags: [Conversation]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+          description: Username or community name to search for
+      responses:
+        200:
+          description: Found conversation or community
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversationIds:
+                    type: array
+                    items:
+                      type: string
+                    description: IDs of found conversation(s)
+                  type:
+                    type: string
+                    enum: [user, community]
+        400:
+          description: Missing name parameter
+        404:
+          description: No user, community, or conversation found
+        500:
+          description: Server error
+    /api/decrypt:
+    post:
+      summary: Decrypt a message using a KEM scheme
+      tags: [Decryption]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - kem_name
+                - ciphertext
+                - shared_secret
+              properties:
+                kem_name:
+                  type: string
+                  example: ML-KEM-512
+                  description: The KEM algorithm used for encryption.
+                ciphertext:
+                  type: string
+                  description: The encrypted message to be decrypted.
+                shared_secret:
+                  type: string
+                  description: The shared secret key used for decryption.
+      responses:
+        200:
+          description: Successfully decrypted message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decryptedMessage:
+                    type: string
+                    example: "Hello, this is a decrypted message."
+        400:
+          description: Missing required parameters
+        500:
+          description: Decryption failed due to internal server error
+  /api/deleteOldMessages:
+    post:
+      summary: Delete old messages based on a selected time period
+      tags: [Messages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - timePeriod
+              properties:
+                timePeriod:
+                  type: string
+                  example: "1 day"
+                  description: Time range to determine which messages should be deleted (e.g., "1 hour", "1 day", "1 week").
+      responses:
+        200:
+          description: Messages successfully deleted for the specified time period
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Messages successfully deleted for the period: 1 day"
+        400:
+          description: Missing or invalid timePeriod parameter
+        500:
+          description: Internal server error while deleting messages
+  /api/encrypt:
+    post:
+      summary: Encrypt a message using a KEM-based public key
+      tags: [Encryption]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+                - receiverPublicKey
+                - kemName
+              properties:
+                message:
+                  type: string
+                  example: "Hello, this is a secure message"
+                receiverPublicKey:
+                  type: string
+                  description: Receiver's public key in Base64 or raw format
+                kemName:
+                  type: string
+                  example: "ML-KEM-512"
+                  description: The name of the post-quantum KEM scheme to use for encryption
+      responses:
+        200:
+          description: Message successfully encrypted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ciphertext:
+                    type: string
+                    description: Encrypted message ciphertext
+                  shared_secret:
+                    type: string
+                    description: Shared secret derived from KEM
+        400:
+          description: Missing required fields
+        500:
+          description: Server error while encrypting the message
+  /api/messages/{id}:
+    get:
+      summary: Get decrypted and verified messages in a conversation
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the user or receiver in the conversation
+        - name: selectedKeySize
+          in: query
+          required: false
+          schema:
+            type: string
+          description: KEM key size (e.g. ML-KEM-512)
+      responses:
+        200:
+          description: List of decrypted messages
+        400:
+          description: Receiver not found or missing secret key
+        500:
+          description: Internal server error
+
+  /api/messages/send/{id}:
+    post:
+      summary: Send an encrypted and signed message
+      tags: [Messages]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the message recipient
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Plaintext message to send
+                selectedKeySize:
+                  type: string
+                  description: KEM algorithm to use (e.g., ML-KEM-512)
+                file:
+                  type: string
+                  format: binary
+                  description: Optional file attachment
+      responses:
+        201:
+          description: Message sent successfully
+        400:
+          description: Missing receiver or public key
+        500:
+          description: Internal server error
+
+  /api/messages/{id}/react:
+    post:
+      summary: Add or remove a reaction to a message
+      tags: [Messages]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emoji:
+                  type: string
+                  description: Emoji reaction
+                userId:
+                  type: string
+                  description: ID of the user reacting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the message
+      responses:
+        200:
+          description: Updated list of reactions
+        404:
+          description: Message not found
+        500:
+          description: Internal server error
+  /api/poll/poll:
+    post:
+      summary: Create a new poll
+      tags: [Polls]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pollId:
+                  type: string
+                question:
+                  type: string
+                options:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        200:
+          description: Poll created successfully
+        400:
+          description: Invalid poll data or poll already exists
+        500:
+          description: Server error while creating poll
+
+  /api/poll/vote:
+    post:
+      summary: Vote for a poll option
+      tags: [Polls]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pollId:
+                  type: string
+                optionIndex:
+                  type: integer
+                userId:
+                  type: string
+                voteValue:
+                  type: integer
+      responses:
+        200:
+          description: Vote registered successfully
+        400:
+          description: Invalid vote or already voted
+        500:
+          description: Error registering vote
+
+  /api/poll/poll/{id}:
+    get:
+      summary: Get a poll by ID
+      tags: [Polls]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Poll found
+        404:
+          description: Poll not found
+        500:
+          description: Error retrieving poll
+
+  /api/sessions:
+    get:
+      summary: Get current user sessions
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of active sessions
+        500:
+          description: Error fetching sessions
+
+  /api/sessions/{sessionId}:
+    delete:
+      summary: Revoke a session by ID
+      tags: [Sessions]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Session revoked successfully
+        404:
+          description: Session not found
+        500:
+          description: Error revoking session
+
+  /api/summary:
+    post:
+      summary: Generate conversation summary using HuggingFace model
+      tags: [Summary]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                type:
+                  type: string
+                  enum: [user, community]
+                limit:
+                  type: integer
+      responses:
+        200:
+          description: Summary generated successfully
+        400:
+          description: Missing or invalid input data
+        404:
+          description: No messages found
+        500:
+          description: Error generating summary
+  /api/users:
+    get:
+      summary: Get all users for sidebar (excluding current user)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of users
+        500:
+          description: Internal Server Error
+
+  /api/users/{userId}/profile-pic:
+    get:
+      summary: Get profile picture of a user by ID
+      tags: [Users]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: ID of the user
+      responses:
+        200:
+          description: Profile picture URL
+        404:
+          description: User not found
+        500:
+          description: Internal Server Error
+
+  /api/users/{userId}/popup-data:
+    get:
+      summary: Get popup data for a user by ID (email, username, publicKey)
+      tags: [Users]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: ID of the user
+      responses:
+        200:
+          description: User popup data
+        404:
+          description: User not found
+        500:
+          description: Internal Server Error
+
+  /api/users/{id}/publicKey:
+    get:
+      summary: Get public key of a user by ID
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID of the user
+      responses:
+        200:
+          description: Public key of the user
+        404:
+          description: Public key not found
+
+
+
+
+
+
+

@@ -22,6 +22,9 @@ import fs from "fs";
 import http from "http";
 import { initializeSocket } from "./socket/socket.js";
 import sessionRoutes from './routes/session.routes.js';
+import { swaggerUi, swaggerSpec } from "./swagger.js";
+import yaml from 'js-yaml';
+
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -73,6 +76,8 @@ app.use('/api/summary', summaryRoutes);
 app.use('/api/conversation', conversationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/sessions', sessionRoutes);
+const swaggerDocument = yaml.load(fs.readFileSync('./backend//docs/docs.yml', 'utf8'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // Ruta comodín frontend
 app.get("*", (req, res) => {
   if (req.url.startsWith('/uploads')) return;
