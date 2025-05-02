@@ -13,19 +13,29 @@ import User from "../models/user.model.js";
 const router = express.Router();
 
 // Configuración Cloudinary para multer
-const storage = new CloudinaryStorage({
+
+const dynamicStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'chat_uploads',
-    resource_type: 'auto',
-    upload_preset: 'ml_default',
-    allowed_formats: ['jpg', 'png', 'pdf', 'mp4'],
-    access_mode: 'public', // <- AGREGAR ESTA LÍNEA
-    public_id: (req, file) => file.fieldname + '-' + Date.now(),
+  params: async (req, file) => {
+    let resourceType = 'auto';
+    const mime = file.mimetype;
+
+    if (mime.startsWith('image/')) resourceType = 'image';
+    else if (mime.startsWith('video/')) resourceType = 'video';
+    else if (mime === 'application/pdf') resourceType = 'raw';
+
+    return {
+      folder: 'chat_uploads',
+      resource_type: resourceType,
+      upload_preset: 'ml_default',
+      allowed_formats: ['jpg', 'png', 'pdf', 'mp4'],
+      public_id: file.fieldname + '-' + Date.now(),
+      access_mode: 'public'
+    };
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage: dynamicStorage });
 
 // 1. Crear una nueva comunidad
 router.post('/', async (req, res) => {
