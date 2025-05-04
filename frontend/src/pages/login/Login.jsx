@@ -115,6 +115,10 @@ const Login = () => {
       const data = await response.json();
       if (data) {
         localStorage.setItem('chat-user', JSON.stringify(data));
+        localStorage.setItem('token', data.token);
+        if (data.sessionId) {
+          localStorage.setItem("sessionId", data.sessionId); 
+        }
         setAuthUser(data);
         navigate('/');
         toast.success('Facial login successful!');
