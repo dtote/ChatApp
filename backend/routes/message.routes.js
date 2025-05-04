@@ -11,20 +11,26 @@ const dynamicStorage = new CloudinaryStorage({
   params: async (req, file) => {
     let resourceType = 'auto';
     const mime = file.mimetype;
-
+  
     if (mime.startsWith('image/')) resourceType = 'image';
     else if (mime.startsWith('video/')) resourceType = 'video';
     else if (mime === 'application/pdf') resourceType = 'raw';
-
-    return {
+  
+    const config = {
       folder: 'chat_uploads',
       resource_type: resourceType,
-      upload_preset: 'ml_default',
-      allowed_formats: ['jpg', 'png', 'pdf', 'mp4'],
       public_id: file.fieldname + '-' + Date.now(),
       access_mode: 'public'
     };
-  },
+  
+    // Solo incluir allowed_formats si no es raw
+    if (resourceType !== 'raw') {
+      config.allowed_formats = ['jpg', 'png', 'pdf', 'mp4'];
+    }
+  
+    return config;
+  }
+  
 });
 
 const upload = multer({ storage: dynamicStorage });
