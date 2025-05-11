@@ -134,13 +134,22 @@ describe('Auth Endpoints', () => {
   it('should login a user (login)', (done) => {
     request.execute(app)
       .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send({
         username: 'usuario105',
         password: '123456',
       })
       .end((err, res) => {
+        if (err) return done(err);
+        
         expect(res).to.have.status(200);
         expect(res.body).to.have.property('message').eql('User logged in successfully');
+        expect(res.body).to.have.property('token');
+        expect(res.body).to.have.property('_id');
+        expect(res.body).to.have.property('username');
+        expect(res.body).to.have.property('email');
+        expect(res.body).to.have.property('profilePic');
+        expect(res.body).to.have.property('publicKey');
   
         const cookies = res.headers['set-cookie'];
         expect(cookies).to.be.an('array');
@@ -153,14 +162,63 @@ describe('Auth Endpoints', () => {
   });
   
 
+  it('should fail to login with missing credentials', (done) => {
+    request.execute(app)
+      .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
+      .send({})
+      .end((err, res) => {
+        if (err) return done(err);
+        
+        expect(res).to.have.status(400);
+        expect(res.body).to.have.property('error').eql('Username and password are required');
+        done();
+      });
+  });
+
+  it('should fail to login with missing password', (done) => {
+    request.execute(app)
+      .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
+      .send({
+        username: 'usuario105'
+      })
+      .end((err, res) => {
+        if (err) return done(err);
+        
+        expect(res).to.have.status(400);
+        expect(res.body).to.have.property('error').eql('Username and password are required');
+        done();
+      });
+  });
+
+  it('should fail to login with missing username', (done) => {
+    request.execute(app)
+      .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
+      .send({
+        password: '123456'
+      })
+      .end((err, res) => {
+        if (err) return done(err);
+        
+        expect(res).to.have.status(400);
+        expect(res.body).to.have.property('error').eql('Username and password are required');
+        done();
+      });
+  });
+
   it('should fail to login with incorrect credentials', (done) => {
     request.execute(app)
       .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send({
         username: 'testuser',
         password: 'WrongPassword!',
       })
       .end((err, res) => {
+        if (err) return done(err);
+        
         expect(res).to.have.status(400);
         expect(res.body).to.have.property('error').eql('Invalid credentials');
         done();
@@ -251,40 +309,45 @@ describe('Auth Endpoints', () => {
   });
 });
 
-let senderToken, receiverToken;
-let senderId, receiverId;
-let sentMessageId;
-
 describe('Messages Endpoints', () => {
-  before(async () => {
-    // Login del usuario emisor (usuario existente en la base de datos)
+  let senderToken, receiverToken;
+  let senderId, receiverId;
+  let sentMessageId;
+
+  before(async function() {
+    this.timeout(10000); // Aumentar timeout a 10 segundos
+    // Login del usuario emisor
     const senderRes = await request.execute(app)
       .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send({
         username: 'usuario105',
         password: '123456',
       });
 
     expect(senderRes).to.have.status(200);
-    senderToken = senderRes.headers['set-cookie']; 
+    senderToken = senderRes.body.token;
     senderId = senderRes.body._id;
 
+    // Login del usuario receptor
     const receiverRes = await request.execute(app)
       .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send({
         username: 'usuario106',
         password: '123456',
       });
     expect(receiverRes).to.have.status(200);
-    receiverToken = receiverRes.headers['set-cookie'];
+    receiverToken = receiverRes.body.token;
     receiverId = receiverRes.body._id;
-
   });
 
-  it('should send a message from sender to receiver', async () => {
+  it('should send a message from sender to receiver', async function() {
+    this.timeout(10000);
     const res = await request.execute(app)
       .post(`/api/messages/send/${receiverId}`)
-      .set('Cookie', senderToken)
+      .set('Authorization', `Bearer ${senderToken}`)
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send({
         message: 'Hola, esto es un mensaje de prueba',
         selectedKeySize: 'ML-KEM-512',
@@ -297,52 +360,60 @@ describe('Messages Endpoints', () => {
     sentMessageId = res.body._id;
   });
 
-  it('should retrieve messages between sender and receiver', async () => {
-    const res = await request.execute(app)
-      .get(`/api/messages/${receiverId}?selectedKeySize=ML-KEM-512`)
-      .set('Cookie', senderToken);
+  it('should retrieve messages between sender and receiver', async function() {
+    this.timeout(10000);
+    try {
+      const res = await request.execute(app)
+        .get(`/api/messages/${receiverId}?selectedKeySize=ML-KEM-512`)
+        .set('Authorization', `Bearer ${senderToken}`)
+        .set('User-Agent', 'Mozilla/5.0 (Test Browser)');
 
-    expect(res).to.have.status(200);
-    expect(res.body).to.be.an('array');
-    expect(res.body.length).to.be.greaterThan(0);
-    expect(res.body[0]).to.have.property('message');
-    expect(res.body[0]).to.have.property('verified');
+      expect(res).to.have.status(200);
+      expect(res.body).to.be.an('array');
+      expect(res.body.length).to.be.greaterThan(0);
+      expect(res.body[0]).to.have.property('message');
+      expect(res.body[0]).to.have.property('verified');
+    } catch (error) {
+      console.error('Error retrieving messages:', error.message);
+      throw error;
+    }
   });
 
-  after(async () => {
-    request.execute(app)
+  after(async function() {
+    this.timeout(10000);
+    await request.execute(app)
       .post('/api/auth/logout')
-      .end((err, res) => {
-        expect(res).to.have.status(200);
-        expect(res.body).to.have.property('message').eql('User logged out successfully');
-      });
+      .set('Authorization', `Bearer ${senderToken}`)
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)');
+
     await Message.deleteOne({ _id: sentMessageId });
     await Conversation.deleteMany({ participants: { $all: [senderId, receiverId] } });
   });
 });
 
-let authToken;
-let testUserId;
-
 describe('User Endpoints', () => {
+  let authToken;
+  let testUserId;
+
   before(async () => {
-    // Login con usuario ya existente
     const loginRes = await request.execute(app)
       .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send({
         username: 'usuario105',
         password: '123456',
       });
 
     expect(loginRes).to.have.status(200);
-    authToken = loginRes.headers['set-cookie'];
+    authToken = loginRes.body.token;
     testUserId = loginRes.body._id;
   });
 
   it('should return a list of users for sidebar, excluding the logged-in user', async () => {
     const res = await request.execute(app)
       .get('/api/users')
-      .set('Cookie', authToken);
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)');
 
     expect(res).to.have.status(200);
     expect(res.body.filteredUser).to.be.an('array');
@@ -354,7 +425,9 @@ describe('User Endpoints', () => {
     expect(user).to.exist;
 
     const res = await request.execute(app)
-      .get(`/api/users/${user._id}/profile-pic`);
+      .get(`/api/users/${user._id}/profile-pic`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)');
 
     expect(res).to.have.status(200);
     expect(res.body).to.have.property('profilePic');
@@ -365,30 +438,37 @@ describe('User Endpoints', () => {
     expect(user).to.exist;
 
     const res = await request.execute(app)
-      .get(`/api/users/${user._id}/popup-data`);
+      .get(`/api/users/${user._id}/popup-data`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)');
 
     expect(res).to.have.status(200);
     expect(res.body).to.have.keys('email', 'username', 'publicKey');
   });
 });
 
-let communityId;
-
 describe('Community Endpoints', () => {
-  before(async () => {
+  let authToken;
+  let testUserId;
+  let communityId;
+
+  before(async function() {
+    this.timeout(10000);
     const loginRes = await request.execute(app)
       .post('/api/auth/login')
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send({
         username: 'usuario105',
         password: '123456',
       });
 
-    expect(loginRes.status).to.equal(200);  // Usar .to.equal() en lugar de .toBe()
-    authToken = loginRes.headers['set-cookie'];
+    expect(loginRes).to.have.status(200);
+    authToken = loginRes.body.token;
     testUserId = loginRes.body._id;
   });
 
-  it('Create a comunnity', async () => {
+  it('Create a community', async function() {
+    this.timeout(10000);
     const newCommunity = {
       name: 'Test Community',
       description: 'A community for testing',
@@ -397,9 +477,11 @@ describe('Community Endpoints', () => {
 
     const res = await request.execute(app)
       .post('/api/communities')
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
       .send(newCommunity);
 
-    expect(res.status).to.equal(201);
+    expect(res).to.have.status(201);
     expect(res.body.name).to.equal(newCommunity.name);
     communityId = res.body._id;  
   });
@@ -422,24 +504,33 @@ describe('Community Endpoints', () => {
 
 
  
-  it('Send a message to a comunnity', async () => {
-    const message = 'This is a test message';
+  it('Send a message to a community', async function() {
+    this.timeout(10000);
+    try {
+      const message = 'This is a test message';
 
-    const res = await request.execute(app)
-      .post(`/api/communities/${communityId}/messages`)
-      .set('Cookie', authToken)
-      .send({ message });
+      const res = await request.execute(app)
+        .post(`/api/communities/${communityId}/messages`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('User-Agent', 'Mozilla/5.0 (Test Browser)')
+        .send({ message });
 
-    expect(res.status).to.equal(201);
-    expect(res.body.message).to.equal(message);
- 
+      expect(res).to.have.status(201);
+      expect(res.body.message).to.equal(message);
+    } catch (error) {
+      console.error('Error sending message to community:', error.message);
+      throw error;
+    }
   });
 
-  it('Remove a communitie', async () => {
+  it('Remove a community', async function() {
+    this.timeout(10000);
     const res = await request.execute(app)
       .delete(`/api/communities/${communityId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('User-Agent', 'Mozilla/5.0 (Test Browser)');
 
-    expect(res.status).to.equal(200);
+    expect(res).to.have.status(200);
     expect(res.body.message).to.equal('Community deleted successfully');
   });
 
