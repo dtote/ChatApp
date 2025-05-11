@@ -17,6 +17,8 @@
 
 ChatApp es una aplicación de mensajería instantánea segura, moderna y robusta, diseñada con tecnologías web actuales y cifrado post-cuántico para proteger las comunicaciones frente a amenazas futuras.
 
+[![Ejecutar Pruebas](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml/badge.svg)](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml)
+
 ---
 
 ## 🚀 Tecnologías Utilizadas
