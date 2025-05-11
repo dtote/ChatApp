@@ -9,7 +9,6 @@ import cloudinary from '../utils/cloudinary.js';
 import { getReceiverSocketId } from "../socket/socket.js";
 import { io } from "../socket/socket.js";
 import User from "../models/user.model.js";
-import { createCommunity, getCommunities, getCommunityById, sendMessageToCommunity, deleteCommunity } from "../controllers/community.controllers.js";
 
 const router = express.Router();
 
@@ -45,13 +44,72 @@ const dynamicStorage = new CloudinaryStorage({
 const upload = multer({ storage: dynamicStorage });
 
 // 1. Crear una nueva comunidad
-router.post('/', protectRoute, createCommunity);
+router.post('/', async (req, res) => {
+    const { name, description, image } = req.body;
+  
+    try {
+      // Obtener las claves públicas y privadas generadas por Flask
+      const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
+        kem_name: "ML-KEM-512",
+      });
+
+      const dsaResponse = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
+        ml_dsa_variant: "ML-DSA-44",
+      });
+  
+      const { public_key: public_key2, private_key: private_key2 } = dsaResponse.data;
+      
+      
+      if (!keys || !keys.public_key || !keys.secret_key) {
+        return res.status(500).json({ error: "Error generating keys" });
+      }
+
+      const users = await User.find(); 
+      const memberIds = users.map(user => user._id);  
+      
+      const newCommunity = new Community({
+        name,
+        description,
+        image,
+        publicKey: keys.public_key, 
+        privateKey: keys.secret_key,   
+        publicKeyDSA: public_key2,
+        privateKeyDSA: private_key2,
+        members: memberIds
+      });
+
+      await newCommunity.save();
+      res.status(201).json(newCommunity);
+    } catch (error) {
+      console.error('Error in creating community:', error); // Agrega esta línea
+      res.status(500).json({ message: 'Error creating community', error });
+    }
+  });
 
 // 2. Obtener todas las comunidades
-router.get('/', getCommunities);
+router.get('/', async (req, res) => {
+  try {
+      const communities = await Community.find().populate('members admins messages');
+      res.status(200).json(communities);
+  } catch (error) {
+      res.status(500).json({ message: 'Error fetching communities', error });
+  }
+});
 
 // 3. Obtener una comunidad por ID
-router.get('/:id', getCommunityById);
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      const community = await Community.findById(id).populate('members admins messages');
+      if (!community) {
+          return res.status(404).json({ message: 'Community not found' });
+      }
+      res.status(200).json(community);
+  } catch (error) {
+      res.status(500).json({ message: 'Error fetching community', error });
+  }
+});
 
 // 4. Obtener los mensajes de la comunidad, desencriptarlos y verificarlos
 router.get('/:id/messages', async (req, res) => {
@@ -168,7 +226,87 @@ router.post('/:id/admins', async (req, res) => {
 });
 
 // 6. Enviar un mensaje a la comunidad
-router.post('/:id/messages', protectRoute, upload.single('file'), sendMessageToCommunity);
+router.post('/:id/messages', protectRoute, upload.single('file'), async (req, res) => {
+  const { id: communityId } = req.params;
+  const { message } = req.body;
+  const file = req.file;
+  const senderId = req.user._id;
+
+  try {
+    const community = await Community.findById(communityId);
+    if (!community) return res.status(404).json({ error: 'Community not found' });
+
+    // Firmar el mensaje
+    const signResponse = await axios.post('https://kyber-api-1.onrender.com/sign', {
+      message,
+      ml_dsa_variant: "ML-DSA-44",
+      private_key: req.user.secretKeyDSA,
+    });
+
+    const { signature } = signResponse.data;
+
+    // Cifrar el mensaje
+    const encryptionResponse = await axios.post('https://kyber-api-1.onrender.com/encrypt', {
+      kem_name: "ML-KEM-512",
+      message: message,
+      public_key: community.publicKey,
+    });
+
+    const { ciphertext, shared_secret } = encryptionResponse.data;
+
+    // Crear nuevo mensaje
+    const newMessage = new Message({
+      senderId,
+      receiverId: communityId,
+      message: ciphertext,
+      signature,
+      publicKeyDSA: req.user.publicKeyDSA,
+      sharedSecret: shared_secret,
+      fileUrl: file ? file.path : null, // ⬅️ Aquí se guarda el archivo
+      verified: false
+    });
+
+    community.messages.push(newMessage._id);
+    await Promise.all([newMessage.save(), community.save()]);
+
+    // Desencriptar para enviar a sockets
+    const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
+      kem_name: "ML-KEM-512",
+      ciphertext: ciphertext,
+      shared_secret: shared_secret,
+    });
+
+    const decrypted_message = decryptionResponse.data.original_message;
+
+    const messageResponse = {
+      _id: newMessage._id,
+      senderId: newMessage.senderId,
+      receiverId: newMessage.receiverId,
+      message: decrypted_message,
+      signature: newMessage.signature,
+      publicKeyDSA: newMessage.publicKeyDSA,
+      fileUrl: newMessage.fileUrl || null,
+      verified: newMessage.verified,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Emitir a todos los miembros de la comunidad
+    for (const memberId of community.members) {
+      const receiverSocketId = getReceiverSocketId(memberId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("newMessage", messageResponse);
+      }
+    }
+
+    res.status(201).json(messageResponse);
+  } catch (error) {
+    console.error("Error in sending message to community:", error.message);
+    res.status(500).json({ error: 'Error sending message to community' });
+  }
+});
+
+
 
 // 7. Salir de una comunidad
 router.post('/:id/leave', async (req, res) => {
@@ -193,6 +331,19 @@ router.post('/:id/leave', async (req, res) => {
 });
 
 // 8. Eliminar una comunidad
-router.delete('/:id', protectRoute, deleteCommunity);
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+      const community = await Community.findByIdAndDelete(id);
+      if (!community) {
+          return res.status(404).json({ message: 'Community not found' });
+      }
+
+      res.status(200).json({ message: 'Community deleted successfully' });
+  } catch (error) {
+      res.status(500).json({ message: 'Error deleting community', error });
+  }
+});
 
 export default router;

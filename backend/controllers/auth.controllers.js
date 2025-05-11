@@ -159,79 +159,47 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
-    }
-
-    const user = await User.findOne({ username });
-    
-    if (!user) {
-      return res.status(400).json({ error: "Invalid credentials" });
-    }
-
-    const isPasswordCorrect = await bcryptjs.compare(password, user.password);
-   
-    if (!isPasswordCorrect) {
-      return res.status(400).json({ error: "Invalid credentials" });
-    }
-
-    const userAgent = req.headers['user-agent'] || 'Unknown Browser';
+    const user = await User.findOne({username});
+    const userAgent = req.headers['user-agent'] || '';
     const parser = new UAParser(userAgent);
     const result = parser.getResult();
-    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
-    const os = result.os.name || 'Unknown OS';             
-    const browser = result.browser.name || 'Unknown Browser'; 
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+    const os = result.os.name;             
+    const browser = result.browser.name; 
+    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+    const geoData = await geoRes.json();
+    const country = geoData.country_name; 
 
-    let country = "Unknown";
-    try {
-      const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-      if (geoRes.ok) {
-        const geoData = await geoRes.json();
-        country = geoData.country_name || "Unknown";
-      }
-    } catch (err) {
-      console.warn("Geo lookup failed:", err.message);
+    const isPaswordCorrect = await bcryptjs.compare(password, user?.password || "");
+   
+    if (!user || !isPaswordCorrect) {
+      return res.status(400).json({ error: "Invalid credentials" });
     }
 
     const token = generateTokenAndSetCookie(user._id, res);
 
-    try {
-      const newSession = await Session.create({
-        userId: user._id,
-        deviceInfo: userAgent,
-        os,
-        browser,
-        ip,
-        country
-      });
-      
-      res.status(200).json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePic: user.profilePic,
-        message: "User logged in successfully",
-        publicKey: user.publicKey,
-        token,
-        sessionId: newSession._id,
-      });
-    } catch (sessionError) {
-      console.error("Error creating session:", sessionError);
-      // Si falla la creación de la sesión, aún permitimos el login
-      res.status(200).json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePic: user.profilePic,
-        message: "User logged in successfully",
-        publicKey: user.publicKey,
-        token
-      });
-    }
+    const newSession = await Session.create({
+      userId: user._id,
+      deviceInfo: userAgent,
+      os,
+      browser,
+      ip,
+      country
+    });
+    
+    res.status(200).json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      profilePic: user.profilePic,
+      message: "User logged in successfully",
+      publicKey: user.publicKey,
+      token,
+      sessionId: newSession._id,
+    });
 
   } catch (error) {
-    console.error("Error in login controller:", error);
+    console.log("Error in login controller", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
