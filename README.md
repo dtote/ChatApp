@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=30&pause=1000&color=00C7B7&center=true&vCenter=true&width=700&lines=Bienvenido+a+ChatApp;Mensajería+Instantánea+Post-Cuántica+Segura;Basada+en+Criptografía+de+Nueva+Generación" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=30&pause=1000&color=00C7B7&center=true&vCenter=true&width=700&lines=Welcome+to+ChatApp;Secure+Post-Quantum+Instant+Messaging;Based+on+Next-Gen+Cryptography" alt="Typing SVG" />
 </p>
 
 <p align="center">
@@ -10,93 +10,94 @@
 </p>
 
 <p align="center">
-  <b>🚀 Comunicación cifrada | 🔐 Seguridad post-cuántica | 🎯 Experiencia interactiva</b>
+  <b>🚀 Encrypted communication | 🔐 Post-quantum security | 🎯 Interactive experience</b>
 </p>
 
-# ChatApp - Mensajería Segura Post-Cuántica
+# ChatApp - Post-Quantum Secure Messaging
 
-ChatApp es una aplicación de mensajería instantánea segura, moderna y robusta, diseñada con tecnologías web actuales y cifrado post-cuántico para proteger las comunicaciones frente a amenazas futuras.
+ChatApp is a modern, secure and robust instant messaging application, built with current web technologies and post-quantum encryption to protect communication against future threats.
 
-[![Ejecutar Pruebas](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml/badge.svg)](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml)
+[![Run Tests](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml/badge.svg)](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml)
 
 ---
 
-## 🚀 Tecnologías Utilizadas
+## 🚀 Technologies Used
 
 **Backend:**  
-Node.js, Express, MongoDB Atlas (base de datos en la nube).
+Node.js, Express, MongoDB Atlas (cloud database).
 
 **Frontend:**  
 React.js + TailwindCSS + DaisyUI.
 
-**Cifrado y Seguridad:**  
-- Cifrado de mensajes usando ML-KEM (Kyber, criptografía post-cuántica).  
-- Firmas digitales con ML-DSA (Dilithium, estándar post-cuántico).  
-- Comunicación en tiempo real con Socket.io.  
-- Autenticación basada en JSON Web Tokens (JWT) y autenticación facial.
+**Encryption and Security:**  
+- Message encryption using ML-KEM (Kyber, post-quantum cryptography).  
+- Digital signatures with ML-DSA (Dilithium, post-quantum standard).  
+- Real-time communication using Socket.io.  
+- Authentication via JSON Web Tokens (JWT) and facial recognition.
 
-**Almacenamiento de Archivos:**  
-- Subida de imágenes, PDFs y vídeos a Cloudinary.
+**File Storage:**  
+- Upload of images, PDFs, and videos to Cloudinary.
 
-**Otras tecnologías:**  
+**Other Technologies:**  
 Face-API.js, OpenAI API, TensorFlow.js, Axios, Cloudinary SDK, JSDOM.
 
 ---
 
-## 🛡️ Funcionalidades Principales
+## 🛡️ Main Features
 
-### Seguridad Avanzada
-- Cifrado de extremo a extremo usando algoritmos post-cuánticos (ML-KEM).
-- Firmas digitales para validar la autenticidad de los mensajes (ML-DSA).
-- Autenticación facial de usuarios mediante Face-API.js para registro e inicio de sesión.
-- Verificación del cifrado mediante escaneo de código QR.
-- Análisis automático de URLs para detectar posibles enlaces peligrosos (malware, phishing).
+### Advanced Security
+- End-to-end encryption using post-quantum algorithms (ML-KEM).
+- Digital signatures to verify message authenticity (ML-DSA).
+- Facial authentication using Face-API.js for sign-up and login.
+- Encryption verification via QR code scanning.
+- Automatic URL analysis to detect potential malware/phishing links.
 
-### Chat y Mensajería
-- Envío de mensajes cifrados.
-- Soporte para archivos adjuntos (imágenes, videos, PDFs).
-- Sistema de reacciones a mensajes con emojis.
-- Creación y votación de encuestas dinámicas en las conversaciones.
-- Cifrado manual: al hacer doble clic sobre un mensaje, el contenido se cifra (formato base64 parcial).
-- Popup de información: al hacer clic en el avatar de un usuario en el chat, se abre un popup que muestra su perfil (email, alias y clave pública).
+### Chat and Messaging
+- Encrypted message sending.
+- Support for file attachments (images, videos, PDFs).
+- Emoji-based reaction system for messages.
+- Dynamic polls in conversations.
+- Manual encryption: double-clicking a message encrypts its content (partial base64).
+- User info popup: clicking on a user's avatar reveals email, alias, and public key.
 
-### Gestión Social
-- Creación y administración de comunidades (grupos de usuarios).
-- Chat individual y grupal.
-- Vista interactiva de usuarios y comunidades.
+### Social Features
+- Community (group) creation and management.
+- Private and group chat.
+- Interactive user and community views.
 
-### Inteligencia Artificial
-- Resumen de conversaciones con modelos IA de OpenAI y HuggingFace (facebook/bart-large-cnn).
-- Chatbot educativo sobre criptografía post-cuántica y ayuda de uso.
+### Artificial Intelligence
+- Conversation summarization using OpenAI and HuggingFace models (facebook/bart-large-cnn).
+- Educational chatbot about post-quantum cryptography and app guidance.
 
-### Otras Características
-- Eliminación automática de mensajes según la frecuencia configurada por el usuario (1 hora, 1 día, 1 semana...).
-- Visualización de claves públicas en un sistema de retículos 3D usando Three.js.
-- Diseño responsive y experiencia fluida en dispositivos móviles y de escritorio.
+### Other Features
+- Automatic message deletion based on user-defined intervals (1 hour, 1 day, 1 week...).
+- 3D lattice-based public key visualization with Three.js.
+- Responsive design for both desktop and mobile.
 
 ---
 
-## 🛠️ Instalación y Configuración
+## 🛠️ Installation & Setup
 
-### 1. Clona el repositorio
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/tuusuario/chatapp.git
+git clone https://github.com/youruser/chatapp.git
 cd chatapp 
 ```
 
-### 2. Instala las dependencias
+### 2. Install dependencies
 
 ```bash
 npm install
 npm install --prefix frontend
 ```
 
-### 3. Configuración de las variables de entorno
+### 3. Configure environment variables
 
-Crea un archivo .env en la carpeta raíz del proyecto con el siguiente contenido:
+Create a .env file in the root directory with the following content:
 
-```MONGO_URI=your_mongodb_atlas_uri
+```
+MONGO_URI=your_mongodb_atlas_uri
 JWT_SECRET=your_jwt_secret
 OPENAI_API_KEY=your_openai_api_key
 HUGGINFACE_API_KEY=your_huggingface_api_key
@@ -105,41 +106,42 @@ CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
-### 4. Ejecuta la aplicación en modo desarrollo
+### 4.  Run the application in development mode
 
 ```
 npm run server
 ```
 
-El frontend puede ser servido aparte si prefieres, dentro de la carpeta frontend/.
+The frontend can be served separately from the frontend/ folder if preferred
 
-### 5. Pruebas Automáticas 
+### 5. Run Automated Tests
 
-Las pruebas están implementadas usando Mocha y Chai.
+Tests are implemented using Mocha and Chai.
 
-Para lanzar todas las pruebas:
+To run all tests:
 
 ```
 npm test
 ```
 
-Además, se configura una GitHub Action para ejecutar los tests automáticamente en cada push o pull request.
+GitHub Actions are set up to automatically run tests on each push or pull request.
 
-## ☁️ Despliegue en la nube
 
-El despliegue de la aplicación se realiza en Render, asegurando:
+## ☁️  Cloud Deployment
 
-Certificados SSL automáticos (cifrado TLS para comunicaciones HTTPS).
+The application is deployed on Render, ensuring:
 
-Sistema de monitorización con acceso a:
+Automatic SSL certificates (TLS encryption for HTTPS).
 
-- Logs en tiempo real.
-- Consola remota.
-- Métricas de recursos (CPU, memoria, tráfico de red).
+Monitoring system with:
 
-Esto garantiza una alta disponibilidad y seguridad en tránsito para todos los datos transmitidos entre frontend y backend.
+- Real-time logs
+- Remote console
+- Resource metrics (CPU, memory, network)
 
-## 📄 Estructura del Proyecto
+This ensures high availability and secure data transmission between frontend and backend.
+
+## 📄 Project Structure
 
 ```
 chatapp/
@@ -165,16 +167,16 @@ chatapp/
 └── .env (no subir al repositorio)
 ```
 
-## 🔒 Seguridad Extra
+## 🔒 Additional Security
 
-- Protección contra inyección de código y XSS.
-- Validación estricta de datos en el backend.
-- Upload seguro de archivos usando Multer + Cloudinary.
-- Tokens JWT con expiración corta y renovable.
-- Cifrado extremo a extremo para mensajes y archivos.
-- Sistema de autenticación facial integrado y funcional.
+- Protection against code injection and XSS.
+- Strict backend data validation.
+- Secure file uploads using Multer + Cloudinary.
+- Short-lived and renewable JWTs.
+- End-to-end encryption for messages and files.
+- Functional facial authentication system.
 
-## 📚 Créditos
+## 📚 Credits
 
 - [Face-API.js](https://github.com/justadudewhohacks/face-api.js)
 - [TensorFlow.js](https://www.tensorflow.org/js)
@@ -183,5 +185,5 @@ chatapp/
 - [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
 - [Cloudinary](https://cloudinary.com/)
 
-## ❤️ Autor
-Desarrollado por Samuel Lorenzo Sánchez.
+## ❤️ Author
+Developed by Samuel Lorenzo Sánchez
