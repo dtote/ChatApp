@@ -135,12 +135,12 @@ export const getMessages = async (req, res) => {
       shared_secret: msg.sharedSecret
     }));
 
-    const bulkDecryptResponse = await bulkDecryptResponse({
+    const bulkDecryptResult = await bulkDecryptResponse({
       kem_name: "ML-KEM-512",
       messages: bulkDecryptInput
     });
 
-    const decryptedMessagesArray = bulkDecryptResponse.data.results;
+    const decryptedMessagesArray = bulkDecryptResult.data.results;
 
     // 2. Preparar el bulkVerify
     const bulkVerifyInput = decryptedMessagesArray.map((decrypted, index) => ({
@@ -150,11 +150,11 @@ export const getMessages = async (req, res) => {
       ml_dsa_variant: "ML-DSA-44"
     }));
 
-    const bulkVerifyResponse = await bulkVerifyResponse({
+    const bulkVerifyResult = await bulkVerifyResponse({
       messages: bulkVerifyInput
     });
 
-    const verificationResults = bulkVerifyResponse.data.results;
+    const verificationResults = bulkVerifyResult.data.results;
 
     // 3. Combinar descifrados + verificaciones
     const finalMessages = messages.map((msg, index) => ({
