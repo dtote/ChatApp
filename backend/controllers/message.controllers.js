@@ -20,7 +20,8 @@ const signWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/sig
 const encryptWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/encrypt', data);
 const decryptWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/decrypt', data);
 const verifyWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/verify', data);
-
+const bulkDecryptResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkDecrypt', data);
+const bulkVerifyResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkVerify', data);
 
 export const sendMessage = async (req, res) => {
   try {
@@ -134,7 +135,7 @@ export const getMessages = async (req, res) => {
       shared_secret: msg.sharedSecret
     }));
 
-    const bulkDecryptResponse = await axios.post('https://kyber-api-1.onrender.com/bulkDecrypt', {
+    const bulkDecryptResponse = await bulkDecryptResponse({
       kem_name: "ML-KEM-512",
       messages: bulkDecryptInput
     });
@@ -149,7 +150,7 @@ export const getMessages = async (req, res) => {
       ml_dsa_variant: "ML-DSA-44"
     }));
 
-    const bulkVerifyResponse = await axios.post('https://kyber-api-1.onrender.com/bulkVerify', {
+    const bulkVerifyResponse = await bulkVerifyResponse({
       messages: bulkVerifyInput
     });
 
