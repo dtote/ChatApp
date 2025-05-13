@@ -112,6 +112,21 @@ router.get('/:id', async (req, res) => {
 });
 
 // 4. Obtener los mensajes de la comunidad, desencriptarlos y verificarlos
+const axiosRetry = async (url, data, retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await axios.post(url, data);
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+};
+
+
+const bulkDecryptResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkDecrypt', data);
+const bulkVerifyResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkVerify', data);
+
 router.get('/:id/messages', async (req, res) => {
   const { id: communityId } = req.params;
 
@@ -127,50 +142,41 @@ router.get('/:id/messages', async (req, res) => {
     }
 
     // Procesar todos los mensajes de la comunidad
-    const decryptedMessages = await Promise.all(community.messages.map(async (msg) => {
-      try {
-        // 1. Desencriptar el mensaje
-        const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
-          kem_name: "ML-KEM-512",
-          ciphertext: msg.message,
-          shared_secret: msg.sharedSecret,
-        });
+    const messages = community.messages;
 
-        const decryptedText = decryptionResponse.data.original_message;
+    // 1. Preparar el bulkDecrypt
+    const bulkDecryptInput = messages.map(msg => ({
+      ciphertext: msg.message,
+      shared_secret: msg.sharedSecret
+    }));
 
-        // 2. Verificar la firma si hay firma y clave pública
-        let verified = false;
-        if (msg.signature && msg.publicKeyDSA) {
-          try {
-            const verifyResponse = await axios.post('https://kyber-api-1.onrender.com/verify', {
-              message: decryptedText,
-              signature: msg.signature,
-              public_key: msg.publicKeyDSA,
-              ml_dsa_variant: "ML-DSA-44"
-            });
-            verified = verifyResponse.data.verified;
-            msg.verified = verified;
-            await msg.save(); // Guardar estado de verificación
-          } catch (verifyErr) {
-            console.error("Error verifying signature:", verifyErr.message);
-          }
-        }
+    const bulkDecryptResult = await bulkDecryptResponse({
+      kem_name: "ML-KEM-512",
+      messages: bulkDecryptInput
+    });
 
-        return {
-          ...msg._doc,
-          message: decryptedText,
-          verified,
-          fileUrl: msg.fileUrl || null
-        };
-      } catch (error) {
-        console.error("Error decrypting or verifying message:", error.message);
-        return {
-          ...msg._doc,
-          message: "[Error al descifrar o verificar]",
-          verified: false,
-          fileUrl: msg.fileUrl || null
-        };
-      }
+    const decryptedMessagesArray = bulkDecryptResult.data.results;
+
+    // 2. Preparar el bulkVerify
+    const bulkVerifyInput = decryptedMessagesArray.map((decrypted, index) => ({
+      message: decrypted.original_message,
+      signature: messages[index].signature,
+      public_key: messages[index].publicKeyDSA,
+      ml_dsa_variant: "ML-DSA-44"
+    }));
+
+    const bulkVerifyResult = await bulkVerifyResponse({
+      messages: bulkVerifyInput
+    });
+
+    const verificationResults = bulkVerifyResult.data.results;
+
+    // 3. Combinar descifrados + verificaciones
+    const decryptedMessages = messages.map((msg, index) => ({
+      ...msg._doc,
+      message: decryptedMessagesArray[index].original_message,
+      verified: verificationResults[index].verified,
+      fileUrl: msg.fileUrl || null
     }));
 
     // Responder con todos los mensajes descifrados y verificados
