@@ -25,7 +25,7 @@ const Home = () => {
   
 
   return (
-    <>
+    <div className="fixed inset-0">
       {/* Mobile Drawer */}
       <div className="lg:hidden relative">
         {/* Overlay */}
@@ -75,8 +75,7 @@ const Home = () => {
           <ChatBot className="mt-[120px]" />
         </div>
       </div>
-
-    </>
+    </div>
   );
 };
 
