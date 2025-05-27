@@ -191,20 +191,23 @@ const SecurityOptions = () => {
 
                   {selectedOption.id === 1 && (
                     <div className="space-y-2">
-                      {['1 hour', '1 day', '1 week'].map(period => (
-                        <label key={period} className="flex items-center cursor-pointer gap-2">
+                      {[
+                        { label: '1 hour', value: '1day' },
+                        { label: '1 day', value: '1day' },
+                        { label: '1 week', value: '7days' }
+                      ].map(({ label, value }) => (
+                        <label key={label} className="flex items-center cursor-pointer gap-2">
                           <input
                             type="radio"
                             name="frequency"
                             className="radio"
-                            onChange={() => deleteOldMessagesFromBackend(period)}
+                            onChange={() => deleteOldMessagesFromBackend(value)}
                           />
-                          <span className="text-sm">{period}</span>
+                          <span className="text-sm">{label}</span>
                         </label>
                       ))}
                     </div>
                   )}
-
 
                   {selectedOption.id === 3 && (
                     <div>
