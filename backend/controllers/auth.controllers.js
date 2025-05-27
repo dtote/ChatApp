@@ -42,11 +42,11 @@ export const signupFacial = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const { data: keys } = await axios.post('http://127.0.0.1:5001/generate_keys', {
+    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
-    const { data: dsaKeys } = await axios.post('http://127.0.0.1:5001/generate_ml_dsa_keys', {
+    const { data: dsaKeys } = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
       ml_dsa_variant: "ML-DSA-44",
     });
 
@@ -107,11 +107,11 @@ export const signup = async (req, res) => {
     }
 
     // Obtener claves públicas y privadas generadas por Flask
-    const { data: keys } = await axios.post('http://127.0.0.1:5001/generate_keys', {
+    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
-    const dsaResponse = await axios.post('http://127.0.0.1:5001/generate_ml_dsa_keys', {
+    const dsaResponse = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
       ml_dsa_variant: "ML-DSA-44",
     });
 
