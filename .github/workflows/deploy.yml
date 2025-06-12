@@ -19,14 +19,16 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install
-          npm install --prefix frontend
+          cd frontend
+          npm install
           
       - name: Build
         run: |
+          cd frontend
           npm run build
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./frontend/build
