@@ -6,9 +6,17 @@ on:
       - gh-pages
   workflow_dispatch:  # Permite ejecución manual
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v3
       
@@ -33,3 +41,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./frontend/build
+          commit_message: "Deploy: ${{ github.event.head_commit.message }}"
