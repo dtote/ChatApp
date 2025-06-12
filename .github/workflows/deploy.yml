@@ -3,7 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - gh-pages  
+      - gh-pages
+  workflow_dispatch:  # Permite ejecución manual
 
 jobs:
   deploy:
