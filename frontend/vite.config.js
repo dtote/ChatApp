@@ -13,12 +13,16 @@ const resolveModulePath = (moduleName) =>
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  server: { 
+  server: {
     port: 3000,
     host: '0.0.0.0',
     https: false,
     mimeTypes: {
       'application/javascript': ['js', 'mjs']
+    },
+    proxy: {
+      '/api': 'http://localhost:4000', // Cambia el puerto según tu backend
+      '/uploads': 'http://localhost:4000/uploads', // Cambia el puerto según tu backend
     }
   },
   allowedHosts: ['*'],
@@ -30,7 +34,8 @@ export default defineConfig({
       process: resolveModulePath('process/browser'),
     }
   },
-  base: '/ChatAppNew16/',  // Reemplaza esto con el nombre de tu repositorio
+  // base: '/ChatAppNew16/',  // Reemplaza esto con el nombre de tu repositorio
+  base: '/',
   build: {
     outDir: 'build',
     assetsDir: 'assets',
