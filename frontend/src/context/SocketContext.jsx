@@ -15,22 +15,24 @@ export const SocketContextProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (authUser) {
-			
-			const socket = io("", {
+			// La URL del servidor deberia ser la raíz del servidor donde está corriendo tu backend
+			// Aunque en este caso vamos a usar localhost para desarrollo
+			// const socketURI = ""
+			const socket = io("http://localhost:4000", {
 				query: {
 					userId: authUser._id,
 				},
-        secure: true, // Asegura que se use HTTPS
+				secure: true, // Asegura que se use HTTPS
 				transports: ["websocket"], // Usar solo WebSockets
 			}
-    );
+			);
 
 			setSocket(socket);
 
 			socket.on("connect", () => {
 				console.log("Conectado al servidor:", socket.id); // Esto debería confirmarte la conexión desde el cliente
 			});
-	
+
 			socket.on("connect_error", (err) => {
 				console.error("Error de conexión:", err.message, err);
 			});
@@ -49,8 +51,8 @@ export const SocketContextProvider = ({ children }) => {
 		}
 	}, [authUser]);
 
-	return ( 
-    <SocketContext.Provider value={{ socket, onlineUsers }}>
-      {children}
-    </SocketContext.Provider>)
+	return (
+		<SocketContext.Provider value={{ socket, onlineUsers }}>
+			{children}
+		</SocketContext.Provider>)
 };
