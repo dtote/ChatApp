@@ -33,7 +33,7 @@ const SearchInput = () => {
 			<input
 				type="text"
 				placeholder="Search…"
-				className="input input-bordered rounded-full text-base px-4 py-2 w-full max-w-[180px] sm:max-w-[320px]" 
+				className="input input-bordered rounded-full text-base px-4 py-2 w-full max-w-[180px] sm:max-w-[320px]"
 				value={search}
 				onChange={(e) => setSearch(e.target.value)}
 			/>
