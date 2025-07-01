@@ -78,10 +78,23 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/sessions', sessionRoutes);
 const swaggerDocument = yaml.load(fs.readFileSync('./backend//docs/docs.yml', 'utf8'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ message: "API route not found" });
+})
+
 // Ruta comodín frontend
 app.get("*", (req, res) => {
   if (req.url.startsWith('/uploads')) return;
-  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+
+  if (process.env.NODE_ENV === "development") {
+    // Redirige a frontend local en desarrollo
+
+    return res.redirect(`http://localhost:3000${req.originalUrl}`);
+  } else if (process.env.NODE_ENV === "production") {
+    // Sirve el build estático en producción
+    res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+  }
+
 });
 
 // Arrancar servidor
@@ -92,5 +105,5 @@ httpServer.listen(PORT, "0.0.0.0", () => {
 
 
 // Exportar app (para pruebas)
-export { app, httpServer};
+export { app, httpServer };
 

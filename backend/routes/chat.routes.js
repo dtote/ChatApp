@@ -3,7 +3,7 @@ import OpenAI from "openai";
 
 const router = Router();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, dangerouslyAllowBrowser: process.env.NODE_ENV === 'development' ? true : false });
 
 router.post("/", async (req, res) => {
   const { messages, systemPrompt } = req.body;
