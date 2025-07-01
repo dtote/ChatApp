@@ -42,7 +42,7 @@ const useLogin = () => {
       localStorage.setItem("chat-user", JSON.stringify(data));
 
       if (data.sessionId) {
-        localStorage.setItem("sessionId", data.sessionId); 
+        localStorage.setItem("sessionId", data.sessionId);
       }
 
       setAuthUser(data);

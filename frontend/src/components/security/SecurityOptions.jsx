@@ -22,7 +22,7 @@ const getShortestVector = (points) => {
     for (let j = i + 1; j < points.length; j++) {
       const a = points[i], b = points[j];
       const length = Math.sqrt(
-        (a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2
+        (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
       );
       if (length < minLength && length > 0) {
         minLength = length;
@@ -50,12 +50,12 @@ const SecurityOptions = () => {
   const closeModal = () => setIsOpen(false);
 
   const getSummary = useGetSummary();
-  const { setSelectedKeySize } = useSecurity(); 
+  const { setSelectedKeySize } = useSecurity();
 
   const deleteOldMessagesFromBackend = async (timePeriod) => {
     try {
       const response = await axios.post('/api/deleteOldMessages', { timePeriod });
-      alert(response.data.message); 
+      alert(response.data.message);
     } catch (error) {
       alert('Error deleting messages');
     }
@@ -63,20 +63,20 @@ const SecurityOptions = () => {
   const fetchSessions = async () => {
     try {
       const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
-  
+
       const res = await axios.get('/api/sessions', {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         }
       });
-  
+
       setSessions(res.data.sessions || []);
     } catch (err) {
       console.error('Error fetching sessions', err);
     }
   };
-  
+
   const revokeSession = async (sessionId) => {
     try {
       const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
@@ -85,9 +85,9 @@ const SecurityOptions = () => {
           "Authorization": `Bearer ${token}`
         }
       });
-  
+
       setSessions(prev => prev.filter(s => s._id !== sessionId));
-  
+
       const currentSessionId = localStorage.getItem("sessionId");
       if (sessionId === currentSessionId) {
         // Cerrar sesión del usuario
@@ -95,13 +95,13 @@ const SecurityOptions = () => {
         localStorage.removeItem("sessionId");
         window.location.href = "/login";
       }
-  
+
     } catch (err) {
       console.error('Error revoking session', err);
     }
   };
-  
-  
+
+
 
   const handleOptionClick = (option) => {
     setSelectedOption(option);
@@ -113,7 +113,7 @@ const SecurityOptions = () => {
       fetchSessions();
     }
     if (option.id === 5) {
-      setSummaryText(""); 
+      setSummaryText("");
       setUserOrCommunity("");
     }
   };
@@ -213,7 +213,7 @@ const SecurityOptions = () => {
                     <div>
                       <input className="input input-bordered w-full" value={base64Key} onChange={e => setBase64Key(e.target.value)} placeholder="Base64 Public Key" />
                       <button className="btn btn-primary mt-2" onClick={handleGenerateLattice}>Generate Lattice</button>
-                     
+
                       <div className="h-[400px] mt-4 rounded border border-gray-300">
                         <Canvas camera={{ position: [0, 0, 15], fov: 50 }}>
                           <ambientLight intensity={0.5} />
@@ -298,7 +298,7 @@ const styles = {
     top: '5px',
     right: '50px',
     fontSize: '15px',
-    cursor: 'pointer', 
+    cursor: 'pointer',
     padding: '10px 20px',
   },
   popupContainer: {

@@ -9,7 +9,7 @@ const useSignup = () => {
   const signup = async ({ username, email, password, confirmPassword, gender, faceDescriptor }) => {
     const success = handleInputErrors({ username, email, password, confirmPassword, gender });
     if (!success) return;
-    
+
     const formData = new FormData();
     formData.append('username', username);
     formData.append('email', email);
@@ -25,7 +25,7 @@ const useSignup = () => {
 
     try {
       const apiEndpoint = faceDescriptor ? '/api/auth/signupFacial' : '/api/auth/signup';
-      
+
       const res = await fetch(apiEndpoint, {
         method: 'POST',
         body: formData,
@@ -36,7 +36,6 @@ const useSignup = () => {
       if (data.error) {
         toast.error(data.error);
       } else {
-        console.log(data);
         localStorage.setItem('chat-user', JSON.stringify(data));
         setAuthUser(data);
         toast.success('Signup successful');

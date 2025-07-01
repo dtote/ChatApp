@@ -50,9 +50,9 @@ export const signupFacial = async (req, res) => {
       ml_dsa_variant: "ML-DSA-44",
     });
 
-    let profilePic = gender === "male" 
-    ? `https://avatar.iran.liara.run/public/boy?username=${username}`
-    : `https://avatar.iran.liara.run/public/girl?username=${username}`;
+    let profilePic = gender === "male"
+      ? `https://avatar.iran.liara.run/public/boy?username=${username}`
+      : `https://avatar.iran.liara.run/public/girl?username=${username}`;
 
     const newUser = new User({
       username,
@@ -97,7 +97,7 @@ export const signup = async (req, res) => {
     const hashedPassword = await bcryptjs.hash(password, salt);
 
     // Ruta predeterminada de imagen de perfil si no se proporciona ninguna
-    let profilePic = gender === "male" 
+    let profilePic = gender === "male"
       ? `https://avatar.iran.liara.run/public/boy?username=${username}`
       : `https://avatar.iran.liara.run/public/girl?username=${username}`;
 
@@ -159,19 +159,19 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
-    const user = await User.findOne({username});
+    const user = await User.findOne({ username });
     const userAgent = req.headers['user-agent'] || '';
     const parser = new UAParser(userAgent);
     const result = parser.getResult();
     const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
-    const os = result.os.name;             
-    const browser = result.browser.name; 
+    const os = result.os.name;
+    const browser = result.browser.name;
     const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
     const geoData = await geoRes.json();
-    const country = geoData.country_name; 
+    const country = geoData.country_name;
 
     const isPaswordCorrect = await bcryptjs.compare(password, user?.password || "");
-   
+
     if (!user || !isPaswordCorrect) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
@@ -186,7 +186,7 @@ export const login = async (req, res) => {
       ip,
       country
     });
-    
+
     res.status(200).json({
       _id: user._id,
       username: user.username,
@@ -239,7 +239,7 @@ export const loginFacial = async (req, res) => {
 
 
     // Obtener todos los usuarios de la base de datos
-     const users = await User.find({
+    const users = await User.find({
       faceDescriptor: { $exists: true, $ne: null },
       "faceDescriptor.0": { $exists: true }
     });
@@ -288,7 +288,7 @@ export const loginFacial = async (req, res) => {
       // Generar token JWT para el usuario
       const token = generateTokenAndSetCookie(matchedUser._id, res);
 
-     
+
       const newSession = await Session.create({
         userId: matchedUser._id,
         deviceInfo: userAgent,
