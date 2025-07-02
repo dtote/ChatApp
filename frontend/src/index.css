@@ -2,47 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
+html,
+body {
 	height: 100%;
 	width: 100%;
-	background: url("/bg.jpg") no-repeat center center fixed;
+	background: url("/bg_4.jpg") no-repeat center center fixed;
 	background-size: cover;
-  }
-  
-  /* En pantallas pequeñas */
-  @media (max-width: 1000px) {
+}
+
+/* En pantallas pequeñas */
+@media (max-width: 1000px) {
 	body {
-	  background-size: cover; /* Mantén cover también aquí */
-	  background-position: top center;
-	  background-attachment: scroll; /* Para que no sea pesado en móviles */
+		background-size: cover;
+		/* Mantén cover también aquí */
+		background-position: top center;
+		background-attachment: scroll;
+		/* Para que no sea pesado en móviles */
 	}
-  }
-  
-  /* Pantallas grandes */
-  @media (min-width: 1024px) {
+}
+
+/* Pantallas grandes */
+@media (min-width: 1024px) {
 	body {
-	  background-size: cover;
-	  background-attachment: fixed;
+		background-size: cover;
+		background-attachment: fixed;
 	}
-  }
-  
+}
+
 
 ::-webkit-scrollbar {
-  cursor: pointer;
-  width: 8px;
+	cursor: pointer;
+	width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #555;
+	background: #555;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #121212;
-  border-radius: 5px;
+	background: #121212;
+	border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #242424;
+	background: #242424;
 }
 
 /* SHAKE ANIMATION ON HORIZONTAL DIRECTION */
@@ -54,6 +57,7 @@ html, body {
 }
 
 @keyframes shake {
+
 	10%,
 	90% {
 		transform: translate3d(-1px, 0, 0);
