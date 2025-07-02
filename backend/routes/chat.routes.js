@@ -1,24 +1,32 @@
 import { Router } from "express";
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 
 const router = Router();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, dangerouslyAllowBrowser: process.env.NODE_ENV === 'development' ? true : false });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 router.post("/", async (req, res) => {
   const { messages, systemPrompt } = req.body;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-2024-05-13",
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages
-      ]
-    });
-    res.json({ response: completion.choices[0].message.content });
+    const geminiMessages = [
+      { role: "user", parts: [{ text: systemPrompt }] },
+      ...messages.map((m) => ({
+        role: m.role === "user" ? "user" : "model",
+        parts: [{ text: m.content }]
+      }))
+    ]
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: geminiMessages
+    })
+
+    const botReply = response?.candidates?.[0]?.content?.parts?.[0]?.text // "No se pudo generar una respuesta"
+    res.json({ response: botReply });
+
   } catch (err) {
-    console.error("OpenAI error:", err);
+    console.error("Gemini error:", err?.message || err);
     res.status(500).json({ error: "Fallo al generar respuesta" });
   }
 });
