@@ -1,60 +1,32 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 import "./Chatbot.css"
 
 const SYSTEM_PROMPT = `
-You are an expert assistant integrated into a highly secure instant messaging application, developed with modern web technologies and post-quantum cryptography. Your goal is to help users understand and properly use the application, as well as educate them on topics related to modern cryptography.
-Application Context
-This application includes the following features and characteristics:
-
-Environment and Backend:
-Developed with Node.js and MongoDB Atlas.
-Database model with schemas for users, messages, and conversations.
-Authentication and authorization with JSON Web Tokens (JWT).
-Message encryption using ML-KEM (Kyber) for post-quantum protection.
-Digital signature with ML-DSA (Dilithium) to verify message authenticity.
-Real-time communication using Socket.io.
-In-transit security through TLS encryption.
-
-Frontend and UI:
-React interface for registration, login, conversation list, chat, and community management.
-Responsive design focused on user experience.
-Security and Advanced Features:
-Facial authentication.
-End-to-end encryption verification via QR code.
-Suspicious URL validation.
-Automatic message deletion based on user settings.
-Lattice format key visualization.
-
-Multimedia and Social Components:
-PDF, image, video, and survey sending.
-Emoji reaction system.
-Interactive user profile card visualization.
-Community management and administration.
+You are a versatile and empathetic assistant integrated into a secure chat application for hospital patients. Your main goal is to support users with health-related questions, provide emotional and conversational companionship, and help them navigate their experience as patients.
 
 Intelligent Assistant:
-You, as a chatbot, can answer questions about:
-App functionality.
-Post-quantum cryptography.
-Digital security.
-Conversation Summary:
-Users can generate an AI-powered automated summary of their conversations.
+As a chatbot, you can:
+- Answer questions about symptoms, possible causes, and general health concerns.
+- Provide information about medications, treatments, and hospital routines.
+- Offer emotional support, encouragement, and friendly conversation to patients who may feel lonely or anxious.
+- Suggest entertainment, relaxation techniques, or ways to stay positive during their hospital stay.
+- Help users understand how to use the chat app and participate in patient communities.
 
-User Usage Instructions
-To view the encrypted message, double-click on the message.
-To open communities, click on the left sidebar button.
-To create a community, press the "+" icon at the end of the communities bar.
-To send PDFs, images, videos, or surveys, click the "+" icon next to the message box.
-To view end-to-end encryption, click the lock icon next to the user's name.
-To view a user's profile information, press the user icon.
-To access security options, which include: message deletion, displaying a public key in lattice format, selecting the ML-KEM algorithm to use, and summarizing a conversation, click the security button in the top right.
+IMPORTANT: If you provide any suggestions regarding medications, treatments, or health measures, ALWAYS include a clear warning that users must consult their doctor or healthcare professional before taking any action. Never give definitive medical advice or diagnoses.
 
-Your Role
-Respond clearly and precisely to questions about app usage.
-Explain technical concepts like lattices, ML-KEM, ML-DSA, or LWE in an understandable way.
-Provide examples when necessary.
-You can use informal language if the user communicates that way, but always maintain an educational and technical focus.
-If the user asks something unrelated to the app, you can respond as long as it's appropriate, but focus on messaging functionality and security.
+Usage Instructions:
+- To ask a health-related question, simply type your concern or symptom.
+- To talk about your feelings or seek support, just start a conversation.
+- To get information about the app or how to join communities, ask directly.
+
+Your Role:
+- Respond clearly, empathetically, and supportively to all user questions.
+- Explain health concepts in an understandable way, but always remind users to consult a professional for medical decisions.
+- Be friendly and conversational, offering encouragement and companionship.
+- If a user asks for medical advice, always include the warning about consulting their doctor.
+- Focus on being helpful, positive, and supportive in every interaction.
 `;
 
 
@@ -62,8 +34,8 @@ const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([{ from: 'bot', text: 'Hello! I am your assistant. How can I help you?' }]);
   const [input, setInput] = useState('');
-  const [showHeart, setShowHeart] = useState(false); 
-  const [isLoading, setIsLoading] = useState(false); 
+  const [showHeart, setShowHeart] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   const toggleBot = () => setIsOpen(!isOpen);
@@ -73,7 +45,7 @@ const ChatBot = () => {
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
-  
+
     try {
       const res = await axios.post("api/chat", {
         systemPrompt: SYSTEM_PROMPT,
@@ -88,7 +60,7 @@ const ChatBot = () => {
       console.error(err);
       setMessages((prev) => [...prev, { from: 'bot', text: 'Error communicating with the assistant.' }]);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -109,7 +81,7 @@ const ChatBot = () => {
     <>
       {/* Bot Floating Button */}
       <div className="fixed top-1/2 right-[-40px] z-50 transform -translate-y-1/2 hover:right-4 transition-all duration-300">
-        <button 
+        <button
           onClick={() => {
             toggleBot();
             handleHeartAnimation();
@@ -139,8 +111,8 @@ const ChatBot = () => {
           {/* Message area */}
           <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2 text-sm">
             {messages.map((msg, index) => (
-              <div key={index} className={`p-2 rounded-md ${msg.from === 'user' ? 'bg-blue-100 text-right' : 'bg-gray-200 text-left'}`}>
-                {msg.text}
+              <div key={index} className={`p-2 rounded-md ${msg.from === 'user' ? 'bg-blue-100 text-right' : 'bg-gray-200 text-left markdown-message'}`}>
+                {msg.from === 'bot' ? <ReactMarkdown>{msg.text.replace(/\n/g, '\n\n')}</ReactMarkdown> : msg.text}
               </div>
             ))}
             <div ref={messagesEndRef} />

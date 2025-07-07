@@ -3,10 +3,12 @@
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.2);
     opacity: 0.7;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -26,10 +28,12 @@
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.5);
     opacity: 0.7;
   }
+
   100% {
     transform: scale(2);
     opacity: 0;
@@ -38,4 +42,18 @@
 
 .animate-heart {
   animation: heart 0.8s ease-out forwards;
+}
+
+.markdown-message ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em;
+}
+
+.markdown-message ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em;
+}
+
+.markdown-message p {
+  margin-bottom: 0.5em;
 }
