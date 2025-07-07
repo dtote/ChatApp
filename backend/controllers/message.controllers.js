@@ -16,12 +16,12 @@ const axiosRetry = async (url, data, retries = 3) => {
   }
 };
 
-const signWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/sign', data);
-const encryptWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/encrypt', data);
-const decryptWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/decrypt', data);
-const verifyWithRetry = (data) => axiosRetry('https://kyber-api-1.onrender.com/verify', data);
-const bulkDecryptResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkDecrypt', data);
-const bulkVerifyResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkVerify', data);
+const signWithRetry = (data) => axiosRetry('http://localhost:5001/sign', data);
+const encryptWithRetry = (data) => axiosRetry('http://localhost:5001/encrypt', data);
+const decryptWithRetry = (data) => axiosRetry('http://localhost:5001/decrypt', data);
+const verifyWithRetry = (data) => axiosRetry('http://localhost:5001/verify', data);
+const bulkDecryptResponse = (data) => axiosRetry('http://localhost:5001/bulkDecrypt', data);
+const bulkVerifyResponse = (data) => axiosRetry('http://localhost:5001/bulkVerify', data);
 
 export const sendMessage = async (req, res) => {
   try {
@@ -95,7 +95,6 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    
 
     res.status(201).json({ ...newMessage._doc, message: decryptionResponse.data.original_message });
   } catch (error) {

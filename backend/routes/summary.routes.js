@@ -55,7 +55,7 @@ router.post("/", async (req, res) => {
     }));
 
     // 🔵 Llamamos a la nueva API bulkDecrypt
-    const decryptionResponse = await axios.post("https://kyber-api-1.onrender.com/bulkDecrypt", {
+    const decryptionResponse = await axios.post("http://localhost:5001/bulkDecrypt", {
       kem_name: selectedKeySize || "ML-KEM-512",
       messages: messagesForDecryption,
     });
