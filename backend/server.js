@@ -24,6 +24,7 @@ import { initializeSocket } from "./socket/socket.js";
 import sessionRoutes from './routes/session.routes.js';
 import { swaggerUi, swaggerSpec } from "./swagger.js";
 import yaml from 'js-yaml';
+import { ENV_CONFIG } from "./config/environment.js";
 
 
 dotenv.config();
@@ -51,9 +52,6 @@ app.use(express.static(path.join(__dirname, "/frontend/dist")));
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://iridescent-sunburst-e41f4b.netlify.app',
-    'https://chatapp-1-eebi.onrender.com',
-    'http://0.0.0.0:8080'
   ],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
