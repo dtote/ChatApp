@@ -2,25 +2,40 @@ import useGetMessages from "../../hooks/useGetMessages";
 import MessageSkeleton from "../skeletons/MessageSkeleton";
 import Message from "./Message";
 import useListenMessages from "../../hooks/useListenMessages";
+import { div } from "@tensorflow/tfjs";
 
 const Messages = () => {
-	const { messages, loading} = useGetMessages();
+  const { messages, loading } = useGetMessages();
 
   useListenMessages();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <span className="loading loading-spinner"></span>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <span className="loading loading-spinner"></span>
+      </div>
+    )
+  }
   return (
     <div className='px-4 flex-1 overflow-auto'>
-       
-       {!loading &&
-				messages.length > 0 &&
-				messages.map((message, idx) => (
-						<Message key={message._id || idx} message={message} />
-				))}
-			
-      {loading && [...Array(3)].map((_, idx) => <MessageSkeleton key={`skeleton-${idx}`} />)}
-			
-      {!loading && messages.length === 0 && (
-				<p className='text-center'>Send a message to start the conversation</p>
-			)}
+
+      {messages.length > 0 && messages.map((message, idx) => (
+        <Message key={message._id || idx} message={message} />
+      ))}
+
+      {/* {loading && [...Array(3)].map((_, idx) => <MessageSkeleton key={`skeleton-${idx}`} />)} */}
+
+      {messages.length === 0 && (
+        <p className='text-center'>Send a message to start the conversation</p>
+      )}
 
       {/* Mostrar PDFs relacionados */}
       {/* {!loading && pdfUrls.length > 0 && (
@@ -42,16 +57,3 @@ const Messages = () => {
 }
 
 export default Messages;
-
-// const Messages = () => {
-//   return (
-//     <div className='px-4 flex-1 overflow-auto'>
-//       <Message/>
-//       <Message/>
-//       <Message/>
-//       <Message/>
-//       <Message/>
-//       <Message/>
-//     </div>
-//   )
-// }
