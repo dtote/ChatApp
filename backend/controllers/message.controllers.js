@@ -16,12 +16,12 @@ const axiosRetry = async (url, data, retries = 3) => {
   }
 };
 
-const signWithRetry = (data) => axiosRetry('http://localhost:5001/sign', data);
-const encryptWithRetry = (data) => axiosRetry('http://localhost:5001/encrypt', data);
-const decryptWithRetry = (data) => axiosRetry('http://localhost:5001/decrypt', data);
-const verifyWithRetry = (data) => axiosRetry('http://localhost:5001/verify', data);
-const bulkDecryptResponse = (data) => axiosRetry('http://localhost:5001/bulkDecrypt', data);
-const bulkVerifyResponse = (data) => axiosRetry('http://localhost:5001/bulkVerify', data);
+const signWithRetry = (data) => axiosRetry('http://localhost:5003/sign', data);
+const encryptWithRetry = (data) => axiosRetry('http://localhost:5003/encrypt', data);
+const decryptWithRetry = (data) => axiosRetry('http://localhost:5003/decrypt', data);
+const verifyWithRetry = (data) => axiosRetry('http://localhost:5003/verify', data);
+const bulkDecryptResponse = (data) => axiosRetry('http://localhost:5003/bulkDecrypt', data);
+const bulkVerifyResponse = (data) => axiosRetry('http://localhost:5003/bulkVerify', data);
 
 export const sendMessage = async (req, res) => {
   try {

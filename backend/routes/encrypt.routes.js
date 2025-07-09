@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
 
   try {
     // Send a request to the Python notebook
-    const encryptionResponse = await axios.post('http://localhost:5001/encrypt', {
+    const encryptionResponse = await axios.post('http://localhost:5003/encrypt', {
       kem_name: kemName,
       message,
       public_key: receiverPublicKey,

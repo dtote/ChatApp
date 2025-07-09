@@ -19,80 +19,80 @@ const dynamicStorage = new CloudinaryStorage({
   params: async (req, file) => {
     let resourceType = 'auto';
     const mime = file.mimetype;
-  
+
     if (mime.startsWith('image/')) resourceType = 'image';
     else if (mime.startsWith('video/')) resourceType = 'video';
     else if (mime === 'application/pdf') resourceType = 'raw';
-  
+
     const config = {
       folder: 'chat_uploads',
       resource_type: resourceType,
       public_id: file.fieldname + '-' + Date.now(),
       access_mode: 'public'
     };
-  
+
     // Solo incluir allowed_formats si no es raw
     if (resourceType !== 'raw') {
       config.allowed_formats = ['jpg', 'png', 'pdf', 'mp4'];
     }
-  
+
     return config;
   }
-  
+
 });
 
 const upload = multer({ storage: dynamicStorage });
 
 // 1. Crear una nueva comunidad
 router.post('/', async (req, res) => {
-    const { name, description, image } = req.body;
-  
-    try {
-      // Obtener las claves públicas y privadas generadas por Flask
-      const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
-        kem_name: "ML-KEM-512",
-      });
+  const { name, description, image } = req.body;
 
-      const dsaResponse = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
-        ml_dsa_variant: "ML-DSA-44",
-      });
-  
-      const { public_key: public_key2, private_key: private_key2 } = dsaResponse.data;
-      
-      
-      if (!keys || !keys.public_key || !keys.secret_key) {
-        return res.status(500).json({ error: "Error generating keys" });
-      }
+  try {
+    // Obtener las claves públicas y privadas generadas por Flask
+    const { data: keys } = await axios.post('http://localhost:5003/generate_keys', {
+      kem_name: "ML-KEM-512",
+    });
 
-      const users = await User.find(); 
-      const memberIds = users.map(user => user._id);  
-      
-      const newCommunity = new Community({
-        name,
-        description,
-        image,
-        publicKey: keys.public_key, 
-        privateKey: keys.secret_key,   
-        publicKeyDSA: public_key2,
-        privateKeyDSA: private_key2,
-        members: memberIds
-      });
+    const dsaResponse = await axios.post('http://localhost:5003/generate_ml_dsa_keys', {
+      ml_dsa_variant: "ML-DSA-44",
+    });
 
-      await newCommunity.save();
-      res.status(201).json(newCommunity);
-    } catch (error) {
-      console.error('Error in creating community:', error); // Agrega esta línea
-      res.status(500).json({ message: 'Error creating community', error });
+    const { public_key: public_key2, private_key: private_key2 } = dsaResponse.data;
+
+
+    if (!keys || !keys.public_key || !keys.secret_key) {
+      return res.status(500).json({ error: "Error generating keys" });
     }
-  });
+
+    const users = await User.find();
+    const memberIds = users.map(user => user._id);
+
+    const newCommunity = new Community({
+      name,
+      description,
+      image,
+      publicKey: keys.public_key,
+      privateKey: keys.secret_key,
+      publicKeyDSA: public_key2,
+      privateKeyDSA: private_key2,
+      members: memberIds
+    });
+
+    await newCommunity.save();
+    res.status(201).json(newCommunity);
+  } catch (error) {
+    console.error('Error in creating community:', error); // Agrega esta línea
+    res.status(500).json({ message: 'Error creating community', error });
+  }
+});
 
 // 2. Obtener todas las comunidades
 router.get('/', async (req, res) => {
   try {
-      const communities = await Community.find().populate('members admins messages');
-      res.status(200).json(communities);
+    const communities = await Community.find().populate('members admins messages');
+    res.status(200).json(communities);
   } catch (error) {
-      res.status(500).json({ message: 'Error fetching communities', error });
+    res.status(500).json({ message: 'Error fetching communities', error });
   }
 });
 
@@ -101,13 +101,13 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-      const community = await Community.findById(id).populate('members admins messages');
-      if (!community) {
-          return res.status(404).json({ message: 'Community not found' });
-      }
-      res.status(200).json(community);
+    const community = await Community.findById(id).populate('members admins messages');
+    if (!community) {
+      return res.status(404).json({ message: 'Community not found' });
+    }
+    res.status(200).json(community);
   } catch (error) {
-      res.status(500).json({ message: 'Error fetching community', error });
+    res.status(500).json({ message: 'Error fetching community', error });
   }
 });
 
@@ -124,8 +124,8 @@ const axiosRetry = async (url, data, retries = 3) => {
 };
 
 
-const bulkDecryptResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkDecrypt', data);
-const bulkVerifyResponse = (data) => axiosRetry('https://kyber-api-1.onrender.com/bulkVerify', data);
+const bulkDecryptResponse = (data) => axiosRetry('http://localhost:5003/bulkDecrypt', data);
+const bulkVerifyResponse = (data) => axiosRetry('http://localhost:5003/bulkVerify', data);
 
 router.get('/:id/messages', async (req, res) => {
   const { id: communityId } = req.params;
@@ -193,19 +193,19 @@ router.post('/:id/join', async (req, res) => {
   const { userId } = req.body; // Asegúrate de que el ID del usuario se envía en el cuerpo
 
   try {
-      const community = await Community.findByIdAndUpdate(
-          id,
-          { $addToSet: { members: userId } }, // Usa $addToSet para evitar duplicados
-          { new: true }
-      );
+    const community = await Community.findByIdAndUpdate(
+      id,
+      { $addToSet: { members: userId } }, // Usa $addToSet para evitar duplicados
+      { new: true }
+    );
 
-      if (!community) {
-          return res.status(404).json({ message: 'Community not found' });
-      }
+    if (!community) {
+      return res.status(404).json({ message: 'Community not found' });
+    }
 
-      res.status(200).json(community);
+    res.status(200).json(community);
   } catch (error) {
-      res.status(500).json({ message: 'Error joining community', error });
+    res.status(500).json({ message: 'Error joining community', error });
   }
 });
 
@@ -215,19 +215,19 @@ router.post('/:id/admins', async (req, res) => {
   const { userId } = req.body; // ID del usuario que se convertirá en administrador
 
   try {
-      const community = await Community.findByIdAndUpdate(
-          id,
-          { $addToSet: { admins: userId } },
-          { new: true }
-      );
+    const community = await Community.findByIdAndUpdate(
+      id,
+      { $addToSet: { admins: userId } },
+      { new: true }
+    );
 
-      if (!community) {
-          return res.status(404).json({ message: 'Community not found' });
-      }
+    if (!community) {
+      return res.status(404).json({ message: 'Community not found' });
+    }
 
-      res.status(200).json(community);
+    res.status(200).json(community);
   } catch (error) {
-      res.status(500).json({ message: 'Error adding admin', error });
+    res.status(500).json({ message: 'Error adding admin', error });
   }
 });
 
@@ -243,7 +243,7 @@ router.post('/:id/messages', protectRoute, upload.single('file'), async (req, re
     if (!community) return res.status(404).json({ error: 'Community not found' });
 
     // Firmar el mensaje
-    const signResponse = await axios.post('https://kyber-api-1.onrender.com/sign', {
+    const signResponse = await axios.post('http://localhost:5003/sign', {
       message,
       ml_dsa_variant: "ML-DSA-44",
       private_key: req.user.secretKeyDSA,
@@ -252,7 +252,7 @@ router.post('/:id/messages', protectRoute, upload.single('file'), async (req, re
     const { signature } = signResponse.data;
 
     // Cifrar el mensaje
-    const encryptionResponse = await axios.post('https://kyber-api-1.onrender.com/encrypt', {
+    const encryptionResponse = await axios.post('http://localhost:5003/encrypt', {
       kem_name: "ML-KEM-512",
       message: message,
       public_key: community.publicKey,
@@ -276,7 +276,7 @@ router.post('/:id/messages', protectRoute, upload.single('file'), async (req, re
     await Promise.all([newMessage.save(), community.save()]);
 
     // Desencriptar para enviar a sockets
-    const decryptionResponse = await axios.post('https://kyber-api-1.onrender.com/decrypt', {
+    const decryptionResponse = await axios.post('http://localhost:5003/decrypt', {
       kem_name: "ML-KEM-512",
       ciphertext: ciphertext,
       shared_secret: shared_secret,
@@ -320,19 +320,19 @@ router.post('/:id/leave', async (req, res) => {
   const { userId } = req.body; // Asegúrate de que el ID del usuario se envía en el cuerpo
 
   try {
-      const community = await Community.findByIdAndUpdate(
-          id,
-          { $pull: { members: userId } }, // Usa $pull para eliminar al usuario
-          { new: true }
-      );
+    const community = await Community.findByIdAndUpdate(
+      id,
+      { $pull: { members: userId } }, // Usa $pull para eliminar al usuario
+      { new: true }
+    );
 
-      if (!community) {
-          return res.status(404).json({ message: 'Community not found' });
-      }
+    if (!community) {
+      return res.status(404).json({ message: 'Community not found' });
+    }
 
-      res.status(200).json(community);
+    res.status(200).json(community);
   } catch (error) {
-      res.status(500).json({ message: 'Error leaving community', error });
+    res.status(500).json({ message: 'Error leaving community', error });
   }
 });
 
@@ -341,14 +341,14 @@ router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-      const community = await Community.findByIdAndDelete(id);
-      if (!community) {
-          return res.status(404).json({ message: 'Community not found' });
-      }
+    const community = await Community.findByIdAndDelete(id);
+    if (!community) {
+      return res.status(404).json({ message: 'Community not found' });
+    }
 
-      res.status(200).json({ message: 'Community deleted successfully' });
+    res.status(200).json({ message: 'Community deleted successfully' });
   } catch (error) {
-      res.status(500).json({ message: 'Error deleting community', error });
+    res.status(500).json({ message: 'Error deleting community', error });
   }
 });
 
