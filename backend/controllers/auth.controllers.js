@@ -42,17 +42,11 @@ export const signupFacial = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
-      kem_name: "ML-KEM-512",
-    });
+    const { data: keys } = await axios.post('http://localhost:5003/generate_keys', { kem_name: "ML-KEM-512" });
 
-    const { data: dsaKeys } = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
-      ml_dsa_variant: "ML-DSA-44",
-    });
+    const { data: dsaKeys } = await axios.post('http://localhost:5003/generate_ml_dsa_keys', { ml_dsa_variant: "ML-DSA-44" });
 
-    let profilePic = gender === "male"
-      ? `https://avatar.iran.liara.run/public/boy?username=${username}`
-      : `https://avatar.iran.liara.run/public/girl?username=${username}`;
+    let profilePic = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(username)}`;
 
     const newUser = new User({
       username,
@@ -70,7 +64,13 @@ export const signupFacial = async (req, res) => {
     const token = generateTokenAndSetCookie(newUser._id, res);
     await newUser.save();
 
-    res.status(201).json({ message: 'User registered successfully', token });
+    res.status(201).json({
+      _id: newUser._id,
+      username: newUser.username,
+      profilePic: newUser.profilePic,
+      message: 'User registered successfully',
+      token
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -97,9 +97,7 @@ export const signup = async (req, res) => {
     const hashedPassword = await bcryptjs.hash(password, salt);
 
     // Ruta predeterminada de imagen de perfil si no se proporciona ninguna
-    let profilePic = gender === "male"
-      ? `https://avatar.iran.liara.run/public/boy?username=${username}`
-      : `https://avatar.iran.liara.run/public/girl?username=${username}`;
+    let profilePic = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(username)}`;
 
     // Si se envió una imagen, actualizar la ruta
     if (profilePicFile) {
@@ -107,11 +105,11 @@ export const signup = async (req, res) => {
     }
 
     // Obtener claves públicas y privadas generadas por Flask
-    const { data: keys } = await axios.post('https://kyber-api-1.onrender.com/generate_keys', {
+    const { data: keys } = await axios.post('http://localhost:5003/generate_keys', {
       kem_name: "ML-KEM-512",
     });
 
-    const dsaResponse = await axios.post('https://kyber-api-1.onrender.com/generate_ml_dsa_keys', {
+    const dsaResponse = await axios.post('http://localhost:5003/generate_ml_dsa_keys', {
       ml_dsa_variant: "ML-DSA-44",
     });
 
@@ -138,10 +136,7 @@ export const signup = async (req, res) => {
       res.status(201).json({
         _id: newUser._id,
         username: newUser.username,
-        email: newUser.email,
         profilePic: newUser.profilePic,
-        publicKey: newUser.publicKey,
-        publicKeyDSA: newUser.publicKeyDSA,
         message: "User registered successfully",
         token
       });
@@ -190,10 +185,8 @@ export const login = async (req, res) => {
     res.status(200).json({
       _id: user._id,
       username: user.username,
-      email: user.email,
       profilePic: user.profilePic,
       message: "User logged in successfully",
-      publicKey: user.publicKey,
       token,
       sessionId: newSession._id,
     });
@@ -301,13 +294,10 @@ export const loginFacial = async (req, res) => {
       return res.status(200).json({
         _id: matchedUser._id,
         username: matchedUser.username,
-        email: matchedUser.email,
         profilePic: matchedUser.profilePic,
         message: "User logged in successfully",
-        publicKey: matchedUser.publicKey,
         token,
         sessionId: newSession._id,
-
       });
     } else {
       return res.status(401).json({ message: 'Face authentication failed' });
