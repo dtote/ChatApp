@@ -37,7 +37,7 @@ export default defineConfig({
   // base: '/ChatAppNew16/',  // Reemplaza esto con el nombre de tu repositorio
   base: '/',
   build: {
-    outDir: 'build',
+    outDir: 'dist',
     assetsDir: 'assets',
   },
 });
