@@ -1,5 +1,7 @@
 import express from 'express';
 import axios from 'axios';
+import { ENV_CONFIG } from '../config/environment.js';
+
 const router = express.Router();
 
 router.post('/', async (req, res) => {
@@ -13,7 +15,7 @@ router.post('/', async (req, res) => {
     }
 
     // Hacer la solicitud al servicio de descifrado en el backend (Flask en este caso)
-    const response = await axios.post('http://localhost:5003/decrypt', {
+    const response = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/decrypt`, {
       kem_name,  // El nombre de la clave de cifrado (como 'ML-KEM-512')
       ciphertext, // El mensaje cifrado
       shared_secret, // La clave secreta compartida

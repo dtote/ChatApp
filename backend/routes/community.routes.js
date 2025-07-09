@@ -9,6 +9,7 @@ import cloudinary from '../utils/cloudinary.js';
 import { getReceiverSocketId } from "../socket/socket.js";
 import { io } from "../socket/socket.js";
 import User from "../models/user.model.js";
+import { ENV_CONFIG } from '../config/environment.js';
 
 const router = express.Router();
 
@@ -49,11 +50,11 @@ router.post('/', async (req, res) => {
 
   try {
     // Obtener las claves públicas y privadas generadas por Flask
-    const { data: keys } = await axios.post('http://localhost:5003/generate_keys', {
+    const { data: keys } = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/generate_keys`, {
       kem_name: "ML-KEM-512",
     });
 
-    const dsaResponse = await axios.post('http://localhost:5003/generate_ml_dsa_keys', {
+    const dsaResponse = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/generate_ml_dsa_keys`, {
       ml_dsa_variant: "ML-DSA-44",
     });
 
@@ -124,8 +125,8 @@ const axiosRetry = async (url, data, retries = 3) => {
 };
 
 
-const bulkDecryptResponse = (data) => axiosRetry('http://localhost:5003/bulkDecrypt', data);
-const bulkVerifyResponse = (data) => axiosRetry('http://localhost:5003/bulkVerify', data);
+const bulkDecryptResponse = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkDecrypt`, data);
+const bulkVerifyResponse = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkVerify`, data);
 
 router.get('/:id/messages', async (req, res) => {
   const { id: communityId } = req.params;
@@ -243,7 +244,7 @@ router.post('/:id/messages', protectRoute, upload.single('file'), async (req, re
     if (!community) return res.status(404).json({ error: 'Community not found' });
 
     // Firmar el mensaje
-    const signResponse = await axios.post('http://localhost:5003/sign', {
+    const signResponse = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/sign`, {
       message,
       ml_dsa_variant: "ML-DSA-44",
       private_key: req.user.secretKeyDSA,
@@ -252,7 +253,7 @@ router.post('/:id/messages', protectRoute, upload.single('file'), async (req, re
     const { signature } = signResponse.data;
 
     // Cifrar el mensaje
-    const encryptionResponse = await axios.post('http://localhost:5003/encrypt', {
+    const encryptionResponse = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/encrypt`, {
       kem_name: "ML-KEM-512",
       message: message,
       public_key: community.publicKey,
@@ -276,7 +277,7 @@ router.post('/:id/messages', protectRoute, upload.single('file'), async (req, re
     await Promise.all([newMessage.save(), community.save()]);
 
     // Desencriptar para enviar a sockets
-    const decryptionResponse = await axios.post('http://localhost:5003/decrypt', {
+    const decryptionResponse = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/decrypt`, {
       kem_name: "ML-KEM-512",
       ciphertext: ciphertext,
       shared_secret: shared_secret,

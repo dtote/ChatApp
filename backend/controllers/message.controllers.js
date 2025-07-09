@@ -4,6 +4,7 @@ import { getReceiverSocketId, io } from "../socket/socket.js";
 import axios from 'axios';
 import User from "../models/user.model.js";
 import { logDetailedError } from "../utils/logErrorDetails.js";
+import { ENV_CONFIG } from "../config/environment.js";
 
 const axiosRetry = async (url, data, retries = 3) => {
   for (let i = 0; i < retries; i++) {
@@ -16,12 +17,12 @@ const axiosRetry = async (url, data, retries = 3) => {
   }
 };
 
-const signWithRetry = (data) => axiosRetry('http://localhost:5003/sign', data);
-const encryptWithRetry = (data) => axiosRetry('http://localhost:5003/encrypt', data);
-const decryptWithRetry = (data) => axiosRetry('http://localhost:5003/decrypt', data);
-const verifyWithRetry = (data) => axiosRetry('http://localhost:5003/verify', data);
-const bulkDecryptResponse = (data) => axiosRetry('http://localhost:5003/bulkDecrypt', data);
-const bulkVerifyResponse = (data) => axiosRetry('http://localhost:5003/bulkVerify', data);
+const signWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/sign`, data);
+const encryptWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/encrypt`, data);
+const decryptWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/decrypt`, data);
+const verifyWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/verify`, data);
+const bulkDecryptResponse = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkDecrypt`, data);
+const bulkVerifyResponse = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkVerify`, data);
 
 export const sendMessage = async (req, res) => {
   try {

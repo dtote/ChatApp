@@ -3,6 +3,7 @@ import express from "express";
 import axios from "axios";
 import Conversation from "../models/conversation.model.js";
 import Community from "../models/community.model.js";
+import { ENV_CONFIG } from "../config/environment.js";
 
 dotenv.config();
 const router = express.Router();
@@ -55,7 +56,7 @@ router.post("/", async (req, res) => {
     }));
 
     // 🔵 Llamamos a la nueva API bulkDecrypt
-    const decryptionResponse = await axios.post("http://localhost:5003/bulkDecrypt", {
+    const decryptionResponse = await axios.post(` ${ENV_CONFIG.PQCLEAN_API_URL}/bulkDecrypt`, {
       kem_name: selectedKeySize || "ML-KEM-512",
       messages: messagesForDecryption,
     });

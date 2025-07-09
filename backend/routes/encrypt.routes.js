@@ -1,5 +1,5 @@
-
 import express from 'express';
+import { ENV_CONFIG } from '../config/environment.js';
 
 
 const router = express.Router();
@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
 
   try {
     // Send a request to the Python notebook
-    const encryptionResponse = await axios.post('http://localhost:5003/encrypt', {
+    const encryptionResponse = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/encrypt`, {
       kem_name: kemName,
       message,
       public_key: receiverPublicKey,

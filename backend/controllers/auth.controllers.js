@@ -9,6 +9,7 @@ import faceapi from 'face-api.js';
 import { createCanvas, loadImage } from 'canvas';
 import { UAParser } from 'ua-parser-js';
 import { JSDOM } from 'jsdom';
+import { ENV_CONFIG } from "../config/environment.js";
 const upload = multer({ dest: 'uploads/' }); // Guardar imágenes en el directorio uploads
 
 // Configurar entorno DOM falso en Node.js
@@ -42,9 +43,9 @@ export const signupFacial = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const { data: keys } = await axios.post('http://localhost:5003/generate_keys', { kem_name: "ML-KEM-512" });
+    const { data: keys } = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/generate_keys`, { kem_name: "ML-KEM-512" });
 
-    const { data: dsaKeys } = await axios.post('http://localhost:5003/generate_ml_dsa_keys', { ml_dsa_variant: "ML-DSA-44" });
+    const { data: dsaKeys } = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/generate_ml_dsa_keys`, { ml_dsa_variant: "ML-DSA-44" });
 
     let profilePic = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(username)}`;
 
@@ -105,11 +106,11 @@ export const signup = async (req, res) => {
     }
 
     // Obtener claves públicas y privadas generadas por Flask
-    const { data: keys } = await axios.post('http://localhost:5003/generate_keys', {
+    const { data: keys } = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/generate_keys`, {
       kem_name: "ML-KEM-512",
     });
 
-    const dsaResponse = await axios.post('http://localhost:5003/generate_ml_dsa_keys', {
+    const dsaResponse = await axios.post(`${ENV_CONFIG.PQCLEAN_API_URL}/generate_ml_dsa_keys`, {
       ml_dsa_variant: "ML-DSA-44",
     });
 
