@@ -6,7 +6,7 @@ html,
 body {
 	height: 100%;
 	width: 100%;
-	background: url("/bg_4.jpg") no-repeat center center fixed;
+	background: url("/bg_health.jpg") no-repeat center center fixed;
 	background-size: cover;
 }
 
