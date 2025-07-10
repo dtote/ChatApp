@@ -15,10 +15,9 @@ export const SocketContextProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (authUser) {
-			// La URL del servidor deberia ser la raíz del servidor donde está corriendo tu backend
-			// Aunque en este caso vamos a usar localhost para desarrollo
-			// const socketURI = ""
-			const socket = io("http://localhost:4000", {
+			const socketURI = process.env.NODE_ENV === 'production' ? window.location.origin : "http://localhost:4000"
+
+			const socket = io(socketURI, {
 				query: {
 					userId: authUser._id,
 				},
