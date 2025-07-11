@@ -36,6 +36,14 @@ const useSignup = () => {
       if (data.error) {
         toast.error(data.error);
       } else {
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+
+        if (data.sessionId) {
+          localStorage.setItem('sessionId', data.sessionId);
+        }
+
         localStorage.setItem('chat-user', JSON.stringify(data));
         setAuthUser(data);
         toast.success('Signup successful');

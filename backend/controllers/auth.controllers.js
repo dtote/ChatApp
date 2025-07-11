@@ -65,12 +65,27 @@ export const signupFacial = async (req, res) => {
     const token = generateTokenAndSetCookie(newUser._id, res);
     await newUser.save();
 
+    const userAgent = req.headers['user-agent'] || '';
+    const parser = new UAParser(userAgent);
+    const result = parser.getResult();
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+
+    const newSession = await Session.create({
+      userId: newUser._id,
+      deviceInfo: userAgent,
+      os: result.os.name,
+      browser: result.browser.name,
+      ip,
+      country: "Unknown"
+    });
+
     res.status(201).json({
       _id: newUser._id,
       username: newUser.username,
       profilePic: newUser.profilePic,
       message: 'User registered successfully',
-      token
+      token,
+      sessionId: newSession._id,
     });
   } catch (error) {
     console.error(error);
@@ -134,12 +149,27 @@ export const signup = async (req, res) => {
       const token = generateTokenAndSetCookie(newUser._id, res);
       await newUser.save();
 
+      const userAgent = req.headers['user-agent'] || '';
+      const parser = new UAParser(userAgent);
+      const result = parser.getResult();
+      const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+
+      const newSession = await Session.create({
+        userId: newUser._id,
+        deviceInfo: userAgent,
+        os: result.os.name,
+        browser: result.browser.name,
+        ip,
+        country: "Unknown"
+      });
+
       res.status(201).json({
         _id: newUser._id,
         username: newUser.username,
         profilePic: newUser.profilePic,
         message: "User registered successfully",
-        token
+        token,
+        sessionId: newSession._id,
       });
     } else {
       res.status(400).json({ error: "Invalid user data" });
