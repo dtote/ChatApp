@@ -1,0 +1,45 @@
+name: Keep Services Alive
+
+on:
+  schedule:
+    - cron: '*/30 6-23 * * *'  # Cada 30 minutos, 6AM-11PM UTC, Lunes a Domingo
+  workflow_dispatch:  # Permite ejecutar manualmente desde GitHub
+
+jobs: 
+  ping-services:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping ChatApp Service
+        run: |
+          echo "🔄 Pinging ChatApp service..."
+          response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 15 https://mhealth-chatapp-production.onrender.com/api/auth/health || echo "000")
+          echo "Health check response: $response"
+
+          if [ "$response" = "200" ]; then
+            echo "✅ ChatApp health check successful. Service is up and running."
+          else
+            echo "⚠️ Health check failed, trying main endpoint..."
+            main_response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 15 https://mhealth-chatapp-production.onrender.com/ || echo "000")
+            echo "Main endpoint response: $main_response"
+          fi
+
+      - name: Ping PQClean API Service
+        run: |
+          echo "🔄 Pinging PQClean API service..."
+          response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 20 https://pqclean-api-production.onrender.com/health || echo "000")
+          echo "PQClean API response: $response"
+
+          if [ "$response" = "200" ]; then
+            echo "✅ PQClean API health check successful. Service is up and running."
+          else
+            echo "⚠️ PQClean API health check failed, trying main endpoint..."
+            main_response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 20 https://pqclean-api-production.onrender.com/ || echo "000")
+            echo "Main endpoint response: $main_response"
+          fi
+      - name: Summary
+        run: |
+          echo "📊 Keep-alive summary:"
+          echo "⏰ Completed at: $(date)"
+          echo "🔄 Next ping scheduled in 30 minutes"
+
