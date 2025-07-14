@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BsSend } from "react-icons/bs";
 import { FaPlus, FaTimes, FaFile, FaImage, FaUser, FaPoll } from "react-icons/fa";
 import useSendMessage from "../../hooks/useSendMessage";
@@ -15,6 +15,16 @@ const MessageInput = () => {
   const [showPollForm, setShowPollForm] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
+  const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  }
+
+  const handleImageClick = () => {
+    imageInputRef.current?.click();
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,20 +98,14 @@ const MessageInput = () => {
           <div className="absolute custom-popup bottom-[50px] bg-gray-700 text-white rounded-lg shadow-lg p-4 w-60 z-50">
             <ul>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200"
-                onClick={() => {
-                  document.getElementById("file-input").click();
-                }}>
+                onClick={handleFileClick}>
                 <FaFile className="mr-4 text-blue-500 text-xl" />
                 <span className="group-hover:text-gray-400 text-lg">Archivo</span>
-                <input id="file-input" type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
               </li>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200"
-                onClick={() => {
-                  document.getElementById("image-input").click();
-                }}>
+                onClick={handleImageClick}>
                 <FaImage className="mr-4 text-blue-400 text-xl" />
                 <span className="group-hover:text-gray-400 text-lg">Fotos</span>
-                <input id="image-input" type="file" accept="image/*,application/pdf" onChange={handleFileChange} className="hidden" />
               </li>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200"
                 onClick={() => setShowPollForm(true)}>
@@ -111,6 +115,12 @@ const MessageInput = () => {
             </ul>
           </div>
         )}
+
+        {/* Input ocultos fuera del menú */}
+        <input ref={fileInputRef} type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
+
+        <input ref={imageInputRef} type="file" accept="image/*,application/pdf" onChange={handleFileChange} className="hidden" />
+
         {showPollForm && (
           <div className="absolute bottom-[270px] bg-gray-800 text-white rounded-lg shadow-lg p-4 w-full max-w-md z-50">
             <h3 className="text-lg font-bold mb-2">Create Poll</h3>
