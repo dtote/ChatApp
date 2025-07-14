@@ -87,22 +87,24 @@ const MessageInput = () => {
         {showPopup && !showPollForm && (
           <div className="absolute custom-popup bottom-[50px] bg-gray-700 text-white rounded-lg shadow-lg p-4 w-60 z-50">
             <ul>
-              <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
-                <label htmlFor="file-input" className="flex items-center cursor-pointer">
-                  <FaFile className="mr-4 text-blue-500 text-xl" />
-                  <span className="group-hover:text-gray-400 text-lg">Archivo</span>
-                </label>
+              <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200"
+                onClick={() => {
+                  document.getElementById("file-input").click();
+                }}>
+                <FaFile className="mr-4 text-blue-500 text-xl" />
+                <span className="group-hover:text-gray-400 text-lg">Archivo</span>
                 <input id="file-input" type="file" accept=".pdf" onChange={handleFileChange} className="hidden" />
               </li>
-              <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200">
-                <label htmlFor="image-input" className="flex items-center cursor-pointer">
-                  <FaImage className="mr-4 text-blue-400 text-xl" />
-                  <span className="group-hover:text-gray-400 text-lg">Fotos</span>
-                </label>
+              <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200"
+                onClick={() => {
+                  document.getElementById("image-input").click();
+                }}>
+                <FaImage className="mr-4 text-blue-400 text-xl" />
+                <span className="group-hover:text-gray-400 text-lg">Fotos</span>
                 <input id="image-input" type="file" accept="image/*,application/pdf" onChange={handleFileChange} className="hidden" />
               </li>
               <li className="flex items-center p-4 hover:bg-gray-600 cursor-pointer group transition-all duration-200"
-                  onClick={() => setShowPollForm(true)}>
+                onClick={() => setShowPollForm(true)}>
                 <FaPoll className="mr-4 text-yellow-500 text-xl" />
                 <span className="group-hover:text-gray-400 text-lg">Encuesta</span>
               </li>
