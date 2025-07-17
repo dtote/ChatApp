@@ -168,8 +168,8 @@ const Login = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-w-96 mx-auto relative">
-      <div className="w-full p-6 rounded-lg shadow-md bg-gray-400 bg-clip-padding backdrop-filter backdrop-blur-lg bg-opacity-0 relative z-10">
-        <h1 className="text-3xl font-semibold text-center text-gray-300">
+      <div className="w-full p-6 rounded-lg shadow-lg bg-white border border-gray-200 relative z-10">
+        <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">
           Login <span className="text-blue-500">ChatApp</span>
         </h1>
 
@@ -178,12 +178,12 @@ const Login = () => {
             <>
               <div>
                 <label className="label p-2">
-                  <span className="text-base label-text">Username</span>
+                  <span className="text-base label-text text-gray-700">Username</span>
                 </label>
                 <input
                   type="text"
                   placeholder="Enter your username"
-                  className="w-full input input-bordered h-10"
+                  className="w-full input input-bordered h-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -191,67 +191,114 @@ const Login = () => {
 
               <div>
                 <label className="label">
-                  <span className="text-base label-text">Password</span>
+                  <span className="text-base label-text text-gray-700">Password</span>
                 </label>
                 <input
                   type="password"
                   placeholder="Enter your password"
-                  className="w-full input input-bordered h-10"
+                  className="w-full input input-bordered h-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </>
           ) : (
-            <div className="relative w-full mt-4">
-              <label className="label p-2">
-                <span className="text-base label-text">Facial Recognition Login</span>
-              </label>
-              <div className="relative w-full sm:max-w-sm aspect-[4/3]">
+            <div className="relative w-full mt-6">
+              <div className="text-center mb-4">
+                <span className="text-lg font-medium text-gray-700">Facial Recognition</span>
+                <p className="text-sm text-gray-500 mt-1">Position your face in the center</p>
+              </div>
+              
+              <div className="relative w-full max-w-xs aspect-[4/3] mx-auto mb-6">
                 <video
                   ref={videoRef}
                   autoPlay
                   muted
                   onPlay={detectFaceLoop}
-                  className="rounded-lg w-full h-full object-cover bg-black"
+                  className="rounded-2xl w-full h-full object-cover bg-gray-100"
                 />
-                <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
-                <div className="absolute border-4 border-green-400 rounded-md
-                  w-[60%] aspect-square top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-                  z-20 pointer-events-none max-w-xs" />
-                <div className="absolute bottom-2 left-0 right-0 px-4">
-                  <progress className="progress w-full" value={detectionProgress} max="100"></progress>
-                </div>
+                <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full rounded-2xl" />
+                
+                {/* Marco de detección más sutil */}
+                <div className="absolute border border-blue-300 rounded-xl
+                  w-[75%] aspect-square top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+                  z-20 pointer-events-none" />
+                
+                {/* Indicador de estado */}
+                {faceDetected && (
+                  <div className="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                    ✓ Detected
+                  </div>
+                )}
               </div>
-              <button type="button" onClick={startVideo} className="btn btn-block mt-4">
-                Activate Camera
-              </button>
-              <button type="button" onClick={stopVideo} className="btn btn-block btn-outline btn-error mt-2">
-                Stop Camera
-              </button>
+              
+              {/* Barra de progreso simple */}
+              <div className="mb-6">
+                <div className="w-full bg-gray-200 rounded-full h-1">
+                  <div 
+                    className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                    style={{ width: `${detectionProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  {detectionProgress === 100 ? 'Face detected successfully!' : 'Detecting face...'}
+                </p>
+              </div>
+              
+              {/* Botones simplificados */}
+              <div className="space-y-3">
+                <button 
+                  type="button" 
+                  onClick={startVideo} 
+                  className="w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                >
+                  Start Camera
+                </button>
+                <button 
+                  type="button" 
+                  onClick={stopVideo} 
+                  className="w-full py-2 px-4 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Stop Camera
+                </button>
+              </div>
             </div>
           )}
 
           <div>
-            <button className="btn btn-block btn-sm mt-2" disabled={loading || (isFaceLogin && !faceDetected)}>
-              {loading ? <span className="loading loading-spinner"></span> : 'Login'}
+            <button 
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mt-6 ${
+                faceDetected && !loading 
+                  ? 'bg-green-500 text-white hover:bg-green-600' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              disabled={loading || (isFaceLogin && !faceDetected)}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </div>
+              ) : (
+                'Login'
+              )}
             </button>
           </div>
 
-          <div className="flex justify-between mt-4">
-            <span
+          <div className="flex justify-between mt-6">
+            <button
               onClick={() => {
                 if (isFaceLogin) {
-                  stopVideo(); // Stop camera if active
+                  stopVideo();
                 }
                 setIsFaceLogin(!isFaceLogin);
               }}
-              className="cursor-pointer text-blue-600 hover:underline"
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
             >
-              {isFaceLogin ? 'Use username/password' : 'Use facial recognition'}
-            </span>
-            <Link to="/signup" className="text-sm hover:underline hover:text-blue-600">
-              Don't have an account?
+              {isFaceLogin ? '← Back to password login' : 'Try facial recognition'}
+            </button>
+            <Link to="/signup" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+              Create account
             </Link>
           </div>
         </form>
