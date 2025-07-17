@@ -42,22 +42,34 @@ const Conversations = () => {
 
   return (
     <div className="py-2 flex flex-col overflow-auto">
-      <div className="flex justify-around mb-4">
+      {/* Navigation buttons */}
+      <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
         <button
-          className={`btn ${view === 'conversations' ? 'btn-active' : ''}`}
+          className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
+            view === 'conversations'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
           onClick={() => setView('conversations')}
         >
-          {/* 👇 Texto para pantallas medianas/grandes, icono para pantallas pequeñas */}
-          <span className="hidden sm:inline">Conversations</span>
-          <span className="inline sm:hidden"><FaComments /></span>
+          <div className="flex items-center justify-center gap-2">
+            <FaComments className="w-4 h-4" />
+            <span className="hidden sm:inline">Conversations</span>
+          </div>
         </button>
 
         <button
-          className={`btn ${view === 'communities' ? 'btn-active' : ''}`}
+          className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
+            view === 'communities'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
           onClick={() => setView('communities')}
         >
-          <span className="hidden sm:inline">Communities</span>
-          <span className="inline sm:hidden"><FaUsers /></span>
+          <div className="flex items-center justify-center gap-2">
+            <FaUsers className="w-4 h-4" />
+            <span className="hidden sm:inline">Communities</span>
+          </div>
         </button>
       </div>
 
@@ -70,14 +82,18 @@ const Conversations = () => {
               lastIdx={idx === conversations.filteredUser.length - 1}
             />
           ))}
-          {loadingConversations && <span className="loading loading-spinner mx-auto"></span>}
+          {loadingConversations && (
+            <div className="flex justify-center py-4">
+              <span className="loading loading-spinner loading-md"></span>
+            </div>
+          )}
         </>
       )}
 
       {view === 'communities' && (
         <>
           {Array.isArray(communities) && communities.map((community, idx) => (
-            <div key={community._id} className="flex gap-2 items-center p-2 py-1 hover:bg-sky-500 rounded cursor-pointer"
+            <div key={community._id} className="flex gap-3 items-center p-3 hover:bg-blue-50 rounded-lg cursor-pointer transition-all duration-200"
               onClick={() => setSelectedConversation({
                 _id: community._id,
                 name: community.name,
@@ -86,31 +102,38 @@ const Conversations = () => {
               })}
             >
               <div className="avatar">
-                <div className="w-12 rounded-full">
-                  <img src={community.image} alt="community avatar" />
+                <div className="w-12 h-12 rounded-full ring-2 ring-gray-200">
+                  <img src={community.image} alt="community avatar" className="w-full h-full object-cover rounded-full" />
                 </div>
               </div>
-              <div className="flex flex-col flex-1">
-                <p className="font-bold text-gray-200">{community.name}</p>
-                <span className="text-sm text-gray-400">{community.description}</span>
+              <div className="flex flex-col flex-1 min-w-0">
+                <p className="font-semibold text-gray-800 truncate">{community.name}</p>
+                <span className="text-sm text-gray-500 truncate">{community.description}</span>
               </div>
             </div>
           ))}
-          {loadingCommunities && <span className="loading loading-spinner mx-auto"></span>}
+          {loadingCommunities && (
+            <div className="flex justify-center py-4">
+              <span className="loading loading-spinner loading-md"></span>
+            </div>
+          )}
 
           <div className="flex justify-center mt-4">
-            <button onClick={() => setShowForm(!showForm)} className="btn btn-circle bg-blue-600 hover:bg-blue-700 text-white text-lg">
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="btn btn-circle bg-blue-500 hover:bg-blue-600 text-white text-lg shadow-lg hover:shadow-xl transition-all duration-200"
+            >
               +
             </button>
           </div>
 
           {showForm && (
-            <div className="p-4 mt-2 bg-gray-800 rounded-lg">
+            <div className="p-4 mt-4 bg-gray-50 rounded-lg border border-gray-200">
               <input
                 type="text"
                 name="name"
                 placeholder="Community Name"
-                className="input input-bordered w-full mb-2"
+                className="input input-bordered w-full mb-3 bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 value={form.name}
                 onChange={handleInputChange}
               />
@@ -118,7 +141,7 @@ const Conversations = () => {
                 type="text"
                 name="description"
                 placeholder="Description"
-                className="input input-bordered w-full mb-2"
+                className="input input-bordered w-full mb-3 bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 value={form.description}
                 onChange={handleInputChange}
               />
@@ -126,7 +149,7 @@ const Conversations = () => {
                 type="text"
                 name="image"
                 placeholder="Image URL (optional)"
-                className="input input-bordered w-full mb-2"
+                className="input input-bordered w-full mb-3 bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 value={form.image}
                 onChange={handleInputChange}
               />
@@ -134,7 +157,7 @@ const Conversations = () => {
                 onClick={handleCreateCommunity}
                 className={`btn btn-primary w-full ${creating ? 'loading' : ''}`}
               >
-                Create
+                Create Community
               </button>
             </div>
           )}
