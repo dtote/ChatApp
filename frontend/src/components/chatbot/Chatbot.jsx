@@ -80,7 +80,7 @@ const ChatBot = () => {
   return (
     <>
       {/* Bot Floating Button */}
-      <div className="fixed top-1/2 right-[-40px] z-50 transform -translate-y-1/2 hover:right-4 transition-all duration-300">
+      <div className="fixed bottom-[-20px] right-[-40px] z-50 transform -translate-y-1/2 hover:right-4 transition-all duration-300">
         <button
           onClick={() => {
             toggleBot();
@@ -102,7 +102,7 @@ const ChatBot = () => {
 
       {/* Bot Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-4 w-80 max-h-[60vh] bg-white shadow-xl rounded-lg border flex flex-col overflow-hidden z-50">
+        <div className="fixed bottom-6 right-8 w-[500px] max-h-[80vh] bg-white shadow-xl rounded-lg border flex flex-col overflow-hidden z-50">
           <div className="flex justify-between items-center px-4 py-2 bg-gray-100 border-b">
             <span className="font-semibold">Assistant</span>
             <button onClick={toggleBot} className="text-lg font-bold">✕</button>
