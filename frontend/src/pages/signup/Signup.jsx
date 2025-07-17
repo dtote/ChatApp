@@ -183,7 +183,7 @@ const Signup = () => {
 
           <div className='md:col-span-2 relative'>
             <div className='flex flex-col items-center space-y-2'>
-              <button onClick={startVideo} type="button" className="btn btn-outline btn-info">
+              <button onClick={startVideo} type="button" className="btn btn-outline btn-primary">
                 Start Camera
               </button>
               <button onClick={stopVideo} type="button" className="btn btn-outline btn-error">
