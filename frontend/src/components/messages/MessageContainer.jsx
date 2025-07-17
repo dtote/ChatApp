@@ -28,34 +28,37 @@ const MessageContainer = () => {
       ) : (
         <>
           {/* Header */}
-          <div className="bg-slate-500 px-4 py-2 mb-2 flex justify-between items-center">
+          <div className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center flex-shrink-0">
             <div className="flex items-center">
-              <span className="label-text mr-1">To:</span>
+              <span className="text-gray-600 mr-2 font-medium">To:</span>
               {isCommunity ? (
-                selectedConversation.name
+                <span className="text-gray-800 font-semibold">{selectedConversation.name}</span>
               ) : (
-                <>
-                  {selectedConversation.username}
+                <div className="flex items-center">
+                  <span className="text-gray-800 font-semibold">{selectedConversation.username}</span>
                   <FaLock
-                    className="text-blue-400 ml-2 cursor-pointer"
+                    className="text-blue-500 ml-2 cursor-pointer hover:text-blue-600 transition-colors"
                     onClick={toggleEncryptionPanel}
                   />
-                </>
+                </div>
               )}
             </div>
           </div>
 
-
           {/* Verificación de Cifrado */}
-          {!isCommunity && isEncryptionVisible && <EncryptionVerification />}
+          {!isCommunity && isEncryptionVisible && (
+            <div className="flex-shrink-0">
+              <EncryptionVerification />
+            </div>
+          )}
 
-          {/* Messages */}
-          <div className="flex-grow overflow-auto">
+          {/* Messages - con altura mínima para asegurar que el input sea visible */}
+          <div className="flex-1 overflow-auto min-h-0">
             <Messages />
           </div>
 
-          {/* Message Input */}
-          <div className="mt-auto relative">
+          {/* Message Input - siempre visible en la parte inferior */}
+          <div className="flex-shrink-0 border-t border-gray-200 bg-white">
             <MessageInput />
           </div>
         </>
@@ -68,12 +71,40 @@ export default MessageContainer;
 
 const NoChatSelected = () => {
   const { authUser } = useAuthContext();
+
   return (
     <div className="flex items-center justify-center w-full h-full">
-      <div className="px-4 text-center sm:text-lg md:text-xl text-gray-200 font-semibold flex flex-col items-center gap-2">
-        <p>Welcome 👋 {authUser.username} ❄</p>
-        <p>Select a chat or a community to start messaging</p>
-        <TiMessages className="text-3xl md:text-6xl text-center" />
+      <div className="text-center max-w-md mx-auto px-6">
+        {/* Icono principal */}
+        <div className="mb-6">
+          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl">
+            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+            </svg>
+          </div>
+        </div>
+
+        {/* Mensaje de bienvenida */}
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          Welcome back, <span className="text-blue-600">{authUser?.username || 'User'}</span>! 👋
+        </h1>
+
+        {/* Subtítulo */}
+        <p className="text-lg text-gray-600 mb-8">
+          Ready to connect? Choose a conversation or join a community to start messaging.
+        </p>
+
+        {/* Indicadores visuales */}
+        <div className="flex justify-center space-x-4 text-gray-400">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-sm">Online</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span className="text-sm">Secure</span>
+          </div>
+        </div>
       </div>
     </div>
   );
