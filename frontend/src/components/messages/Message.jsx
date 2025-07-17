@@ -1,28 +1,39 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuthContext } from "../../context/AuthContext";
 import useConversation from "../../zustand/useConversation.js";
-import { useSocketContext } from "../../context/SocketContext"; 
-import { FaLock, FaLockOpen } from "react-icons/fa"; 
-import extractTime  from "../../utils/extractTime.js";
+import { useSocketContext } from "../../context/SocketContext";
+import { FaLock, FaLockOpen, FaDownload } from "react-icons/fa";
+import extractTime from "../../utils/extractTime.js";
 import useSecurity from '../../zustand/useSecurity.js';
 import axios from 'axios';
 import Picker from '@emoji-mart/react';
-import data from '@emoji-mart/data'; 
+import data from '@emoji-mart/data';
 import './Message.css';
 
 const checkUrlSafety = async (url, setUrlStatus) => {
-  const normalizedUrl = url.toLowerCase();
-  const isHttps = normalizedUrl.startsWith('https://');
-  const containsDangerousKeywords = ['troyano', 'malware', 'virus', 'phishing', 'scam'].some(keyword =>
-    normalizedUrl.includes(keyword)
-  );
-  const urlFormatValid = /^(https?:\/\/)?([\da-z.-]+\.[a-z.]{2,6})([/\w .-]*)*\/?$/.test(normalizedUrl);
-  const isSafe = isHttps && !containsDangerousKeywords && urlFormatValid;
+  // 🔄 Mark as "checking" immediately
+  setUrlStatus(prev => ({ ...prev, [url]: 'checking' }));
 
-  setUrlStatus(prev => ({
-    ...prev,
-    [url]: isSafe
-  }));
+  try {
+    const normalizedUrl = url.toLowerCase();
+    const isHttps = normalizedUrl.startsWith('https://');
+    const containsDangerousKeywords = ['troyano', 'malware', 'virus', 'phishing', 'scam'].some(keyword =>
+      normalizedUrl.includes(keyword)
+    );
+    const urlFormatValid = /^(https?:\/\/)?([\da-z.-]+\.[a-z.]{2,6})([/\w .-]*)*\/?$/.test(normalizedUrl);
+
+    // 🔄 Simulate more realistic verification (optional)
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const isSafe = isHttps && !containsDangerousKeywords && urlFormatValid;
+
+    // 🔄 Update final status
+    setUrlStatus(prev => ({ ...prev, [url]: isSafe }));
+  } catch (error) {
+    console.error('Error verifying URL:', error);
+    // 🔄 Mark as error if verification fails
+    setUrlStatus(prev => ({ ...prev, [url]: 'error' }));
+  }
 };
 
 const PublicKeyDisplay = ({ publicKey }) => {
@@ -34,7 +45,7 @@ const PublicKeyDisplay = ({ publicKey }) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Error al copiar la clave:", err);
+      console.error("Error copying key:", err);
     }
   };
 
@@ -58,7 +69,7 @@ const Message = ({ message }) => {
   const { socket } = useSocketContext();
   const fromMe = message.senderId === authUser._id;
   const formattedTime = extractTime(message.createdAt);
-	const shakeClass = message.shouldShake ? "shake" : "";
+  const shakeClass = message.shouldShake ? "shake" : "";
   const chatClassName = fromMe ? "chat-end" : "chat-start";
   const bubbleBgColor = fromMe ? "bg-blue-500" : "";
   const [showEncrypted, setShowEncrypted] = useState(false);
@@ -76,29 +87,30 @@ const Message = ({ message }) => {
     email: "",
     username: "",
     publicKey: "",
-    sharedElements: "Elementos compartidos"
+    sharedElements: "Shared elements"
   });
   const [reactions, setReactions] = useState(message.reactions || []);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
 
   const handleToggleEmojiPicker = () => {
     setShowEmojiPicker(prev => !prev);
   };
-  
+
   const handleReact = async (emojiObj) => {
-    console.log("Emoji seleccionado:", emojiObj);
+    console.log("Selected emoji:", emojiObj);
     const emoji = emojiObj.native;
-  
+
     try {
       const response = await axios.post(`/api/messages/${message._id}/react`, {
         emoji,
         userId: authUser._id,
       });
-    
-      setReactions(response.data); // actualizar con las reacciones actuales
+
+      setReactions(response.data);
       setShowEmojiPicker(false);
     } catch (error) {
-      console.error("Error al reaccionar al mensaje:", error);
+      console.error("Error reacting to message:", error);
     }
   };
 
@@ -118,7 +130,7 @@ const Message = ({ message }) => {
         isPoll = true;
         pollQuestion = parsedPoll.question;
         pollOptions = parsedPoll.options;
-        
+
       }
     }
   } catch (err) {
@@ -130,22 +142,22 @@ const Message = ({ message }) => {
 
   const handleVote = async () => {
     if (selectedOption !== null) {
-      const voteValue = 1;  
-      const userId = authUser._id; 
-      
+      const voteValue = 1;
+      const userId = authUser._id;
+
       try {
         const response = await axios.post('/api/poll/vote', {
-          pollId: message._id,  
-          optionIndex: selectedOption, 
-          userId,  
-          voteValue,  
+          pollId: message._id,
+          optionIndex: selectedOption,
+          userId,
+          voteValue,
         });
-  
+
         if (response.status === 200) {
-          setPollOptionsState(response.data.options); 
+          setPollOptionsState(response.data.options);
         }
       } catch (error) {
-        console.error("Error al registrar el voto:", error);
+        console.error("Error registering vote:", error);
       }
     }
   };
@@ -157,16 +169,16 @@ const Message = ({ message }) => {
 
     const handleClickOutside = (e) => {
       const clickedElement = e.target;
-  
-      // Verifica si se hizo clic en el botón o en el emoji picker
+
+      // Check if clicked on emoji button or picker
       const isEmojiButton = clickedElement.closest(".emoji-button");
       const isEmojiPicker = clickedElement.closest(".emoji-picker");
-  
+
       if (!isEmojiButton && !isEmojiPicker) {
         setShowEmojiPicker(false);
       }
     };
-  
+
     if (showEmojiPicker) {
       document.addEventListener("mousedown", handleClickOutside);
     }
@@ -192,10 +204,8 @@ const Message = ({ message }) => {
         try {
           const pollExists = await axios.get(`/api/poll/poll/${message._id}`);
           if (pollExists.status === 200) {
-            pollOptions = pollExists.data.options;
-            
             const newPollOptions = pollExists.data.options;
-          
+
             if (JSON.stringify(pollOptionsState) !== JSON.stringify(newPollOptions)) {
               setPollOptionsState(newPollOptions);
             }
@@ -219,7 +229,7 @@ const Message = ({ message }) => {
     initializePoll();
 
     if (socket) {
-     
+
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
       };
@@ -233,10 +243,10 @@ const Message = ({ message }) => {
         const data = await response.json();
         setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
       } else {
-        console.error("Error al obtener la imagen de perfil");
+        console.error("Error getting profile picture");
       }
     } catch (error) {
-      console.error("Error en la solicitud fetch:", error);
+      console.error("Error in fetch request:", error);
     }
   };
 
@@ -249,32 +259,138 @@ const Message = ({ message }) => {
           email: data.email,
           username: data.username,
           publicKey: data.publicKey,
-          sharedElements: "Elementos compartidos"
+          sharedElements: "Shared elements"
         });
       } else {
-        console.error("Error al obtener los datos del usuario");
+        console.error("Error getting user data");
       }
     } catch (error) {
-      console.error("Error en la solicitud fetch:", error);
+      console.error("Error in fetch request:", error);
     }
   };
-  const 
-  handleEncryptMessage = (message) => {
+
+  const handleDownload = async (url, filename) => {
     try {
-      // Codificar el mensaje con btoa
-      const encodedMessage = btoa(message.message);
-  
-      // Devolver el mensaje codificado con un sufijo con el nombre de usuario
+      const response = await axios.get(url, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data])
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+    }
+  }
+
+  function toBase64Unicode(str) {
+    return window.btoa(unescape(encodeURIComponent(str)));
+  }
+
+  const handleEncryptMessage = (message) => {
+    try {
+      // Encode message with btoa
+      const encodedMessage = toBase64Unicode(message.message);
+
+      // Return encoded message with username suffix
       return `${encodedMessage.slice(0, 60)}...signedBy-${authUser.username}`;
     } catch (error) {
-      console.error("Error al cifrar el mensaje:", error);
-      return "[Error al cifrar]";
+      console.error("Error encrypting message:", error);
+      return "[Error encrypting]";
     }
   };
-  
+
+  const getDocumentPreview = () => {
+    const fileUrl = message.fileUrl;
+    const extension = fileUrl.split('.').pop()?.toLowerCase();
+
+    const getFileSize = () => {
+      if (message.fileSize) {
+        const bytes = parseInt(message.fileSize);
+        if (bytes < 1024) return `${bytes} B`;
+        else if (bytes < 1048576) return `${(bytes / 1024).toFixed(2)} KB`;
+        else if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(2)} MB`;
+        else return `${(bytes / 1073741824).toFixed(2)} GB`;
+      }
+      return 'Unknown size';
+    }
+
+    const getFileName = () => {
+      if (message.fileName) {
+        return message.fileName;
+      }
+      // Fallback to URL if fileName is not provided
+      const urlFileName = fileUrl.split('/').pop()?.split('?')[0];
+      return urlFileName || 'Document';
+    }
+
+    const getFileIcon = () => {
+      switch (extension) {
+        case 'pdf':
+          return '📄';
+        case 'doc':
+        case 'docx':
+          return '📘';
+        case 'xls':
+        case 'xlsx':
+          return '📊';
+        case 'ppt':
+        case 'pptx':
+          return '📽️';
+        case 'txt':
+          return '📝';
+        case 'zip':
+        case 'rar':
+          return '📦';
+        default:
+          return '📋';
+      }
+    };
+
+    // FALLBACK
+    return (
+      <div
+        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+        onClick={() => window.open(fileUrl, '_blank')}
+      >
+        {/* 🔧 FILE ICON */}
+        < div className="text-3xl" >
+          {getFileIcon()}
+        </div >
+
+        {/* 🔧 FILE INFORMATION */}
+        < div className="flex-1 min-w-0" >
+          <p className="text-sm font-medium text-gray-900 truncate">
+            {getFileName()}
+          </p>
+          <p className="text-xs text-gray-500">
+            {getFileSize()} • {extension?.toUpperCase() || 'FILE'}
+          </p>
+        </div >
+
+        {/* 🔧 DOWNLOAD BUTTON */}
+        < button
+          className="text-gray-400 hover:text-gray-600 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload(fileUrl, getFileName());
+          }}
+        >
+          <FaDownload className="w-4 h-4" />
+        </button >
+      </div >
+    );
+  }
+
   return (
     <>
-      <div className={`chat ${chatClassName}`} onDoubleClick={() => setShowEncrypted(!showEncrypted)}>
+      <div className={`chat ${chatClassName} `} onDoubleClick={() => setShowEncrypted(!showEncrypted)}>
         <div className="chat-image avatar" onClick={() => setShowPopup(true)}>
           <div className="w-10 rounded-full">
             <img alt="Profile" src={profilePic} />
@@ -282,18 +398,18 @@ const Message = ({ message }) => {
         </div>
         <div className={`chat-bubble text-white ${bubbleBgColor} ${shakeClass} pb-2`}>
           {showEncrypted ? (
-            <span className="text-yellow-500">{handleEncryptMessage(message.senderId)}</span>
+            <span className="text-yellow-500 break-all">{handleEncryptMessage(message)}</span>
           ) : isPoll ? (
             <form className="w-full bg-white p-4 rounded shadow-md mt-2">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">{pollQuestion}</h3>
               <div className="flex flex-col gap-2">
                 {Array.isArray(pollOptionsState) && pollOptionsState.length > 0 && pollOptionsState.map((option, idx) => (
                   <label key={idx} className="flex items-center gap-2 text-gray-700">
-                    <input 
-                      type="radio" 
-                      className="form-checkbox h-4 w-4 text-blue-600" 
+                    <input
+                      type="radio"
+                      className="form-checkbox h-4 w-4 text-blue-600"
                       value={idx}
-                      onChange={(e) =>  setSelectedOption(parseInt(e.target.value))}
+                      onChange={(e) => setSelectedOption(parseInt(e.target.value))}
                     />
                     <span>{option.option}</span>
                     <span className="ml-auto">{Array.isArray(option.votes) ? option.votes.length : 0} votes</span>
@@ -302,88 +418,111 @@ const Message = ({ message }) => {
               </div>
               <button
                 type="button"
-                className={`mt-4 bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded shadow `}
+                className={`mt - 4 bg - blue - 500 hover: bg - blue - 600 text - white py - 1.5 px - 4 rounded shadow `}
                 onClick={handleVote}
-                
+
               >
-              Send Vote
+                Send Vote
               </button>
             </form>
           ) : message.fileUrl ? (
             <div>
-              {/* Mostrar mensaje de texto si existe */}
-              {message.message && (
-                <p className="mb-2 text-white break-words">{message.message}</p>
-              )}
-          
-              {/* Mostrar archivo según su tipo */}
+
+              {/* Show file according to its type */}
               {message.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <img
-                  src={`${message.fileUrl}`}
-                  alt="Sent image"
-                  className="max-w-[300px] max-h-[300px] w-auto h-auto rounded-lg shadow"
-                />
+                // 🖼️ IMAGE FILES
+
+                <div className="relative group max-w-[200px]">
+                  <div className="bg-white rounded-lg p-1 shadow-md">
+                    <img
+                      src={`${message.fileUrl} `}
+                      alt="Sent image"
+                      className="max-w-[180px] max-h-[180px] w-auto h-auto rounded-lg shadow cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(message.fileUrl, '_blank')}
+                    />
+                  </div>
+
+                  {/* 🔧 FILENAME WITH SIZE AND DOWNLOAD BUTTON */}
+                  <div className="flex items-center justify-between mt-1 px-1">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-300 truncate">
+                        {message.fileName || message.fileUrl.split('/').pop()?.split('?')[0] || 'image.jpg'}
+                      </p>
+                      {/* 🔧 ADD SIZE */}
+                      {message.fileSize && (
+                        <p className="text-xs text-gray-400">
+                          {(() => {
+                            const bytes = parseInt(message.fileSize);
+                            if (bytes < 1024) return `${bytes} B`;
+                            else if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+                            else if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(1)} MB`;
+                            else return `${(bytes / 1073741824).toFixed(1)} GB`;
+                          })()}
+                        </p>
+                      )}
+                    </div>
+                    {/* 🔧 DOWNLOAD BUTTON */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(message.fileUrl, message.fileName || 'image.jpg');
+                      }}
+                      className="text-gray-400 hover:text-gray-300 transition-colors ml-2"
+                    >
+                      <FaDownload className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
               ) : message.fileUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+                // 🎥 VIDEO FILES
                 <video
-                  src={`${message.fileUrl}`}
+                  src={`${message.fileUrl} `}
                   controls
-                  className="w-full max-w-full h-auto rounded shadow"
-                />
-              ) : message.fileUrl.match(/\.pdf$/i) ? (
-                <iframe
-                  src={`${message.fileUrl}`}
-                  title="PDF enviado"
-                  className="w-full max-w-full h-[400px] rounded shadow"
+                  className="w-full max-w-[250px] h-auto rounded shadow"
                 />
               ) : (
-                <a
-                  href={`${message.fileUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-200 underline"
-                >
-                  Attachment File
-                </a>
+                // 📋 DOCUMENTS
+                <div className="space-y-2">
+                  <div
+                    className="bg-white rounded-lg p-1 shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => window.open(message.fileUrl, '_blank')}
+                  >
+                    {getDocumentPreview()}
+                  </div>
+                </div>
               )}
             </div>
-          ) : (currentMessage.message || '').split(urlPattern).map((part, index) => {
-              const urlMatch = part.match(urlPattern);
-              if (urlMatch) {
-                const url = urlMatch[0];
-                const status = urlStatus[url];
-
-                return (
-                  <span key={index}>
-                    {status === null && (
-                      <>
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-yellow-500">
-                          {url}
-                        </a>
-                        <span className="ml-1 text-yellow-500 italic">Analizando...</span>
-                      </>
-                    )}
-                    {status === true && (
-                      <>
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-green-500">
-                          {url}
-                        </a>
-                        <FaLock className="inline-block text-green-500 ml-1" />
-                      </>
-                    )}
-                    {status === false && (
-                      <>
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-red-500 underline">
-                          {url}
-                        </a>
-                        <FaLockOpen className="inline-block text-red-500 ml-1" />
-                      </>
-                    )}
-                  </span>
-                );
-              }
-              return <span key={index}>{part}</span>;
-            })
-          }
+          ) : (
+            <div>
+              {typeof message.message === 'string' && message.message.match(urlPattern) ? (
+                <div>
+                  {message.message.split(urlPattern).map((part, index) => {
+                    if (part.match(urlPattern)) {
+                      const safetyStatus = urlStatus[part];
+                      return (
+                        <div key={index} className="inline-block">
+                          <a
+                            href={part}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`underline ${safetyStatus === true ? 'text-blue-200' : safetyStatus === false ? 'text-red-400' : 'text-yellow-300'} `}
+                          >
+                            {part}
+                          </a>
+                          {safetyStatus === true && <span className="text-green-400 ml-1">✓</span>}
+                          {safetyStatus === false && <span className="text-red-400 ml-1">⚠</span>}
+                          {safetyStatus === null && <span className="text-yellow-300 ml-1">...</span>}
+                        </div>
+                      );
+                    }
+                    return <span key={index}>{part}</span>
+                  })}
+                </div>
+              ) : (
+                <span>{message.message}</span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 mt-1 ml-12">
           {reactions.map((reaction, index) => (
@@ -400,16 +539,15 @@ const Message = ({ message }) => {
         </div>
         {showEmojiPicker && (
           <div
-          className={`emoji-picker absolute z-50 bottom-[100px] ${
-            fromMe ? 'right-0' : 'left-100'
-          }`}
+            className={`emoji - picker absolute z - 50 bottom - [100px] ${fromMe ? 'right-0' : 'left-0'
+              } `}
           >
             <Picker data={data} onEmojiSelect={handleReact} theme="light" />
           </div>
         )}
 
         <div className="chat-footer opacity-50 text-xs flex gap-1 items-center">{formattedTime}</div>
-      </div>
+      </div >
 
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -418,14 +556,14 @@ const Message = ({ message }) => {
             <div className="text-center flex justify-center mb-4">
               <img
                 src={profilePic}
-                alt="Foto de Perfil"
+                alt="Profile Picture"
                 className="w-10 h-10 rounded-full"
               />
             </div>
             <p className="text-center"><strong>Email:</strong> {userData.email}</p>
             <p className="text-center"><strong>Alias:</strong> {userData.username}</p>
             <PublicKeyDisplay publicKey={userData.publicKey} />
-            <p className="text-center"><strong>Shared Elements:</strong> {userData.sharedElements || 'No hay elementos compartidos'}</p>
+            <p className="text-center"><strong>Shared Elements:</strong> {userData.sharedElements || 'No shared elements'}</p>
             <button
               className="text-center mt-4 bg-blue-500 text-white py-2 px-4 rounded"
               onClick={() => setShowPopup(false)}
