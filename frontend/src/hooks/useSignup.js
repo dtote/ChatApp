@@ -1,33 +1,48 @@
-import { useState } from 'react';
-import toast from 'react-hot-toast';
-import { useAuthContext } from '../context/AuthContext';
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAuthContext } from "../context/AuthContext";
 
 const useSignup = () => {
   const [loading, setLoading] = useState(false);
   const { authUser, setAuthUser } = useAuthContext();
 
-  const signup = async ({ username, email, password, confirmPassword, gender, faceDescriptor }) => {
-    const success = handleInputErrors({ username, email, password, confirmPassword, gender });
-    if (!success) return;
+  const signup = async ({
+    username,
+    email,
+    password,
+    confirmPassword,
+    gender,
+    faceDescriptor,
+  }) => {
+    const success = handleInputErrors({
+      username,
+      email,
+      password,
+      confirmPassword,
+      gender,
+    });
+    if (!success) return { error: true };
 
     const formData = new FormData();
-    formData.append('username', username);
-    formData.append('email', email);
-    formData.append('password', password);
-    formData.append('confirmpassword', confirmPassword);
-    formData.append('gender', gender);
+    formData.append("username", username);
+    formData.append("email", email);
+    formData.append("password", password);
+    formData.append("confirmpassword", confirmPassword);
+    formData.append("gender", gender);
 
     if (faceDescriptor) {
-      formData.append('faceDescriptor', JSON.stringify(faceDescriptor));
+      formData.append("faceDescriptor", JSON.stringify(faceDescriptor));
     }
 
     setLoading(true);
 
     try {
-      const apiEndpoint = faceDescriptor ? '/api/auth/signupFacial' : '/api/auth/signup';
+      const apiEndpoint = faceDescriptor
+        ? "/api/auth/signupFacial"
+        : "/api/auth/signup";
 
       const res = await fetch(apiEndpoint, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
@@ -35,22 +50,25 @@ const useSignup = () => {
 
       if (data.error) {
         toast.error(data.error);
+        return { error: true };
       } else {
         if (data.token) {
-          localStorage.setItem('token', data.token);
+          localStorage.setItem("token", data.token);
         }
 
         if (data.sessionId) {
-          localStorage.setItem('sessionId', data.sessionId);
+          localStorage.setItem("sessionId", data.sessionId);
         }
 
-        localStorage.setItem('chat-user', JSON.stringify(data));
+        localStorage.setItem("chat-user", JSON.stringify(data));
         setAuthUser(data);
-        toast.success('Signup successful');
+        toast.success("Signup successful");
+        return { success: true, data };
       }
     } catch (error) {
       console.error(error);
-      toast.error('Error en el registro. Por favor intenta nuevamente.');
+      toast.error("Error en el registro. Por favor intenta nuevamente.");
+      return { error: true };
     } finally {
       setLoading(false);
     }
@@ -63,17 +81,17 @@ export default useSignup;
 
 function handleInputErrors({ username, password, confirmPassword, gender }) {
   if (!username || !password || !confirmPassword || !gender) {
-    toast.error('Please fill all the fields');
+    toast.error("Please fill all the fields");
     return false;
   }
 
   if (password !== confirmPassword) {
-    toast.error('Passwords do not match');
+    toast.error("Passwords do not match");
     return false;
   }
 
   if (password.length < 6) {
-    toast.error('Password must be at least 6 characters long');
+    toast.error("Password must be at least 6 characters long");
     return false;
   }
 

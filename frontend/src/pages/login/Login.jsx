@@ -50,6 +50,31 @@ const Login = () => {
     }
   };
 
+  const stopVideo = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    const stream = videoRef.current?.srcObject;
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        track.stop();
+      });
+      videoRef.current.srcObject = null;
+    }
+
+    // Limpiar el canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    setFaceDetected(false);
+    setDetectionProgress(0);
+  };
+
   const detectFaceLoop = async () => {
     const video = videoRef.current;
     if (!video || video.paused || video.ended || video.readyState < 2) {
@@ -114,10 +139,13 @@ const Login = () => {
 
       const data = await response.json();
       if (data) {
+        // Detener la cámara antes de navegar
+        stopVideo();
+
         localStorage.setItem('chat-user', JSON.stringify(data));
         localStorage.setItem('token', data.token);
         if (data.sessionId) {
-          localStorage.setItem("sessionId", data.sessionId); 
+          localStorage.setItem("sessionId", data.sessionId);
         }
         setAuthUser(data);
         navigate('/');
@@ -188,8 +216,8 @@ const Login = () => {
                   className="rounded-lg w-full h-full object-cover bg-black"
                 />
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
-                <div className="absolute border-4 border-green-400 rounded-md 
-                  w-[60%] aspect-square top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                <div className="absolute border-4 border-green-400 rounded-md
+                  w-[60%] aspect-square top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
                   z-20 pointer-events-none max-w-xs" />
                 <div className="absolute bottom-2 left-0 right-0 px-4">
                   <progress className="progress w-full" value={detectionProgress} max="100"></progress>
@@ -197,6 +225,9 @@ const Login = () => {
               </div>
               <button type="button" onClick={startVideo} className="btn btn-block mt-4">
                 Activate Camera
+              </button>
+              <button type="button" onClick={stopVideo} className="btn btn-block btn-outline btn-error mt-2">
+                Stop Camera
               </button>
             </div>
           )}
@@ -209,7 +240,12 @@ const Login = () => {
 
           <div className="flex justify-between mt-4">
             <span
-              onClick={() => setIsFaceLogin(!isFaceLogin)}
+              onClick={() => {
+                if (isFaceLogin) {
+                  stopVideo(); // Detener cámara si está activa
+                }
+                setIsFaceLogin(!isFaceLogin);
+              }}
               className="cursor-pointer text-blue-600 hover:underline"
             >
               {isFaceLogin ? 'Use username/password' : 'Use facial recognition'}

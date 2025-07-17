@@ -60,6 +60,31 @@ const Signup = () => {
     }
   };
 
+  const stopVideo = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    const stream = videoRef.current?.srcObject;
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        track.stop();
+      });
+      videoRef.current.srcObject = null;
+    }
+
+    // Limpiar el canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    setFaceDetected(false);
+    setFaceDescriptor(null);
+  };
+
   const detectFaceLoop = async () => {
     const video = videoRef.current;
     if (!video || video.paused || video.ended || video.readyState < 2) {
@@ -108,7 +133,12 @@ const Signup = () => {
       return;
     }
 
-    await signup({ username, email, password, confirmPassword, gender, faceDescriptor });
+    const result = await signup({ username, email, password, confirmPassword, gender, faceDescriptor });
+
+    // Si el signup fue exitoso, detener la cámara
+    if (result && result.success) {
+      stopVideo();
+    }
   };
 
   return (
@@ -156,6 +186,9 @@ const Signup = () => {
               <button onClick={startVideo} type="button" className="btn btn-outline btn-info">
                 Start Camera
               </button>
+              <button onClick={stopVideo} type="button" className="btn btn-outline btn-error">
+                Stop Camera
+              </button>
 
               <div className="relative w-full sm:max-w-sm aspect-[4/3]">
                 <video
@@ -166,8 +199,8 @@ const Signup = () => {
                   className="rounded-lg w-full h-full object-cover bg-black"
                 />
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
-                <div className="absolute border-4 border-green-400 rounded-md 
-                  w-[60%] aspect-square top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                <div className="absolute border-4 border-green-400 rounded-md
+                  w-[60%] aspect-square top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
                   z-20 pointer-events-none max-w-xs" />
               </div>
 
