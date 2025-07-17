@@ -56,10 +56,14 @@ const Home = () => {
           <button onClick={toggleDrawer} className="btn btn-primary m-4 w-fit z-30">
             ☰ Open menu
           </button>
-          <div className="flex-1 overflow-y-auto">
-            <MessageContainer className="h-[600px]" />
-            <SecurityOptions />
-            <ChatBot className="mt-30" />
+          <div className="flex-1 overflow-hidden relative bg-gray-50">
+            <MessageContainer />
+            <div className="absolute top-4 right-4 z-10">
+              <SecurityOptions />
+            </div>
+            <div className="absolute bottom-4 right-4 z-10">
+              <ChatBot />
+            </div>
           </div>
         </div>
       </div>
@@ -69,10 +73,14 @@ const Home = () => {
           <Sidebar />
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <MessageContainer className="flex-1 overflow-y-auto" />
-          <SecurityOptions />
-          <ChatBot className="mt-[120px]" />
+        <div className="flex-1 flex flex-col overflow-hidden relative bg-gray-50">
+          <MessageContainer />
+          <div className="absolute top-4 right-4 z-10">
+            <SecurityOptions />
+          </div>
+          <div className="absolute bottom-4 right-4 z-10">
+            <ChatBot />
+          </div>
         </div>
       </div>
     </div>
