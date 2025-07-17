@@ -45,19 +45,19 @@ const MessageContainer = () => {
             </div>
           </div>
 
-          {/* Verificación de Cifrado */}
+          {/* Encryption Verification */}
           {!isCommunity && isEncryptionVisible && (
             <div className="flex-shrink-0">
               <EncryptionVerification />
             </div>
           )}
 
-          {/* Messages - con altura mínima para asegurar que el input sea visible */}
+          {/* Messages - with minimum height to ensure input is visible */}
           <div className="flex-1 overflow-auto min-h-0">
             <Messages />
           </div>
 
-          {/* Message Input - siempre visible en la parte inferior */}
+          {/* Message Input - always visible at the bottom */}
           <div className="flex-shrink-0 border-t border-gray-200 bg-white">
             <MessageInput />
           </div>
@@ -84,17 +84,17 @@ const NoChatSelected = () => {
           </div>
         </div>
 
-        {/* Mensaje de bienvenida */}
+        {/* Welcome message */}
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           Welcome back, <span className="text-blue-600">{authUser?.username || 'User'}</span>! 👋
         </h1>
 
-        {/* Subtítulo */}
+        {/* Subtitle */}
         <p className="text-lg text-gray-600 mb-8">
           Ready to connect? Choose a conversation or join a community to start messaging.
         </p>
 
-        {/* Indicadores visuales */}
+        {/* Visual indicators */}
         <div className="flex justify-center space-x-4 text-gray-400">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
