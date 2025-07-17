@@ -8,11 +8,11 @@ import { MdDeleteForever, MdVpnKey, MdGridOn, MdLockOutline, MdSummarize, MdSecu
 import { OrbitControls, Line } from '@react-three/drei';
 
 const securityOptions = [
-  { id: 1, title: "Message Deletion", details: "Allows users to permanently remove messages based on a selected timeframe.", icon: <MdDeleteForever className="text-xl text-primary" /> },
-  { id: 3, title: "Lattice Public Keys", details: "Display a public key as a 3D lattice structure.", icon: <MdGridOn className="text-xl text-primary" /> },
-  { id: 4, title: "Session Control", details: "View and revoke other active login sessions.", icon: <MdDevices className="text-xl text-primary" /> },
-  { id: 5, title: "Conversation Summary", details: "Summarize conversations using AI.", icon: <MdSummarize className="text-xl text-primary" /> },
-  { id: 8, title: "Verify Digital Signatures", details: "Ensure the message integrity with ML-DSA.", icon: <MdSecurity className="text-xl text-primary" /> }
+  { id: 1, title: "Message Deletion", details: "Allows users to permanently remove messages based on a selected timeframe.", icon: <MdDeleteForever className="text-xl text-blue-500" /> },
+  { id: 3, title: "Lattice Public Keys", details: "Display a public key as a 3D lattice structure.", icon: <MdGridOn className="text-xl text-blue-500" /> },
+  { id: 4, title: "Session Control", details: "View and revoke other active login sessions.", icon: <MdDevices className="text-xl text-blue-500" /> },
+  { id: 5, title: "Conversation Summary", details: "Summarize conversations using AI.", icon: <MdSummarize className="text-xl text-blue-500" /> },
+  { id: 8, title: "Verify Digital Signatures", details: "Ensure the message integrity with ML-DSA.", icon: <MdSecurity className="text-xl text-blue-500" /> }
 ];
 
 const getShortestVector = (points) => {
@@ -160,33 +160,40 @@ const SecurityOptions = () => {
   };
 
   return (
-    <div className="fixed top-2 right-4 z-50">
-      <button className="btn btn-sm btn-accent mt-4 flex items-center gap-2" onClick={openModal}>
-        <MdLockOutline className="text-2xl" />
-        <span className="hidden sm:inline-block">Security Options</span>
+    <div>
+      <button className="btn btn-sm btn-primary flex items-center gap-2" onClick={openModal}>
+        <MdLockOutline className="text-xl" />
+        <span className="hidden sm:inline-block">Security</span>
       </button>
       <input type="checkbox" id="security-modal" className="modal-toggle" checked={isOpen} readOnly />
       <div className="modal">
-        <div className="modal-box w-11/12 max-w-5xl">
-          <div className="flex flex-col md:flex-row h-[80vh]">
-            <div className="w-full md:w-1/3 overflow-y-auto border-r border-base-300 pr-4 pt-8">
-              <h3 className="text-lg font-bold mb-2">Security Options</h3>
-              <ul className="space-y-4">
+        <div className="modal-box w-11/12 max-w-5xl max-h-[90vh]">
+          <div className="flex flex-col md:flex-row h-full">
+            <div className="w-full md:w-1/3 overflow-y-auto border-r border-base-300 pr-4 pt-4 md:pt-8">
+              <h3 className="text-lg font-bold mb-4">Security Options</h3>
+              <ul className="space-y-2 md:space-y-4">
                 {securityOptions.map((option) => (
                   <li key={option.id}>
-                    <button className="w-full text-left flex items-center gap-3 py-3 px-4 rounded-md hover:bg-base-200 transition duration-200 border-b border-base-300" onClick={() => handleOptionClick(option)}>
+                    <button
+                      className={`w-full text-left flex items-center gap-3 py-2 md:py-3 px-3 md:px-4 rounded-md transition duration-200 border-b border-base-300 ${
+                        selectedOption?.id === option.id
+                          ? 'bg-blue-50 text-blue-600 border-blue-200'
+                          : 'hover:bg-base-200'
+                      }`}
+                      onClick={() => handleOptionClick(option)}
+                    >
                       {option.icon}
-                      <span>{option.title}</span>
+                      <span className="text-sm md:text-base">{option.title}</span>
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="w-full md:w-2/3 pl-4 overflow-y-auto">
-              {selectedOption && (
+            <div className="w-full md:w-2/3 pl-0 md:pl-4 overflow-y-auto pt-4 md:pt-0">
+              {selectedOption ? (
                 <div className="space-y-4">
-                  <h3 className="text-xl mt-4 font-bold">{selectedOption.title}</h3>
+                  <h3 className="text-lg md:text-xl font-bold">{selectedOption.title}</h3>
                   <p className="text-sm text-gray-500">{selectedOption.details}</p>
 
                   {selectedOption.id === 1 && (
@@ -214,7 +221,7 @@ const SecurityOptions = () => {
                       <input className="input input-bordered w-full" value={base64Key} onChange={e => setBase64Key(e.target.value)} placeholder="Base64 Public Key" />
                       <button className="btn btn-primary mt-2" onClick={handleGenerateLattice}>Generate Lattice</button>
 
-                      <div className="h-[400px] mt-4 rounded border border-gray-300">
+                      <div className="h-[300px] md:h-[400px] mt-4 rounded border border-gray-300">
                         <Canvas camera={{ position: [0, 0, 15], fov: 50 }}>
                           <ambientLight intensity={0.5} />
                           <directionalLight position={[5, 5, 5]} intensity={1} />
@@ -245,7 +252,7 @@ const SecurityOptions = () => {
                       <ul className="divide-y divide-base-300">
                         {sessions.map((session) => (
                           <li key={session.id} className="py-2 flex justify-between items-center">
-                            <span>{session.deviceInfo}</span>
+                            <span className="text-sm">{session.deviceInfo}</span>
                             <button className="btn btn-xs btn-error" onClick={() => revokeSession(session._id)}>Revoke</button>
                           </li>
                         ))}
@@ -256,7 +263,7 @@ const SecurityOptions = () => {
                   {selectedOption.id === 5 && (
                     <div>
                       <input className="input input-bordered w-full" value={userOrCommunity} onChange={e => setUserOrCommunity(e.target.value)} placeholder="Username or Community" />
-                      <button className="btn btn-info mt-2" onClick={handleSearchConversation}>Search</button>
+                      <button className="btn btn-primary mt-2" onClick={handleSearchConversation}>Search</button>
                       {loadingSummary ? <p>Loading summary...</p> : summaryText && <p className="bg-base-200 p-4 rounded mt-4">{summaryText}</p>}
                     </div>
                   )}
@@ -276,11 +283,18 @@ const SecurityOptions = () => {
                   )}
 
                 </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center">
+                    <div className="text-4xl mb-4">🔒</div>
+                    <p className="text-sm md:text-base">Select a security option to view details</p>
+                  </div>
+                </div>
               )}
             </div>
-            <div className="modal-action">
-              <button onClick={closeModal} className="btn btn-success">Close</button>
-            </div>
+          </div>
+          <div className="modal-action">
+            <button onClick={closeModal} className="btn btn-primary">Close</button>
           </div>
         </div>
       </div>
