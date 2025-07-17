@@ -44,6 +44,186 @@
   animation: heart 0.8s ease-out forwards;
 }
 
+/* Draggable bubble styles */
+.chatbot-bubble {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.chatbot-bubble.dragging {
+  z-index: 9999 !important;
+  transition: none !important;
+}
+
+.chatbot-bubble.dragging button {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Smooth transitions for non-dragging states */
+.chatbot-bubble:not(.dragging) {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effects */
+.chatbot-bubble:hover {
+  transform: scale(1.05);
+}
+
+.chatbot-bubble.dragging:hover {
+  transform: scale(1.1);
+}
+
+/* Chat window positioning */
+.chatbot-window {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Draggable chat window styles */
+.chatbot-window .cursor-move {
+  cursor: grab;
+  transition: background-color 0.2s ease;
+}
+
+.chatbot-window .cursor-move:active {
+  cursor: grabbing;
+}
+
+.chatbot-window .cursor-move:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* Window dragging state */
+.chatbot-window.dragging {
+  transition: none !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.chatbot-window.dragging .cursor-move {
+  background-color: #dbeafe !important;
+}
+
+/* Mobile bubble styles */
+.mobile-bubble {
+  cursor: pointer !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-bubble button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chatbot-window {
+    width: calc(100vw - 2rem) !important;
+    max-width: none !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    bottom: 100px !important;
+    top: 120px !important;
+    height: calc(100vh - 220px) !important;
+  }
+
+  .chatbot-bubble {
+    bottom: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    top: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .chatbot-window {
+    width: calc(100vw - 1rem) !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+  }
+}
+
+/* Ensure chat window stays within viewport */
+.chatbot-window {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* Improve message area scrolling */
+.chatbot-window .flex-1 {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.chatbot-window .flex-1::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatbot-window .flex-1::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatbot-window .flex-1::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.chatbot-window .flex-1::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Tooltip styles */
+.chatbot-bubble:not(.mobile-bubble) button::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 10000;
+  margin-bottom: 8px;
+}
+
+.chatbot-bubble:not(.mobile-bubble) button::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 10000;
+  margin-bottom: 3px;
+}
+
+.chatbot-bubble:not(.mobile-bubble) button:hover::before,
+.chatbot-bubble:not(.mobile-bubble) button:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Hide tooltip when dragging */
+.chatbot-bubble.dragging button::before,
+.chatbot-bubble.dragging button::after {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
 .markdown-message ul {
   list-style-type: disc !important;
   padding-left: 1.5em;
