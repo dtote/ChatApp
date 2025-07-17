@@ -135,7 +135,7 @@ const Signup = () => {
 
     const result = await signup({ username, email, password, confirmPassword, gender, faceDescriptor });
 
-    // Si el signup fue exitoso, detener la cámara
+    // If signup was successful, stop the camera
     if (result && result.success) {
       stopVideo();
     }

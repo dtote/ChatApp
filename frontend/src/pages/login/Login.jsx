@@ -1,4 +1,4 @@
-// Login.js (mejorado con todas las mejoras y barra de progreso de detección facial)
+// Login.js (enhanced with all improvements and facial detection progress bar)
 import React, { useState, useRef, useEffect } from 'react';
 import * as faceapi from 'face-api.js';
 import { Link, useNavigate } from 'react-router-dom';
@@ -139,7 +139,7 @@ const Login = () => {
 
       const data = await response.json();
       if (data) {
-        // Detener la cámara antes de navegar
+        // Stop camera before navigating
         stopVideo();
 
         localStorage.setItem('chat-user', JSON.stringify(data));
@@ -242,7 +242,7 @@ const Login = () => {
             <span
               onClick={() => {
                 if (isFaceLogin) {
-                  stopVideo(); // Detener cámara si está activa
+                  stopVideo(); // Stop camera if active
                 }
                 setIsFaceLogin(!isFaceLogin);
               }}
