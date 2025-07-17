@@ -31,6 +31,14 @@ const messageSchema = new mongoose.Schema({
     type: String,  // URL donde se almacena el PDF
     default: null,
   },
+  fileName: {
+    type: String,
+    default: null,
+  },
+  fileSize: {
+    type: Number,
+    default: null,
+  },
   verified: { type: Boolean, default: false },
   reactions: [
     {
@@ -39,7 +47,7 @@ const messageSchema = new mongoose.Schema({
         ref: "User"
       },
       emoji: {
-        type: String, 
+        type: String,
       }
     },
   ]

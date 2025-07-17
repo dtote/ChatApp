@@ -5,6 +5,7 @@ import axios from 'axios';
 import User from "../models/user.model.js";
 import { logDetailedError } from "../utils/logErrorDetails.js";
 import { ENV_CONFIG } from "../config/environment.js";
+import cloudinary from "../utils/cloudinary.js";
 
 const axiosRetry = async (url, data, retries = 3) => {
   for (let i = 0; i < retries; i++) {
@@ -30,6 +31,37 @@ export const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
     const file = req.file;
+
+    let fileUrl = null;
+    let fileName = null;
+    let fileSize = null;
+
+    if (file) {
+      const extension = file.originalname.split('.').pop() || '';
+      const cleanBaseName = file.originalname
+        .split('.')[0]
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .substring(0, 40);
+
+      fileName = `${cleanBaseName}.${extension}`;
+      fileUrl = file.path;
+      try {
+        const publicId = file.filename || file.public_id;
+        if (publicId) {
+          const cloudinaryInfo = await cloudinary.api.resource(publicId, {
+            resource_type: 'auto'
+          });
+
+          // 🔧 BUSCAR TAMAÑO EN RESPUESTA DE CLOUDINARY
+          fileSize = cloudinaryInfo.bytes || cloudinaryInfo.size || file.size;
+        }
+      } catch (cloudinaryError) {
+        console.log('📁 Error getting Cloudinary info:', cloudinaryError);
+        fileSize = file.size; // Fallback al tamaño de Multer
+      }
+
+      console.log('📁 File uploaded:', fileName, `(${(fileSize / 1024).toFixed(1)} KB)`);
+    }
 
     const receiver = await User.findById(receiverId);
     if (!receiver || !receiver.publicKey) {
@@ -69,6 +101,8 @@ export const sendMessage = async (req, res) => {
       signature,
       publicKeyDSA: req.user.publicKeyDSA,
       fileUrl: file ? file.path : null,
+      fileName: file ? fileName : null,
+      fileSize: file ? fileSize : null,
       verified: false,
     });
 
@@ -91,13 +125,18 @@ export const sendMessage = async (req, res) => {
         message: decryptionResponse.data.original_message,
         sharedSecret: newMessage.sharedSecret,
         fileUrl: newMessage.fileUrl,
+        fileName: newMessage.fileName,
+        fileSize: newMessage.fileSize,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
     }
 
 
-    res.status(201).json({ ...newMessage._doc, message: decryptionResponse.data.original_message });
+    res.status(201).json({
+      ...newMessage._doc,
+      message: decryptionResponse.data.original_message,
+    });
   } catch (error) {
     logDetailedError("sendMessage", error);
     res.status(500).json({ error: "Internal server error" });
@@ -161,7 +200,9 @@ export const getMessages = async (req, res) => {
       ...msg,
       message: decryptedMessagesArray[index].original_message,
       verified: verificationResults[index].verified,
-      fileUrl: msg.fileUrl || null
+      fileUrl: msg.fileUrl || null,
+      fileName: msg.fileName || null,
+      fileSize: msg.fileSize || null
     }));
 
     res.status(200).json(finalMessages.reverse());
