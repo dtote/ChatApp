@@ -3,33 +3,33 @@ import { useAuthContext } from '../../context/AuthContext'; // Asegúrate de imp
 
 const EncryptionVerification = () => {
   const { authUser } = useAuthContext(); // Obtener el usuario autenticado
-  console.log(authUser); 
-  const publicKey = authUser.publicKey || 'Clave pública no disponible'; // Asegúrate de que authUser tenga la clave pública
-  
-  
+  console.log(authUser);
+  const publicKey = authUser.publicKey || 'Public key not available'; // Asegúrate de que authUser tenga la clave pública
+
+
   // Si existe clave publica mostrar un mensaje de Conexión cifrada
-  let message_QR = "Conexión insegura";
+  let message_QR = "Insecure connection";
   if (publicKey) {
     message_QR = "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf";
   }
   return (
     <div className="bg-gray-800 p-4 rounded-lg shadow-md text-white mt-2">
-      <h2 className="text-lg font-bold mb-2">Verificar código de seguridad</h2>
+      <h2 className="text-lg font-bold mb-2">Verify security code</h2>
       <div className="flex items-center justify-between">
-        {/* Código QR */}
+        {/* QR Code */}
         <div className="bg-white p-4 rounded-full">
           <QRCode value={message_QR} size={150} level="H" />
         </div>
 
-        {/* Información del cifrado */}
+        {/* Encryption information */}
         <div className="ml-4 text-sm">
           <p>
-            Para verificar que los mensajes y las llamadas están cifrados de
-            extremo a extremo, escanea este código en su dispositivo.
+            To verify that messages and calls are encrypted from
+            end-to-end, scan this code on your device.
           </p>
-          
+
         </div>
-      </div>        
+      </div>
     </div>
   );
 };

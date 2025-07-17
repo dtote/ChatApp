@@ -43,7 +43,7 @@ const Conversations = () => {
   return (
     <div className="py-2 flex flex-col overflow-auto">
       <div className="flex justify-around mb-4">
-        <button 
+        <button
           className={`btn ${view === 'conversations' ? 'btn-active' : ''}`}
           onClick={() => setView('conversations')}
         >
@@ -52,7 +52,7 @@ const Conversations = () => {
           <span className="inline sm:hidden"><FaComments /></span>
         </button>
 
-        <button 
+        <button
           className={`btn ${view === 'communities' ? 'btn-active' : ''}`}
           onClick={() => setView('communities')}
         >
@@ -67,7 +67,6 @@ const Conversations = () => {
             <Conversation
               key={conversation._id}
               conversation={conversation}
-              emoji={getRandomEmoji()}
               lastIdx={idx === conversations.filteredUser.length - 1}
             />
           ))}

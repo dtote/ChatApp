@@ -18,11 +18,11 @@ const Home = () => {
         setIsOpen((prev) => !prev);
       }
     };
-  
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-  
+
 
   return (
     <div className="fixed inset-0">
@@ -44,7 +44,7 @@ const Home = () => {
             <button
               onClick={closeDrawer}
               className="btn btn-ghost text-xl"
-              aria-label="Cerrar menú"
+              aria-label="Close menu"
             >
               ✕
             </button>
@@ -54,12 +54,12 @@ const Home = () => {
         {/* Contenido principal */}
         <div className="flex flex-col h-screen">
           <button onClick={toggleDrawer} className="btn btn-primary m-4 w-fit z-30">
-            ☰ Abrir menú
+            ☰ Open menu
           </button>
           <div className="flex-1 overflow-y-auto">
             <MessageContainer className="h-[600px]" />
-            <SecurityOptions/>
-            <ChatBot className="mt-30"/>
+            <SecurityOptions />
+            <ChatBot className="mt-30" />
           </div>
         </div>
       </div>
