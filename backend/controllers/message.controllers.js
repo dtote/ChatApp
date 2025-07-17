@@ -163,7 +163,7 @@ export const getMessages = async (req, res) => {
 
     const messages = await Message.find({ _id: { $in: conversation.messages } })
       .sort({ createdAt: -1 })
-      .limit(50)
+      .limit(25)
       .lean();
 
     if (!messages.length) return res.status(200).json([]);
@@ -218,7 +218,7 @@ export const reactMessage = async (req, res) => {
   const messageId = req.params.id;
 
   const message = await Message.findById(messageId);
-  if (!message) return res.status(404).send("Mensaje no encontrado");
+  if (!message) return res.status(404).send("Message not found");
 
   const existingReaction = message.reactions.find(
     (r) => r.userId === userId && r.emoji === emoji
