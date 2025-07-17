@@ -10,7 +10,7 @@ const generateTokenAndSetCookie = (userId, res) => {
   });
 
   res.cookie('jwt', token, {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     httpOnly: true, // Prevenir ataques XSS
     sameSite: "None", // Prevenir ataques CSRF
     secure: process.env.NODE_ENV === "production" ? true : false // La cookie solo funciona en HTTPS
