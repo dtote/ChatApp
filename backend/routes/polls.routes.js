@@ -3,84 +3,84 @@ import Poll from '../models/polls.model.js';
 
 const router = express.Router();
 
-// Endpoint para crear una encuesta
+// Endpoint to create a poll
 router.post('/poll', async (req, res) => {
-  const { pollId, question, options } = req.body; // Recibe ID opcional, pregunta y opciones
+  const { pollId, question, options } = req.body; // Receives optional ID, question, and options
 
   if (!question || !Array.isArray(options) || options.length < 2) {
-    return res.status(400).json({ message: "La encuesta debe tener al menos dos opciones" });
+    return res.status(400).json({ message: "The poll must have at least two options" });
   }
 
   try {
-    // Si se proporciona un ID específico, verifica que no exista una encuesta con ese ID
+    // If a specific ID is provided, verify that a poll with that ID doesn't exist
     if (pollId) {
       const existingPoll = await Poll.findById(pollId);
       if (existingPoll) {
-        return res.status(400).json({ message: "Ya existe una encuesta con este ID" });
+        return res.status(400).json({ message: "A poll with this ID already exists" });
       }
     }
 
     const newPoll = new Poll({
-      _id: pollId, // Esto puede ser indefinido si no se proporciona, y MongoDB generará uno automáticamente
+      _id: pollId, // This can be undefined if not provided, and MongoDB will generate one automatically
       question,
       options: options.map(option => ({
         option,
-        votes: [] // Inicializa el array de votos vacío para cada opción
+        votes: [] // Initialize empty votes array for each option
       })),
     });
 
-    // Guarda la nueva encuesta en la base de datos
+    // Save the new poll to the database
     await newPoll.save();
 
-    res.status(200).json({ message: "Encuesta creada con éxito", poll: newPoll });
+    res.status(200).json({ message: "Poll created successfully", poll: newPoll });
   } catch (error) {
-    console.error("Error al crear la encuesta:", error);
-    res.status(500).json({ message: "Error al crear la encuesta" });
+    console.error("Error creating poll:", error);
+    res.status(500).json({ message: "Error creating poll" });
   }
 });
 
-// Endpoint para votar en una opción de encuesta
+// Endpoint to vote on a poll option
 router.post('/vote', async (req, res) => {
   const { pollId, optionIndex, userId, voteValue } = req.body;
-  // Verifica si el voto es válido (0 o 1)
+  // Verify if the vote is valid (0 or 1)
   if (![0, 1].includes(voteValue)) {
-    return res.status(400).json({ message: "El valor del voto debe ser 0 o 1" });
+    return res.status(400).json({ message: "The vote value must be 0 or 1" });
   }
 
   try {
-    // Encuentra la encuesta por ID
+    // Find the poll by ID
     let poll = await Poll.findById(pollId);
 
-    // Verifica si la encuesta existe
+    // Verify if the poll exists
     if (!poll) {
-      return res.status(404).json({ message: 'Encuesta no encontrada' });
+      return res.status(404).json({ message: 'Poll not found' });
     }
 
-    // Verifica que el índice de la opción sea válido
+    // Verify that the option index is valid
     if (optionIndex < 0 || optionIndex >= poll.options.length) {
-      return res.status(400).json({ message: 'Opción inválida' });
+      return res.status(400).json({ message: 'Invalid option' });
     }
 
-    // Verifica si el usuario ya ha votado
+    // Verify if the user has already voted
     const existingVote = poll.options[optionIndex].votes.find(vote => vote.userId.toString() === userId.toString());
     if (existingVote) {
-      return res.status(400).json({ message: 'El usuario ya ha votado en esta opción' });
+      return res.status(400).json({ message: 'The user has already voted on this option' });
     }
 
-    // Agrega el voto al array de votos de la opción seleccionada
+    // Add the vote to the votes array of the selected option
     poll.options[optionIndex].votes.push({ userId, voteValue });
 
-    // Guarda la encuesta actualizada
+    // Save the updated poll
     await poll.save();
 
-    res.status(200).json({ message: 'Voto registrado con éxito', poll });
+    res.status(200).json({ message: 'Vote registered successfully', poll });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al registrar el voto' });
+    res.status(500).json({ message: 'Error registering vote' });
   }
 });
 
-// Endpoint para obtener una encuesta por ID
+// Endpoint to get a poll by ID
 router.get('/poll/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -88,13 +88,13 @@ router.get('/poll/:id', async (req, res) => {
     const poll = await Poll.findById(id);
 
     if (!poll) {
-      return res.status(404).json({ message: 'Encuesta no encontrada' });
+      return res.status(404).json({ message: 'Poll not found' });
     }
 
     res.status(200).json(poll);
   } catch (error) {
-    console.error('Error al obtener la encuesta:', error);
-    res.status(500).json({ message: 'Error al obtener la encuesta' });
+    console.error('Error getting poll:', error);
+    res.status(500).json({ message: 'Error getting poll' });
   }
 });
 

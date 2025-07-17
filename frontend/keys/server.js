@@ -28,14 +28,14 @@ const sslOptions = {
   cert: fs.readFileSync(path.join(__dirname, "keys", "localhost.crt")),
 };
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Middleware para servir archivos estáticos de /uploads
-app.use(express.static(path.join(__dirname, "/frontend/dist"))); // Middleware para servir la aplicación frontend
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Middleware to serve static files from /uploads
+app.use(express.static(path.join(__dirname, "/frontend/dist"))); // Middleware to serve the frontend application
 
-// Configuración de CORS
+// CORS configuration
 app.use(cors({
-  origin: 'http://localhost:3000', // Permitir solicitudes desde este origen
-  methods: ['GET'], // Asegúrate de permitir el método GET
-  allowedHeaders: ['Content-Type', 'Authorization'] // Permitir los encabezados necesarios
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  methods: ['GET'], // Make sure to allow the GET method
+  credentials: true
 }));
 
 app.use(express.json());
@@ -50,8 +50,8 @@ app.use('/api/encrypt', encrypt);
 app.use('/api/decrypt', decrypt2);
 app.use('/api/checkUrlSafety', checkUrlSafety);
 
-// Configuración de rutas comodín
-// Esta ruta debe ir después de todas las rutas de archivos estáticos y de API
+// Wildcard route configuration
+// This route must go after all static file routes and API routes
 app.get("*", (req, res) => {
   if (req.url.startsWith('/uploads')) return;
   res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));

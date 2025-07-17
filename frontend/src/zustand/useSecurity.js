@@ -1,8 +1,8 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 
 const useSecurity = create((set) => ({
-  selectedKeySize: 'ML-KEM-512', // Aquí almacenamos el tipo de clave
-  setSelectedKeySize: (keySize) => set({ selectedKeySize: keySize }), // Función para actualizar el tipo de clave
+  selectedKeySize: 'ML-KEM-512', // Here we store the key type
+  setSelectedKeySize: (keySize) => set({ selectedKeySize: keySize }), // Function to update the key type
 }));
 
 export default useSecurity;

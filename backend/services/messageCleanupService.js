@@ -21,50 +21,35 @@ const deleteMessagesByTime = async (timePeriod) => {
         throw new Error('Invalid time period');
     }
 
-    // Encontrar los mensajes a eliminar con un límite de tiempo
-    const messagesToDelete = await Message.find(
-      { createdAt: { $lt: cutoffDate } },
-      { _id: 1 },
-      { maxTimeMS: 30000 } // 30 segundos máximo para la búsqueda
-    ).lean();
-
-    if (!messagesToDelete || messagesToDelete.length === 0) {
-      console.log('No messages found to delete');
-      return { deletedMessages: 0, updatedConversations: 0 };
+    // Find messages to delete with a time limit
+    const messagesToDelete = await Message.find({
+      createdAt: { $lt: cutoffDate }
+    }).limit(1000).select('_id');
+    
+    if (messagesToDelete.length === 0) {
+      console.log('No old messages found to delete');
+      return;
     }
 
     const messageIds = messagesToDelete.map(msg => msg._id);
+    
+    // Delete messages in batches
+    const deleteResult = await Message.deleteMany({
+      _id: { $in: messageIds }
+    }, { maxTimeMS: 30000 }); // 30 seconds maximum for search
 
-    // Procesar en lotes para evitar timeouts
-    const BATCH_SIZE = 1000;
-    let totalDeleted = 0;
-    let totalUpdated = 0;
+    // Update conversations in the same batch
+    const updateResult = await Conversation.updateMany(
+      { messages: { $in: messageIds } },
+      { $pullAll: { messages: messageIds } },
+      { maxTimeMS: 30000 }
+    );
 
-    // Eliminar mensajes en lotes
-    for (let i = 0; i < messageIds.length; i += BATCH_SIZE) {
-      const batchIds = messageIds.slice(i, i + BATCH_SIZE);
-      const deleteResult = await Message.deleteMany(
-        { _id: { $in: batchIds } },
-        { maxTimeMS: 30000 }
-      );
-      totalDeleted += deleteResult.deletedCount;
-
-      // Actualizar conversaciones en el mismo lote
-      const updateResult = await Conversation.updateMany(
-        { messages: { $in: batchIds } },
-        { $pullAll: { messages: batchIds } },
-        { maxTimeMS: 30000 }
-      );
-      totalUpdated += updateResult.modifiedCount;
-
-      console.log(`Processed batch ${i / BATCH_SIZE + 1}: Deleted ${deleteResult.deletedCount} messages, Updated ${updateResult.modifiedCount} conversations`);
-    }
-
-    console.log(`Total: Deleted ${totalDeleted} messages, Updated ${totalUpdated} conversations`);
+    console.log(`Processed batch: Deleted ${deleteResult.deletedCount} messages, Updated ${updateResult.modifiedCount} conversations`);
 
     return {
-      deletedMessages: totalDeleted,
-      updatedConversations: totalUpdated
+      deletedMessages: deleteResult.deletedCount,
+      updatedConversations: updateResult.modifiedCount
     };
   } catch (error) {
     console.error('Error in deleteMessagesByTime:', error);

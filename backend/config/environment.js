@@ -1,14 +1,14 @@
 export const ENV_CONFIG = {
-  // APIs externas
+  // External APIs
   PQCLEAN_API_URL: process.env.PQCLEAN_API_URL || 'http://localhost:5003',
 
-  // Bases de datos (WIP: create local mongodb)
+  // Databases (WIP: create local mongodb)
   MONGO_URI: process.env.MONGO_URI,
 
-  // Autenticación
+  // Authentication
   JWT_SECRET: process.env.JWT_SECRET,
 
-  // APIs de IA
+  // AI APIs
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   HUGGINGFACE_API_KEY: process.env.HUGGINGFACE_API_KEY,
@@ -20,10 +20,10 @@ export const ENV_CONFIG = {
     API_SECRET: process.env.CLOUDINARY_API_SECRET,
   },
 
-  // Servidor
+  // Server
   PORT: process.env.PORT || 4000,
   NODE_ENV: process.env.NODE_ENV || 'development',
 
-  // URLs para CORS
+  // URLs for CORS
   FRONTEND_URL: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : 'http://localhost:3000',
 }

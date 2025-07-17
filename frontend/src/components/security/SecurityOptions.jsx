@@ -90,7 +90,7 @@ const SecurityOptions = () => {
 
       const currentSessionId = localStorage.getItem("sessionId");
       if (sessionId === currentSessionId) {
-        // Cerrar sesión del usuario
+        // Log out the user
         localStorage.removeItem("chat-user");
         localStorage.removeItem("sessionId");
         window.location.href = "/login";
@@ -222,7 +222,15 @@ const SecurityOptions = () => {
                       <button className="btn btn-primary mt-2" onClick={handleGenerateLattice}>Generate Lattice</button>
 
                       <div className="h-[300px] md:h-[400px] mt-4 rounded border border-gray-300">
-                        <Canvas camera={{ position: [0, 0, 15], fov: 50 }}>
+                        <Canvas 
+                          camera={{ position: [0, 0, 15], fov: 50 }}
+                          onCreated={({ gl }) => {
+                            gl.setClearColor('#f8fafc', 0);
+                          }}
+                          onError={(error) => {
+                            console.warn('Three.js error:', error);
+                          }}
+                        >
                           <ambientLight intensity={0.5} />
                           <directionalLight position={[5, 5, 5]} intensity={1} />
                           <OrbitControls />
@@ -251,7 +259,7 @@ const SecurityOptions = () => {
                     <div>
                       <ul className="divide-y divide-base-300">
                         {sessions.map((session) => (
-                          <li key={session.id} className="py-2 flex justify-between items-center">
+                          <li key={session._id} className="py-2 flex justify-between items-center">
                             <span className="text-sm">{session.deviceInfo}</span>
                             <button className="btn btn-xs btn-error" onClick={() => revokeSession(session._id)}>Revoke</button>
                           </li>
@@ -305,7 +313,7 @@ const SecurityOptions = () => {
 export default SecurityOptions;
 
 
-// Estilos en línea para el componente
+// Inline styles for the component
 const styles = {
   securityText: {
     position: 'fixed',

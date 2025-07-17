@@ -80,7 +80,7 @@ app.all('/api/*', (req, res) => {
   res.status(404).json({ message: "API route not found" });
 })
 
-// Ruta comodín frontend
+// Frontend wildcard route
 app.get("*", (req, res) => {
   if (req.url.startsWith('/uploads')) return;
 
@@ -89,7 +89,7 @@ app.get("*", (req, res) => {
 
     return res.redirect(`http://localhost:3000${req.originalUrl}`);
   } else if (process.env.NODE_ENV === "production") {
-    // Sirve el build estático en producción
+    // Serve static build in production
     res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
   }
 

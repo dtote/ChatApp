@@ -6,10 +6,10 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   try {
-    // Extraer los parámetros necesarios desde el cuerpo de la solicitud
+    // Extract the necessary parameters from the request body
     const { kem_name, ciphertext, shared_secret } = req.body;
 
-    // Verificar que se hayan proporcionado los parámetros necesarios
+    // Verify that the necessary parameters have been provided
     if (!kem_name || !ciphertext || !shared_secret) {
       return res.status(400).json({ error: 'Faltan parámetros necesarios para el descifrado.' });
     }

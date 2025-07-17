@@ -1,13 +1,11 @@
-import QRCode from 'react-qr-code'; // Asegúrate de instalar esta biblioteca
-import { useAuthContext } from '../../context/AuthContext'; // Asegúrate de importar correctamente
+import QRCode from 'react-qr-code'; // Make sure to install this library
+import { useAuthContext } from '../../context/AuthContext'; // Make sure to import correctly
 
 const EncryptionVerification = () => {
-  const { authUser } = useAuthContext(); // Obtener el usuario autenticado
-  console.log(authUser);
-  const publicKey = authUser.publicKey || 'Public key not available'; // Asegúrate de que authUser tenga la clave pública
+  const { authUser } = useAuthContext();
+  const publicKey = authUser.publicKey || 'Public key not available'; // Make sure authUser has the public key
 
-
-  // Si existe clave publica mostrar un mensaje de Conexión cifrada
+  // If public key exists, show an encrypted connection message
   let message_QR = "Insecure connection";
   if (publicKey) {
     message_QR = "https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf";

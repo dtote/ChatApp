@@ -11,7 +11,7 @@ router.get("/search", protectRoute, async (req, res) => {
 
   try {
     const { name } = req.query;
-    const userId = req.user._id;  // Asegúrate de tener auth middleware para req.user
+    const userId = req.user._id;  // Make sure you have auth middleware for req.user
 
     if (!name) {
       return res.status(400).json({ error: "Name is required" });

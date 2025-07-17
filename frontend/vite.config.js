@@ -21,8 +21,8 @@ export default defineConfig({
       'application/javascript': ['js', 'mjs']
     },
     proxy: {
-      '/api': 'http://localhost:4000', // Cambia el puerto según tu backend
-      '/uploads': 'http://localhost:4000/uploads', // Cambia el puerto según tu backend
+      '/api': 'http://localhost:4000', // Change the port according to your backend
+      '/uploads': 'http://localhost:4000/uploads', // Change the port according to your backend
     }
   },
   allowedHosts: ['*'],

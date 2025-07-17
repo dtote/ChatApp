@@ -100,7 +100,7 @@ const PostQuantumEducation = () => {
   );
 };
 
-// Estilos en línea para el componente
+// Inline styles for the component
 const styles = {
   securityText: {
     position: 'fixed',

@@ -3,37 +3,35 @@ import axios from 'axios';
 
 const router = express.Router();
 
-// Clave de la API de Google Safe Browsing (añádela después de registrarte)
-const GOOGLE_API_KEY = 'AIzaSyDbZTdCLMIxdbqmdxx6rsPiSIkbbHPkBAg';
+// Google Safe Browsing API key (add it after registering)
+const API_KEY = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
 
-// Endpoint que recibe la URL como query parameter
+// Endpoint that receives the URL as a query parameter
 router.get('/', async (req, res) => {
   const { url } = req.query;
 
-  // Configuración de los datos para la API de Google Safe Browsing
-  const postData = {
+  // Google Safe Browsing API data configuration
+  const requestData = {
     client: {
-      clientId: "CryptoChatApp",
-      clientVersion: "1.5.2"
+      clientId: 'your-client-id',
+      clientVersion: '1.0.0'
     },
     threatInfo: {
-      threatTypes: ["MALWARE", "SOCIAL_ENGINEERING"],
-      platformTypes: ["ANY_PLATFORM"],
-      threatEntryTypes: ["URL"],
-      threatEntries: [
-        { url: url }
-      ]
+      threatTypes: ['MALWARE', 'SOCIAL_ENGINEERING', 'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION'],
+      platformTypes: ['ANY_PLATFORM'],
+      threatEntryTypes: ['URL'],
+      threatEntries: [{ url: url }]
     }
   };
 
   try {
-    // Realizar la solicitud a Google Safe Browsing
+    // Perform the request to Google Safe Browsing
     const response = await axios.post(
-      `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GOOGLE_API_KEY}`,
-      postData
+      `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${API_KEY}`,
+      requestData
     );
 
-    // Enviar la respuesta (si la URL es segura, devolverá un objeto vacío)
+    // Send the response (if the URL is safe, it will return an empty object)
     if (Object.keys(response.data).length === 0) {
       res.json({ safe: true, message: 'The URL is safe.' });
     } else {

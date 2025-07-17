@@ -52,12 +52,12 @@ export const sendMessage = async (req, res) => {
             resource_type: 'auto'
           });
 
-          // 🔧 BUSCAR TAMAÑO EN RESPUESTA DE CLOUDINARY
+          // 🔧 SEARCH SIZE IN CLOUDINARY RESPONSE
           fileSize = cloudinaryInfo.bytes || cloudinaryInfo.size || file.size;
         }
       } catch (cloudinaryError) {
         console.log('📁 Error getting Cloudinary info:', cloudinaryError);
-        fileSize = file.size; // Fallback al tamaño de Multer
+        fileSize = file.size; // Fallback to Multer size
       }
 
       console.log('📁 File uploaded:', fileName, `(${(fileSize / 1024).toFixed(1)} KB)`);
@@ -106,7 +106,7 @@ export const sendMessage = async (req, res) => {
       verified: false,
     });
 
-    // Ahora que el mensaje ya está guardado, puedes pushear su ID
+    // Now that the message is already saved, you can push its ID
     conversation.messages.push(newMessage._id);
     await conversation.save();
 
@@ -225,12 +225,12 @@ export const reactMessage = async (req, res) => {
   );
 
   if (existingReaction) {
-    // Quitar reacción (toggle)
+    // Remove reaction (toggle)
     message.reactions = message.reactions.filter(
       (r) => !(r.userId === userId && r.emoji === emoji)
     );
   } else {
-    // Añadir reacción
+    // Add reaction
     message.reactions.push({ emoji, userId });
   }
 
