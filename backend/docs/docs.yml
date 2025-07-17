@@ -15,20 +15,29 @@ paths:
           multipart/form-data:
             schema:
               type: object
+              required:
+                - username
+                - email
+                - password
+                - confirmpassword
               properties:
                 username:
                   type: string
+                  description: Username for the account
                 email:
                   type: string
+                  format: email
+                  description: Email address
                 password:
                   type: string
+                  description: Password for the account
                 confirmpassword:
                   type: string
-                gender:
-                  type: string
+                  description: Password confirmation
                 profilePic:
                   type: string
                   format: binary
+                  description: Profile picture file (optional)
       responses:
         201:
           description: User registered successfully

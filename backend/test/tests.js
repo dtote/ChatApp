@@ -18,7 +18,6 @@ describe('Auth Endpoints', () => {
         email: 'testuser@example.com',
         password: 'Test1234!',
         confirmpassword: 'Test1234!',
-        gender: 'male',
       })
       .end(async (err, res) => {
         try {
@@ -42,7 +41,6 @@ describe('Auth Endpoints', () => {
         email: 'testuser2@example.com',
         password: 'Test1234!',
         confirmpassword: 'Test1234!',
-        gender: 'male',
       })
       .end(async (err, res) => {
         try {
@@ -67,7 +65,6 @@ describe('Auth Endpoints', () => {
         email: 'test5@example.com',
         password: '123',
         confirmpassword: '123',
-        gender: 'male',
       })
       .end((err, res) => {
         expect(res).to.have.status(400);
@@ -93,7 +90,6 @@ describe('Auth Endpoints', () => {
       .send({
         username: 'faceless',
         password: 'Test1234!',
-        gender: 'male',
         email: 'face@example.com',
       })
       .end((err, res) => {
@@ -122,7 +118,6 @@ describe('Auth Endpoints', () => {
         email: 'testuser2@example.com',
         password: 'Test1234!',
         confirmpassword: 'Test5678!',
-        gender: 'female',
       })
       .end((err, res) => {
         expect(res).to.have.status(400);
@@ -229,7 +224,6 @@ describe('Auth Endpoints', () => {
     const newUser = {
       username: 'testuser',
       password: 'Test1234!',
-      gender: 'male',
       email: 'testuser@example.com',
       faceDescriptor: JSON.stringify([0.1, 0.2, 0.3, 0.4]),  
     };
@@ -253,7 +247,6 @@ describe('Auth Endpoints', () => {
     const invalidUser = {
       username: 'testuser2',
       password: 'Test1234!',
-      gender: 'male',
       email: 'testuser2@example.com',
     };
 
@@ -270,7 +263,6 @@ describe('Auth Endpoints', () => {
   it('should return 400 if password is missing', (done) => {
     const invalidUser = {
       username: 'testuser3',
-      gender: 'male',
       email: 'testuser3@example.com',
       faceDescriptor: JSON.stringify([0.1, 0.2, 0.3, 0.4]),
     };

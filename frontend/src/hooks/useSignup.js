@@ -11,7 +11,6 @@ const useSignup = () => {
     email,
     password,
     confirmPassword,
-    gender,
     faceDescriptor,
   }) => {
     const success = handleInputErrors({
@@ -19,7 +18,6 @@ const useSignup = () => {
       email,
       password,
       confirmPassword,
-      gender,
     });
     if (!success) return { error: true };
 
@@ -28,7 +26,6 @@ const useSignup = () => {
     formData.append("email", email);
     formData.append("password", password);
     formData.append("confirmpassword", confirmPassword);
-    formData.append("gender", gender);
 
     if (faceDescriptor) {
       formData.append("faceDescriptor", JSON.stringify(faceDescriptor));
@@ -67,7 +64,7 @@ const useSignup = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Error en el registro. Por favor intenta nuevamente.");
+      toast.error("Error during registration. Please try again.");
       return { error: true };
     } finally {
       setLoading(false);
@@ -77,10 +74,8 @@ const useSignup = () => {
   return { loading, signup };
 };
 
-export default useSignup;
-
-function handleInputErrors({ username, password, confirmPassword, gender }) {
-  if (!username || !password || !confirmPassword || !gender) {
+function handleInputErrors({ username, password, confirmPassword }) {
+  if (!username || !password || !confirmPassword) {
     toast.error("Please fill all the fields");
     return false;
   }
@@ -97,3 +92,5 @@ function handleInputErrors({ username, password, confirmPassword, gender }) {
 
   return true;
 }
+
+export default useSignup;
