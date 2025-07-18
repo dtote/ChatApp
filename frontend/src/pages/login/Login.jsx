@@ -170,7 +170,7 @@ const Login = () => {
     <div className="flex flex-col items-center justify-center min-w-96 mx-auto relative">
       <div className="w-full p-6 rounded-lg shadow-lg bg-white border border-gray-200 relative z-10">
         <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">
-          Login <span className="text-blue-500">ChatApp</span>
+          Login <span className="text-blue-500">PQCare</span>
         </h1>
 
         <form onSubmit={handleSubmit}>

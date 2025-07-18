@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ping ChatApp Service
+      - name: Ping PQCare Service
         run: |
-          echo "🔄 Pinging ChatApp service..."
+          echo "🔄 Pinging PQCare service..."
           response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 15 https://mhealth-chatapp-production.onrender.com/api/auth/health || echo "000")
           echo "Health check response: $response"
 
           if [ "$response" = "200" ]; then
-            echo "✅ ChatApp health check successful. Service is up and running."
+            echo "✅ PQCare health check successful. Service is up and running."
           else
             echo "⚠️ Health check failed, trying main endpoint..."
             main_response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 15 https://mhealth-chatapp-production.onrender.com/ || echo "000")

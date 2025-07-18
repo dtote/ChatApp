@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=30&pause=1000&color=00C7B7&center=true&vCenter=true&width=700&lines=Welcome+to+ChatApp;Secure+Post-Quantum+Instant+Messaging;Based+on+Next-Gen+Cryptography" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=30&pause=1000&color=00C7B7&center=true&vCenter=true&width=700&lines=Welcome+to+PQCare;Secure+Post-Quantum+Instant+Messaging;Based+on+Next-Gen+Cryptography" alt="Typing SVG" />
 </p>
 
 <p align="center">
@@ -13,11 +13,11 @@
   <b>🚀 Encrypted communication | 🔐 Post-quantum security | 🎯 Interactive experience</b>
 </p>
 
-# ChatApp - Post-Quantum Secure Messaging
+# PQCare - Post-Quantum Secure Messaging
 
-ChatApp is a modern, secure and robust instant messaging application, built with current web technologies and post-quantum encryption to protect communication against future threats.
+PQCare is a modern, secure and robust instant messaging application, built with current web technologies and post-quantum encryption to protect communication against future threats.
 
-[![Run Tests](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml/badge.svg)](https://github.com/SamLorenzoSanc/ChatApp/actions/workflows/test.yml)
+[![Run Tests](https://github.com/SamLorenzoSanc/PQCare/actions/workflows/test.yml/badge.svg)](https://github.com/SamLorenzoSanc/PQCare/actions/workflows/test.yml)
 
 ---
 
@@ -81,8 +81,8 @@ Face-API.js, OpenAI API, TensorFlow.js, Axios, Cloudinary SDK, JSDOM.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/youruser/chatapp.git
-cd chatapp 
+git clone https://github.com/youruser/pqcare.git
+cd pqcare 
 ```
 
 ### 2. Install dependencies
@@ -144,7 +144,7 @@ This ensures high availability and secure data transmission between frontend and
 ## 📄 Project Structure
 
 ```
-chatapp/
+pqcare/
 │
 ├── backend/
 │   ├── controllers/

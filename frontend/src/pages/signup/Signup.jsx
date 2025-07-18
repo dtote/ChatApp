@@ -139,7 +139,7 @@ const Signup = () => {
     <div className="flex flex-col items-center justify-center min-w-96 mx-auto relative">
       <div className="w-full max-w-4xl p-3 sm:p-4 lg:p-6 rounded-lg shadow-lg bg-white border border-gray-200 relative z-10">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-center text-gray-800 mb-4 sm:mb-6">
-          Sign Up to <span className="text-blue-500">ChatApp</span>
+          Sign Up to <span className="text-blue-500">PQCare</span>
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">

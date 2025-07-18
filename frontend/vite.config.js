@@ -34,7 +34,6 @@ export default defineConfig({
       process: resolveModulePath('process/browser'),
     }
   },
-  // base: '/ChatAppNew16/',  // Reemplaza esto con el nombre de tu repositorio
   base: '/',
   build: {
     outDir: 'dist',

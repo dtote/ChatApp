@@ -63,7 +63,7 @@ const Home = () => {
               </svg>
               <span className="font-medium">Menu</span>
             </button>
-            <div className="text-lg font-semibold text-gray-800 text-center">ChatApp</div>
+            <div className="text-lg font-semibold text-gray-800 text-center">PQCare</div>
             <div className="flex-shrink-0 justify-self-end">
               <SecurityOptions />
             </div>
@@ -85,7 +85,7 @@ const Home = () => {
         <div className="flex-1 flex flex-col overflow-hidden relative bg-gray-50">
           <div className="grid grid-cols-3 items-center p-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
             <div></div>
-            <div className="text-lg font-semibold text-gray-800 text-center">ChatApp</div>
+            <div className="text-lg font-semibold text-gray-800 text-center">PQCare</div>
             <div className="flex-shrink-0 justify-self-end">
               <SecurityOptions />
             </div>
