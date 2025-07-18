@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import useSignup from '../../hooks/useSignup.js';
+import { useCameraContext } from '../../context/CameraContext.jsx';
 import '@tensorflow/tfjs';
 import * as faceapi from 'face-api.js';
 import { toast } from 'react-hot-toast';
@@ -14,9 +15,7 @@ const Signup = () => {
   });
   const [faceDescriptor, setFaceDescriptor] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const animationFrameRef = useRef(null);
+  const { videoRef, canvasRef, animationFrameRef, startVideo, stopVideo } = useCameraContext();
   const { loading, signup } = useSignup();
 
   useEffect(() => {
@@ -29,52 +28,11 @@ const Signup = () => {
       toast.success("Models loaded successfully.");
     };
     loadModels();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      const stream = videoRef.current?.srcObject;
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
   }, []);
 
-  const startVideo = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 720 }, height: { ideal: 560 } },
-      });
-      videoRef.current.srcObject = stream;
-      toast.success("Camera activated. Please align your face inside the frame.");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to access the camera.");
-    }
-  };
-
-  const stopVideo = () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    const stream = videoRef.current?.srcObject;
-    if (stream) {
-      stream.getTracks().forEach(track => {
-        track.stop();
-      });
-      videoRef.current.srcObject = null;
-    }
-
-    // Clear canvas
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
+  // Custom stopVideo that also resets face detection state
+  const handleStopVideo = () => {
+    stopVideo();
     setFaceDetected(false);
     setFaceDescriptor(null);
   };
@@ -131,7 +89,7 @@ const Signup = () => {
 
     // If signup was successful, stop the camera
     if (result && result.success) {
-      stopVideo();
+      handleStopVideo();
     }
   };
 
@@ -256,7 +214,7 @@ const Signup = () => {
                 </button>
                 <button 
                   type="button" 
-                  onClick={stopVideo} 
+                  onClick={handleStopVideo} 
                   className="w-full py-2 px-4 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Stop Camera
@@ -283,7 +241,7 @@ const Signup = () => {
                 </button>
                 <button 
                   type="button" 
-                  onClick={stopVideo} 
+                  onClick={handleStopVideo} 
                   className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm"
                 >
                   Stop Camera

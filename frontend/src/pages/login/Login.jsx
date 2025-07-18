@@ -1,8 +1,9 @@
 // Login.js (enhanced with all improvements and facial detection progress bar)
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as faceapi from 'face-api.js';
 import { Link, useNavigate } from 'react-router-dom';
 import useLogin from '../../hooks/useLogin';
+import { useCameraContext } from '../../context/CameraContext.jsx';
 import { toast } from 'react-hot-toast';
 import { useAuthContext } from '../../context/AuthContext';
 
@@ -12,9 +13,7 @@ const Login = () => {
   const [isFaceLogin, setIsFaceLogin] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
   const [detectionProgress, setDetectionProgress] = useState(0);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const animationFrameRef = useRef(null);
+  const { videoRef, canvasRef, animationFrameRef, startVideo, stopVideo } = useCameraContext();
   const { loading, login } = useLogin();
   const { setAuthUser } = useAuthContext();
   const navigate = useNavigate();
@@ -29,48 +28,11 @@ const Login = () => {
       toast.success("Models loaded successfully.");
     };
     loadModels();
-
-    return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-      const stream = videoRef.current?.srcObject;
-      if (stream) stream.getTracks().forEach(track => track.stop());
-    };
   }, []);
 
-  const startVideo = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 720 }, height: { ideal: 560 } },
-      });
-      videoRef.current.srcObject = stream;
-      toast.success("Camera activated. Please align your face inside the frame.");
-    } catch (err) {
-      console.error('Camera access error:', err);
-      toast.error('Unable to access the camera.');
-    }
-  };
-
-  const stopVideo = () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    const stream = videoRef.current?.srcObject;
-    if (stream) {
-      stream.getTracks().forEach(track => {
-        track.stop();
-      });
-      videoRef.current.srcObject = null;
-    }
-
-    // Limpiar el canvas
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
+  // Custom stopVideo that also resets face detection state
+  const handleStopVideo = () => {
+    stopVideo();
     setFaceDetected(false);
     setDetectionProgress(0);
   };
@@ -140,7 +102,7 @@ const Login = () => {
       const data = await response.json();
       if (data) {
         // Stop camera before navigating
-        stopVideo();
+        handleStopVideo();
 
         localStorage.setItem('chat-user', JSON.stringify(data));
         localStorage.setItem('token', data.token);
@@ -256,7 +218,7 @@ const Login = () => {
                 </button>
                 <button 
                   type="button" 
-                  onClick={stopVideo} 
+                  onClick={handleStopVideo} 
                   className="w-full py-2 px-4 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Stop Camera
