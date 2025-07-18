@@ -30,6 +30,7 @@
     "daisyui": "^5.0.23",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.0.1",
     "face-api.js": "^0.20.0",
     "js-yaml": "^4.1.0",
     "jsdom": "^26.0.0",
