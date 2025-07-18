@@ -22,6 +22,7 @@ import fs from "fs";
 import http from "http";
 import { initializeSocket } from "./socket/socket.js";
 import sessionRoutes from './routes/session.routes.js';
+import cacheRoutes from './routes/cache.routes.js';
 import { swaggerUi, swaggerSpec } from "./swagger.js";
 import yaml from 'js-yaml';
 import { ENV_CONFIG } from "./config/environment.js";
@@ -74,6 +75,7 @@ app.use('/api/summary', summaryRoutes);
 app.use('/api/conversation', conversationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/sessions', sessionRoutes);
+app.use('/api/cache', cacheRoutes);
 const swaggerDocument = yaml.load(fs.readFileSync('./backend//docs/docs.yml', 'utf8'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.all('/api/*', (req, res) => {
