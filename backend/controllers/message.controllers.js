@@ -6,24 +6,120 @@ import User from "../models/user.model.js";
 import { logDetailedError } from "../utils/logErrorDetails.js";
 import { ENV_CONFIG } from "../config/environment.js";
 import cloudinary from "../utils/cloudinary.js";
+import { cryptoCache } from "../utils/cache.js";
+import { cryptoMonitor } from "../utils/monitor.js";
 
 const axiosRetry = async (url, data, retries = 3) => {
   for (let i = 0; i < retries; i++) {
     try {
       return await axios.post(url, data);
     } catch (error) {
+      console.log(`🔄 [axiosRetry] Attempt ${i + 1}/${retries} failed:`, error.response?.status);
+      
+      // Si es rate limiting, esperar más tiempo
+      if (error.response?.status === 429) {
+        const waitTime = Math.pow(2, i + 1) * 1000; // Backoff exponencial: 2s, 4s, 8s
+        console.log(`⏳ [axiosRetry] Rate limited, waiting ${waitTime}ms before retry`);
+        await new Promise(r => setTimeout(r, waitTime));
+      } else {
+        // Para otros errores, esperar 1 segundo
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      
       if (i === retries - 1) throw error;
-      await new Promise(r => setTimeout(r, 1000));
     }
   }
 };
 
-const signWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/sign`, data);
-const encryptWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/encrypt`, data);
-const decryptWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/decrypt`, data);
-const verifyWithRetry = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/verify`, data);
-const bulkDecryptResponse = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkDecrypt`, data);
-const bulkVerifyResponse = (data) => axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkVerify`, data);
+const signWithRetry = async (data) => {
+  // Verificar caché primero
+  const cached = cryptoCache.get('sign', data);
+  if (cached) {
+    console.log('📦 [signWithRetry] Cache hit for sign operation');
+    cryptoMonitor.recordOperation('sign', true, true);
+    return cached;
+  }
+
+  try {
+    // Si no está en caché, hacer la llamada
+    const result = await axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/sign`, data);
+    cryptoCache.set('sign', data, result);
+    cryptoMonitor.recordOperation('sign', true, false);
+    return result;
+  } catch (error) {
+    const errorType = error.response?.status === 429 ? 'rate_limit' : 'other';
+    cryptoMonitor.recordOperation('sign', false, false, errorType);
+    throw error;
+  }
+};
+
+const encryptWithRetry = async (data) => {
+  const cached = cryptoCache.get('encrypt', data);
+  if (cached) {
+    console.log('📦 [encryptWithRetry] Cache hit for encrypt operation');
+    cryptoMonitor.recordOperation('encrypt', true, true);
+    return cached;
+  }
+
+  try {
+    const result = await axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/encrypt`, data);
+    cryptoCache.set('encrypt', data, result);
+    cryptoMonitor.recordOperation('encrypt', true, false);
+    return result;
+  } catch (error) {
+    const errorType = error.response?.status === 429 ? 'rate_limit' : 'other';
+    cryptoMonitor.recordOperation('encrypt', false, false, errorType);
+    throw error;
+  }
+};
+
+const decryptWithRetry = async (data) => {
+  const cached = cryptoCache.get('decrypt', data);
+  if (cached) {
+    console.log('📦 [decryptWithRetry] Cache hit for decrypt operation');
+    return cached;
+  }
+
+  const result = await axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/decrypt`, data);
+  cryptoCache.set('decrypt', data, result);
+  return result;
+};
+
+const verifyWithRetry = async (data) => {
+  const cached = cryptoCache.get('verify', data);
+  if (cached) {
+    console.log('📦 [verifyWithRetry] Cache hit for verify operation');
+    return cached;
+  }
+
+  const result = await axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/verify`, data);
+  cryptoCache.set('verify', data, result);
+  return result;
+};
+
+const bulkDecryptResponse = async (data) => {
+  const cached = cryptoCache.get('bulkDecrypt', data);
+  if (cached) {
+    console.log('📦 [bulkDecryptResponse] Cache hit for bulkDecrypt operation');
+    return cached;
+  }
+
+  const result = await axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkDecrypt`, data);
+  cryptoCache.set('bulkDecrypt', data, result);
+  return result;
+};
+
+const bulkVerifyResponse = async (data) => {
+  const cached = cryptoCache.get('bulkVerify', data);
+  if (cached) {
+    console.log('📦 [bulkVerifyResponse] Cache hit for bulkVerify operation');
+    return cached;
+  }
+
+  const result = await axiosRetry(`${ENV_CONFIG.PQCLEAN_API_URL}/bulkVerify`, data);
+  cryptoCache.set('bulkVerify', data, result);
+  return result;
+};
 
 export const sendMessage = async (req, res) => {
   try {
