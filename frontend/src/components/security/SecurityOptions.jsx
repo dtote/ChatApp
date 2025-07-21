@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
+import { logger } from '../../utils/logger.js';
 import useSecurity from '../../zustand/useSecurity.js';
 import useGetSummary from '../../hooks/useGetSummary.js';
 import { MdDeleteForever, MdVpnKey, MdGridOn, MdLockOutline, MdSummarize, MdSecurity, MdVisibilityOff, MdTimer, MdDevices, MdFingerprint } from "react-icons/md";
@@ -152,9 +153,15 @@ const SecurityOptions = () => {
         toast.success(`Found ${res.data.type} conversation`);
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.error || "Conversation not found";
-      toast.error(errorMessage);
-      console.error("Search error:", err);
+      // Handle 404 errors silently (user not found is expected)
+      if (err.response?.status === 404) {
+        const errorMessage = err.response?.data?.error || "No user or community found with that name";
+        toast.error(errorMessage);
+      } else {
+        // Log unexpected errors
+        logger.error("Search error", err);
+        toast.error("An error occurred while searching. Please try again.");
+      }
     }
   };
 

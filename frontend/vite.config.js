@@ -38,5 +38,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    sourcemap: false, // Disable source maps in production
+    minify: 'terser', // Use terser for better minification
+    rollupOptions: {
+      output: {
+        // Remove console.logs in production
+        manualChunks: undefined,
+      },
+    },
   },
 });
