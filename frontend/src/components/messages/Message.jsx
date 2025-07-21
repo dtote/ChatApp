@@ -6,6 +6,7 @@ import { FaLock, FaLockOpen, FaDownload } from "react-icons/fa";
 import extractTime from "../../utils/extractTime.js";
 import useSecurity from '../../zustand/useSecurity.js';
 import axios from 'axios';
+import { logger } from '../../utils/logger.js';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
 import './Message.css';
@@ -38,27 +39,114 @@ const checkUrlSafety = async (url, setUrlStatus) => {
 
 const PublicKeyDisplay = ({ publicKey }) => {
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(false);
+  const [showFullKey, setShowFullKey] = useState(false);
 
   const handleCopy = async () => {
+    if (!publicKey) {
+      setError(true);
+      setTimeout(() => setError(false), 2000);
+      return;
+    }
+
     try {
-      await navigator.clipboard.writeText(publicKey);
+      // Fallback method for older browsers
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(publicKey);
+      } else {
+        // Fallback for non-secure contexts or older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = publicKey;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+
       setCopied(true);
+      setError(false);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Error copying key:", err);
+      setError(true);
+      setTimeout(() => setError(false), 2000);
     }
   };
 
+  if (!publicKey) {
+    return (
+      <div className="text-center">
+        <p className="text-sm text-gray-500 bg-gray-100 p-2 rounded max-w-xs mx-auto">
+          <strong>Public Key:</strong> Not available
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="text-center">
-      <p
-        onClick={handleCopy}
-        className="cursor-pointer text-sm text-gray-700 bg-gray-100 p-2 rounded hover:bg-gray-200 max-w-xs mx-auto break-words"
-        title="Click to copy public key"
-      >
-        <strong>Public Key:</strong> {publicKey?.slice(0, 20)}...
-      </p>
-      {copied && <p className="text-green-500 text-sm mt-1">Key copied!</p>}
+      <div className="flex flex-col items-center gap-2">
+        <p
+          onClick={handleCopy}
+          className="cursor-pointer text-sm text-gray-700 bg-gray-100 p-2 rounded hover:bg-gray-200 max-w-xs mx-auto break-words font-mono"
+          title="Click to copy public key"
+        >
+          <strong>Public Key:</strong> {publicKey.slice(0, 30)}...
+        </p>
+
+        <div className="flex gap-2">
+          <button
+            onClick={handleCopy}
+            className="btn btn-xs btn-primary"
+            disabled={copied}
+          >
+            {copied ? 'Copied!' : 'Copy Key'}
+          </button>
+
+          <button
+            onClick={() => setShowFullKey(true)}
+            className="btn btn-xs btn-outline"
+          >
+            View Full Key
+          </button>
+        </div>
+
+        {copied && <p className="text-green-500 text-sm">✅ Key copied to clipboard!</p>}
+        {error && <p className="text-red-500 text-sm">❌ Failed to copy key</p>}
+      </div>
+
+      {/* Modal for full key */}
+      {showFullKey && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl mx-4">
+            <h3 className="text-lg font-bold mb-4">Full Public Key</h3>
+            <div className="bg-gray-100 p-4 rounded font-mono text-sm break-all max-h-96 overflow-y-auto">
+              {publicKey}
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowFullKey(false)}
+                className="btn btn-outline btn-sm"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  handleCopy();
+                  setShowFullKey(false);
+                }}
+                className="btn btn-primary btn-sm"
+              >
+                Copy Full Key
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -252,9 +340,23 @@ const Message = ({ message }) => {
 
   const fetchUserData = async (userId) => {
     try {
-      const response = await fetch(`/api/users/${userId}/popup-data`);
+      const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
+      const response = await fetch(`/api/users/${userId}/popup-data`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
       if (response.ok) {
         const data = await response.json();
+        logger.info('User data fetched successfully', {
+          email: data.email,
+          username: data.username,
+          hasPublicKey: !!data.publicKey,
+          publicKeyLength: data.publicKey?.length
+        });
+
         setUserData({
           email: data.email,
           username: data.username,
@@ -262,10 +364,16 @@ const Message = ({ message }) => {
           sharedElements: "Shared elements"
         });
       } else {
-        console.error("Error getting user data");
+        logger.error("Error getting user data", {
+          status: response.status,
+          statusText: response.statusText,
+          userId
+        });
+        setUserData(prev => ({ ...prev, publicKey: null }));
       }
     } catch (error) {
-      console.error("Error in fetch request:", error);
+      logger.error("Error in fetch request", error);
+      setUserData(prev => ({ ...prev, publicKey: null }));
     }
   };
 

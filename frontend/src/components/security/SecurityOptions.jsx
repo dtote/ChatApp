@@ -18,20 +18,29 @@ const securityOptions = [
 ];
 
 const getShortestVector = (points) => {
+  if (!points || points.length < 2) {
+    return [];
+  }
+
   let minLength = Infinity;
-  let shortest = [points[0], points[0]];
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      const a = points[i], b = points[j];
+  let shortest = [points[0], points[1]];
+
+  // Limit search to first 100 points for performance
+  const searchPoints = points.slice(0, 100);
+
+  for (let i = 0; i < searchPoints.length; i++) {
+    for (let j = i + 1; j < searchPoints.length; j++) {
+      const a = searchPoints[i], b = searchPoints[j];
       const length = Math.sqrt(
         (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
       );
-      if (length < minLength && length > 0) {
+      if (length < minLength && length > 0.1) { // Minimum distance threshold
         minLength = length;
         shortest = [a, b];
       }
     }
   }
+
   return shortest;
 };
 
@@ -39,7 +48,7 @@ const getShortestVector = (points) => {
 const SecurityOptions = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [base64Key, setBase64Key] = useState('');
+  const [base64Key, setBase64Key] = useState('AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/');
   const [latticePoints, setLatticePoints] = useState([]);
   const [summaryText, setSummaryText] = useState("");
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -121,17 +130,58 @@ const SecurityOptions = () => {
   };
 
   const base64ToBytes = (base64) => {
-    const decoded = atob(base64);
-    return new Uint8Array([...decoded].map(char => char.charCodeAt(0)));
+    try {
+      // Validate base64 string
+      if (!base64 || typeof base64 !== 'string') {
+        throw new Error('Invalid input: must be a non-empty string');
+      }
+
+      // Remove any whitespace and validate base64 format
+      const cleanBase64 = base64.replace(/\s/g, '');
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleanBase64)) {
+        throw new Error('Invalid base64 format');
+      }
+
+      const decoded = atob(cleanBase64);
+      return new Uint8Array([...decoded].map(char => char.charCodeAt(0)));
+    } catch (error) {
+      throw new Error(`Failed to decode base64: ${error.message}`);
+    }
   };
 
   const generateLatticePoints = (bytes) => {
-    return Array.from(bytes).map((b, i) => [i % 10 - 5, Math.floor(i / 10) - 5, b / 255 * 2 - 1]);
+    if (!bytes || bytes.length === 0) {
+      throw new Error('No data to generate lattice from');
+    }
+
+    // Limit to first 1000 bytes to avoid performance issues
+    const limitedBytes = bytes.slice(0, 1000);
+
+    return Array.from(limitedBytes).map((b, i) => [
+      (i % 20) - 10, // X coordinate: -10 to 10
+      Math.floor(i / 20) - Math.floor(limitedBytes.length / 40), // Y coordinate: centered
+      (b / 255) * 4 - 2 // Z coordinate: -2 to 2, scaled for better visibility
+    ]);
   };
 
   const handleGenerateLattice = () => {
-    const byteArray = base64ToBytes(base64Key);
-    setLatticePoints(generateLatticePoints(byteArray));
+    try {
+      if (!base64Key.trim()) {
+        toast.error('Please enter a base64 public key');
+        return;
+      }
+
+      const byteArray = base64ToBytes(base64Key.trim());
+      const points = generateLatticePoints(byteArray);
+      setLatticePoints(points);
+
+      toast.success(`Generated lattice with ${points.length} points`);
+      logger.info('Lattice generated successfully', { pointsCount: points.length });
+    } catch (error) {
+      toast.error(`Error generating lattice: ${error.message}`);
+      logger.error('Lattice generation failed', error);
+      setLatticePoints([]);
+    }
   };
 
   const handleSearchConversation = async () => {
@@ -240,40 +290,125 @@ const SecurityOptions = () => {
 
                   {selectedOption.id === 3 && (
                     <div>
-                      <input className="input input-bordered w-full" value={base64Key} onChange={e => setBase64Key(e.target.value)} placeholder="Base64 Public Key" />
-                      <button className="btn btn-primary mt-2" onClick={handleGenerateLattice}>Generate Lattice</button>
-
-                      <div className="h-[300px] md:h-[400px] mt-4 rounded border border-gray-300">
-                        <Canvas
-                          camera={{ position: [0, 0, 15], fov: 50 }}
-                          onCreated={({ gl }) => {
-                            gl.setClearColor('#f8fafc', 0);
-                          }}
-                          onError={(error) => {
-                            console.warn('Three.js error:', error);
-                          }}
-                        >
-                          <ambientLight intensity={0.5} />
-                          <directionalLight position={[5, 5, 5]} intensity={1} />
-                          <OrbitControls />
-                          {shortestVector.length === 2 && shortestVector[0] !== shortestVector[1] && (
-                            <Line
-                              points={shortestVector}
-                              color="red"
-                              lineWidth={2}
-                            />
-                          )}
-                          {latticePoints.map((pos, i) => (
-                            <mesh key={i} position={pos}>
-                              <sphereGeometry args={[0.2, 16, 16]} />
-                              <meshStandardMaterial color="blue" />
-                            </mesh>
-                          ))}
-                        </Canvas>
-                        <p className="text-sm mt-2 text-gray-600">
-                          The red line represents the shortest vector in this lattice, which is central to the hardness of ML-KEM.
-                        </p>
+                      <div className="space-y-2">
+                        <label className="label">
+                          <span className="label-text">Base64 Public Key</span>
+                          <span className="label-text-alt text-gray-500">Enter a valid base64 encoded public key</span>
+                        </label>
+                        <input
+                          className="input input-bordered w-full font-mono text-sm"
+                          value={base64Key}
+                          onChange={e => setBase64Key(e.target.value)}
+                          placeholder="e.g., AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            className="btn btn-primary flex-1"
+                            onClick={handleGenerateLattice}
+                            disabled={!base64Key.trim()}
+                          >
+                            Generate Lattice Visualization
+                          </button>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => {
+                              setLatticePoints([]);
+                              setBase64Key('');
+                              toast.success('Lattice cleared');
+                            }}
+                            disabled={latticePoints.length === 0}
+                          >
+                            Clear
+                          </button>
+                        </div>
                       </div>
+
+                      {latticePoints.length > 0 && (
+                        <div className="mt-4">
+                          <div className="bg-gray-50 p-3 rounded-lg mb-3">
+                            <div className="flex justify-between items-center text-sm">
+                              <span>📊 Lattice Statistics:</span>
+                              <span className="font-mono">{latticePoints.length} points</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm mt-1">
+                              <span>🔴 Shortest Vector:</span>
+                              <span className="font-mono">
+                                {shortestVector.length === 2 && shortestVector[0] !== shortestVector[1]
+                                  ? `${Math.sqrt(
+                                    (shortestVector[0][0] - shortestVector[1][0]) ** 2 +
+                                    (shortestVector[0][1] - shortestVector[1][1]) ** 2 +
+                                    (shortestVector[0][2] - shortestVector[1][2]) ** 2
+                                  ).toFixed(3)} units`
+                                  : 'N/A'
+                                }
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="h-[300px] md:h-[400px] rounded border border-gray-300 bg-gradient-to-br from-blue-50 to-indigo-50">
+                            <Canvas
+                              camera={{ position: [0, 0, 20], fov: 45 }}
+                              onCreated={({ gl }) => {
+                                gl.setClearColor('#f8fafc', 0);
+                              }}
+                              onError={(error) => {
+                                logger.warn('Three.js error', error);
+                              }}
+                            >
+                              <ambientLight intensity={0.6} />
+                              <directionalLight position={[10, 10, 5]} intensity={0.8} />
+                              <pointLight position={[-10, -10, -5]} intensity={0.3} />
+                              <OrbitControls
+                                enablePan={true}
+                                enableZoom={true}
+                                enableRotate={true}
+                                autoRotate={false}
+                                autoRotateSpeed={0.5}
+                              />
+
+                              {/* Grid for reference */}
+                              <gridHelper args={[20, 20, '#e5e7eb', '#d1d5db']} />
+
+                              {/* Shortest vector line */}
+                              {shortestVector.length === 2 && shortestVector[0] !== shortestVector[1] && (
+                                <Line
+                                  points={shortestVector}
+                                  color="red"
+                                  lineWidth={3}
+                                />
+                              )}
+
+                              {/* Lattice points */}
+                              {latticePoints.map((pos, i) => (
+                                <mesh key={i} position={pos}>
+                                  <sphereGeometry args={[0.15, 12, 12]} />
+                                  <meshStandardMaterial
+                                    color={i % 3 === 0 ? '#3b82f6' : i % 3 === 1 ? '#8b5cf6' : '#06b6d4'}
+                                    transparent={true}
+                                    opacity={0.8}
+                                  />
+                                </mesh>
+                              ))}
+                            </Canvas>
+                          </div>
+
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <strong>🔐 Lattice Cryptography:</strong> This visualization represents your public key as a 3D lattice structure.
+                              The red line shows the shortest vector, which is fundamental to the security of ML-KEM.
+                              Finding this shortest vector is computationally hard, making the cryptosystem secure against quantum attacks.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {latticePoints.length === 0 && base64Key.trim() && (
+                        <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <p className="text-sm text-yellow-800">
+                            💡 <strong>Tip:</strong> Enter a valid base64-encoded public key and click "Generate Lattice Visualization" to see the 3D representation.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
