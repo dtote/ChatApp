@@ -1,9 +1,10 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
-// Rate limiter para operaciones criptográficas
+// Rate limiter for cryptographic operations
 export const cryptoRateLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 30, // Máximo 30 peticiones por minuto por IP
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // Maximum 30 requests per minute per IP
+  keyGenerator: ipKeyGenerator, // Use helper function for IPv6
   message: {
     error: 'Too many cryptographic operations. Please wait a moment before trying again.',
     retryAfter: 60
@@ -18,11 +19,11 @@ export const cryptoRateLimiter = rateLimit({
   }
 });
 
-// Rate limiter para mensajes
+// Rate limiter for messages
 export const messageRateLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 20, // Máximo 20 mensajes por minuto por usuario
-  keyGenerator: (req) => req.user?._id || req.ip, // Usar ID de usuario si está autenticado
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20, // Maximum 20 messages per minute per user
+  keyGenerator: (req) => req.user?._id || ipKeyGenerator(req), // Use user ID if authenticated, otherwise IP
   message: {
     error: 'Too many messages sent. Please wait a moment before sending another message.',
     retryAfter: 60
@@ -37,10 +38,11 @@ export const messageRateLimiter = rateLimit({
   }
 });
 
-// Rate limiter para autenticación
+// Rate limiter for authentication
 export const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // Máximo 5 intentos de login por 15 minutos
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Maximum 5 login attempts per 15 minutes
+  keyGenerator: ipKeyGenerator, // Use helper function for IPv6
   message: {
     error: 'Too many login attempts. Please wait 15 minutes before trying again.',
     retryAfter: 900
@@ -55,10 +57,11 @@ export const authRateLimiter = rateLimit({
   }
 });
 
-// Rate limiter general para API
+// General API rate limiter
 export const apiRateLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 100, // Máximo 100 peticiones por minuto por IP
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // Maximum 100 requests per minute per IP
+  keyGenerator: ipKeyGenerator, // Use helper function for IPv6
   message: {
     error: 'Too many requests. Please wait a moment before trying again.',
     retryAfter: 60
