@@ -6,6 +6,7 @@ import useSecurity from '../../zustand/useSecurity.js';
 import useGetSummary from '../../hooks/useGetSummary.js';
 import { MdDeleteForever, MdVpnKey, MdGridOn, MdLockOutline, MdSummarize, MdSecurity, MdVisibilityOff, MdTimer, MdDevices, MdFingerprint } from "react-icons/md";
 import { OrbitControls, Line } from '@react-three/drei';
+import toast from 'react-hot-toast';
 
 const securityOptions = [
   { id: 1, title: "Message Deletion", details: "Allows users to permanently remove messages based on a selected timeframe.", icon: <MdDeleteForever className="text-xl text-blue-500" /> },
@@ -133,18 +134,27 @@ const SecurityOptions = () => {
   };
 
   const handleSearchConversation = async () => {
+    if (!userOrCommunity.trim()) {
+      toast.error("Please enter a username or community name");
+      return;
+    }
+
     try {
       const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
       const res = await axios.get('/api/conversation/search', {
-        params: { name: userOrCommunity },
+        params: { name: userOrCommunity.trim() },
         headers: { Authorization: `Bearer ${token}` },
       });
+
       if (res.data?.conversationIds) {
         setConversation({ ids: res.data.conversationIds, type: res.data.type });
         handleGetSummary(res.data.conversationIds, res.data.type);
+        toast.success(`Found ${res.data.type} conversation`);
       }
     } catch (err) {
-      alert("Conversation not found");
+      const errorMessage = err.response?.data?.error || "Conversation not found";
+      toast.error(errorMessage);
+      console.error("Search error:", err);
     }
   };
 
@@ -152,9 +162,15 @@ const SecurityOptions = () => {
     setLoadingSummary(true);
     try {
       const summary = await getSummary(ids, type, 50);
-      setSummaryText(summary);
+      if (summary) {
+        setSummaryText(summary);
+        toast.success("Summary generated successfully");
+      } else {
+        toast.error("Failed to generate summary");
+      }
     } catch (e) {
       console.error("Summary error", e);
+      toast.error("Error generating summary. Please try again.");
     }
     setLoadingSummary(false);
   };
@@ -175,11 +191,10 @@ const SecurityOptions = () => {
                 {securityOptions.map((option) => (
                   <li key={option.id}>
                     <button
-                      className={`w-full text-left flex items-center gap-3 py-2 md:py-3 px-3 md:px-4 rounded-md transition duration-200 border-b border-base-300 ${
-                        selectedOption?.id === option.id
-                          ? 'bg-blue-50 text-blue-600 border-blue-200'
-                          : 'hover:bg-base-200'
-                      }`}
+                      className={`w-full text-left flex items-center gap-3 py-2 md:py-3 px-3 md:px-4 rounded-md transition duration-200 border-b border-base-300 ${selectedOption?.id === option.id
+                        ? 'bg-blue-50 text-blue-600 border-blue-200'
+                        : 'hover:bg-base-200'
+                        }`}
                       onClick={() => handleOptionClick(option)}
                     >
                       {option.icon}
@@ -222,7 +237,7 @@ const SecurityOptions = () => {
                       <button className="btn btn-primary mt-2" onClick={handleGenerateLattice}>Generate Lattice</button>
 
                       <div className="h-[300px] md:h-[400px] mt-4 rounded border border-gray-300">
-                        <Canvas 
+                        <Canvas
                           camera={{ position: [0, 0, 15], fov: 50 }}
                           onCreated={({ gl }) => {
                             gl.setClearColor('#f8fafc', 0);
@@ -270,9 +285,38 @@ const SecurityOptions = () => {
 
                   {selectedOption.id === 5 && (
                     <div>
-                      <input className="input input-bordered w-full" value={userOrCommunity} onChange={e => setUserOrCommunity(e.target.value)} placeholder="Username or Community" />
-                      <button className="btn btn-primary mt-2" onClick={handleSearchConversation}>Search</button>
-                      {loadingSummary ? <p>Loading summary...</p> : summaryText && <p className="bg-base-200 p-4 rounded mt-4">{summaryText}</p>}
+                      <div className="space-y-2">
+                        <input
+                          className="input input-bordered w-full"
+                          value={userOrCommunity}
+                          onChange={e => setUserOrCommunity(e.target.value)}
+                          placeholder="Enter username or community name"
+                          onKeyPress={(e) => e.key === 'Enter' && handleSearchConversation()}
+                        />
+                        <button
+                          className="btn btn-primary w-full"
+                          onClick={handleSearchConversation}
+                          disabled={loadingSummary}
+                        >
+                          {loadingSummary ? 'Searching...' : 'Search Conversation'}
+                        </button>
+                      </div>
+
+                      {loadingSummary && (
+                        <div className="mt-4 text-center">
+                          <div className="loading loading-spinner loading-md"></div>
+                          <p className="mt-2 text-sm text-gray-600">Generating summary...</p>
+                        </div>
+                      )}
+
+                      {summaryText && !loadingSummary && (
+                        <div className="mt-4">
+                          <h4 className="font-semibold mb-2">Conversation Summary:</h4>
+                          <div className="bg-base-200 p-4 rounded-lg border">
+                            <p className="text-sm leading-relaxed">{summaryText}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 

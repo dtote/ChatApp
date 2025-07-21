@@ -2,7 +2,7 @@ import express from "express";
 import User from "../models/user.model.js";
 import Community from "../models/community.model.js";
 import Conversation from "../models/conversation.model.js";
-import {protectRoute} from '../middleware/protectRoute.js';
+import { protectRoute } from '../middleware/protectRoute.js';
 
 
 const router = express.Router();
@@ -17,11 +17,14 @@ router.get("/search", protectRoute, async (req, res) => {
       return res.status(400).json({ error: "Name is required" });
     }
 
-    const user = await User.findOne({ username: name });
-    const community = !user ? await Community.findOne({ name }) : null;
+    // Case-insensitive search
+    const user = await User.findOne({ username: { $regex: new RegExp(`^${name}$`, 'i') } });
+    const community = !user ? await Community.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } }) : null;
 
     if (!user && !community) {
-      return res.status(404).json({ error: "No user or community found with that name" });
+      return res.status(404).json({
+        error: `No user or community found with name "${name}". Please check the spelling and try again.`
+      });
     }
 
     if (user) {
@@ -30,7 +33,9 @@ router.get("/search", protectRoute, async (req, res) => {
       });
 
       if (!conversation) {
-        return res.status(404).json({ error: "No conversation found with that user" });
+        return res.status(404).json({
+          error: `No conversation found with user "${name}". You may need to start a conversation first.`
+        });
       }
 
       return res.json({ conversationIds: [conversation._id], type: "user" });
