@@ -9,22 +9,20 @@ const Conversation = ({ conversation, lastIdx }) => {
   const isSelected = selectedConversation?._id === conversation._id;
 
   return <>
-    <div className={`flex gap-3 items-center hover:bg-blue-50 rounded-lg p-3 cursor-pointer transition-all duration-200 ${
-      isSelected ? "bg-blue-100 border-l-4 border-blue-500" : ""
-    }`} onClick={() => setSelectedConversation(conversation)}>
+    <div className={`flex gap-3 items-center hover:bg-blue-50 rounded-lg p-3 cursor-pointer transition-all duration-200 ${isSelected ? "bg-blue-100 border-l-4 border-blue-500" : ""
+      }`} onClick={() => setSelectedConversation(conversation)}>
       <div className={`avatar relative ${isOnline ? "online" : ""}`}>
-        <div className='w-12 h-12 rounded-full ring-2 ring-gray-200'>
+        <div className='w-10 h-10 sm:w-12 sm:h-12 rounded-full ring-2 ring-gray-200'>
           <img src={conversation.profilePic} alt="user avatar" className="w-full h-full object-cover rounded-full" />
         </div>
         {isOnline && (
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+          <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full"></div>
         )}
       </div>
       <div className='flex flex-col flex-1 min-w-0'>
         <div className='flex gap-3 justify-between items-center'>
-          <p className={`font-semibold truncate ${
-            isSelected ? "text-blue-700" : "text-gray-800"
-          }`}>
+          <p className={`font-semibold truncate ${isSelected ? "text-blue-700" : "text-gray-800"
+            }`}>
             {conversation.username}
           </p>
         </div>

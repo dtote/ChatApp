@@ -8,6 +8,7 @@ body {
 	width: 100%;
 	background: url("/bg_health.jpg") no-repeat center center fixed;
 	background-size: cover;
+	overflow: hidden;
 }
 
 /* En pantallas pequeñas */
@@ -21,11 +22,90 @@ body {
 	}
 }
 
+/* Pantallas medianas */
+@media (min-width: 768px) and (max-width: 1023px) {
+	body {
+		background-size: cover;
+		background-attachment: scroll;
+	}
+}
+
 /* Pantallas grandes */
 @media (min-width: 1024px) {
 	body {
 		background-size: cover;
 		background-attachment: fixed;
+	}
+}
+
+/* Asegurar que el contenido principal ocupe toda la altura disponible */
+#root {
+	height: 100vh;
+	width: 100vw;
+	overflow: hidden;
+}
+
+/* Mejoras para el sidebar responsive */
+@media (max-width: 640px) {
+
+	/* Ajustes para pantallas muy pequeñas */
+	.avatar .w-12 {
+		width: 2rem;
+		height: 2rem;
+	}
+
+	/* Reducir padding en elementos del sidebar */
+	.p-3 {
+		padding: 0.5rem;
+	}
+
+	/* Ajustar tamaños de texto */
+	.text-sm {
+		font-size: 0.75rem;
+	}
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+
+	/* Ajustes para pantallas medianas */
+	.avatar .w-12 {
+		width: 2.5rem;
+		height: 2.5rem;
+	}
+}
+
+/* Asegurar que los botones de navegación tengan suficiente espacio */
+@media (min-width: 768px) and (max-width: 1279px) {
+
+	/* En pantallas medianas, usar texto más corto */
+	.nav-button-text {
+		font-size: 0.75rem;
+	}
+}
+
+/* Ajustes específicos para pantallas pequeñas */
+@media (max-width: 1050px) {
+
+	/* Reducir el ancho mínimo del sidebar en pantallas pequeñas */
+	.sidebar-min-width {
+		min-width: 250px;
+	}
+}
+
+/* Ajuste sutil para móviles - solo el ancho mínimo */
+@media (max-width: 768px) {
+
+	/* En móviles, el sidebar debe ocupar todo el ancho disponible del drawer */
+	.sidebar-min-width {
+		min-width: 100%;
+		max-width: 100%;
+	}
+
+	/* Asegurar que el drawer móvil esté pegado a la izquierda */
+	.mobile-drawer {
+		left: 0;
+		width: 85vw;
+		max-width: 320px;
 	}
 }
 

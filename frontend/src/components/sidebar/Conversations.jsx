@@ -43,32 +43,32 @@ const Conversations = () => {
   return (
     <div className="py-2 flex flex-col overflow-auto">
       {/* Navigation buttons */}
-      <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
+      <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
         <button
-          className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
-            view === 'conversations'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
+          className={`flex-1 py-2 px-2 sm:px-4 rounded-md font-medium transition-all duration-200 ${view === 'conversations'
+            ? 'bg-white text-blue-600 shadow-sm'
+            : 'text-gray-600 hover:text-gray-800'
+            }`}
           onClick={() => setView('conversations')}
         >
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-1 sm:gap-2">
             <FaComments className="w-4 h-4" />
-            <span className="hidden sm:inline">Conversations</span>
+            <span className="hidden lg:inline text-sm">Conversations</span>
+            <span className="lg:hidden text-xs">Conversations</span>
           </div>
         </button>
 
         <button
-          className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
-            view === 'communities'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-800'
-          }`}
+          className={`flex-1 py-2 px-2 sm:px-4 rounded-md font-medium transition-all duration-200 ${view === 'communities'
+            ? 'bg-white text-blue-600 shadow-sm'
+            : 'text-gray-600 hover:text-gray-800'
+            }`}
           onClick={() => setView('communities')}
         >
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-1 sm:gap-2">
             <FaUsers className="w-4 h-4" />
-            <span className="hidden sm:inline">Communities</span>
+            <span className="hidden lg:inline text-sm">Communities</span>
+            <span className="lg:hidden text-xs">Communities</span>
           </div>
         </button>
       </div>

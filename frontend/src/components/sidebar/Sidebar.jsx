@@ -5,8 +5,8 @@ import LogoutButton from './LogoutButton.jsx';
 
 const Sidebar = () => {
   return (
-    <div className="bg-white border-r border-gray-200 sm:w-[500px] md:w-[350px] lg:w-[400px] p-4
-      h-screen flex flex-col overflow-hidden shadow-lg">
+    <div className="bg-white border-r border-gray-200 w-full max-w-[400px] min-w-[320px] p-3 sm:p-4 sidebar-min-width
+      h-full flex flex-col overflow-hidden shadow-lg lg:shadow-lg">
 
       <div className="flex flex-col overflow-y-auto min-h-0">
         <SearchInput />

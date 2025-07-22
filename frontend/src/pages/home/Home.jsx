@@ -25,9 +25,9 @@ const Home = () => {
 
 
   return (
-    <div className="fixed inset-0">
+    <div className="fixed inset-0 flex flex-col">
       {/* Mobile Drawer */}
-      <div className="lg:hidden relative">
+      <div className="lg:hidden flex flex-col h-full">
         {/* Overlay */}
         {isOpen && (
           <div
@@ -38,9 +38,9 @@ const Home = () => {
 
         {/* Sidebar Drawer */}
         <div
-          className={`fixed top-0 left-0 h-screen w-[80vw] max-w-[300px] box-border bg-gray-400 bg-clip-padding backdrop-blur-lg bg-opacity-30 p-4 z-50 transform transition-transform duration-300 overflow-y-auto text-sm ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`fixed top-0 left-0 h-screen w-[85vw] max-w-[320px] bg-white shadow-lg z-50 transform transition-transform duration-300 overflow-hidden mobile-drawer ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
         >
-          <div className="flex justify-start">
+          <div className="flex justify-end p-2">
             <button
               onClick={closeDrawer}
               className="btn btn-ghost text-xl"
@@ -52,8 +52,8 @@ const Home = () => {
           <Sidebar />
         </div>
         {/* Contenido principal */}
-        <div className="flex flex-col h-screen">
-          <div className="grid grid-cols-3 items-center p-4 bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex flex-col h-full">
+          <div className="grid grid-cols-3 items-center p-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
             <button
               onClick={toggleDrawer}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200 justify-self-start"
@@ -77,7 +77,8 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="hidden mt-20 lg:flex w-screen h-[80vh] overflow-hidden">
+      {/* Desktop Layout */}
+      <div className="hidden lg:flex h-full">
         <div className="flex flex-col h-full">
           <Sidebar />
         </div>

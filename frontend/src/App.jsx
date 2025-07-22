@@ -12,7 +12,7 @@ function App() {
   const { authUser } = useAuthContext();
   return (
     <CameraProvider>
-      <div className="p-4 sm:h-[800px] md:h-[700px] lg:h-[800px] w-screen h-screen flex items-center justify-center">
+      <div className="w-screen h-screen flex items-center justify-center">
         <Routes>
           <Route path="/" element={authUser ? <Home /> : <Navigate to={'/login'} />} />
           <Route path='/signup' element={authUser ? <Navigate to='/' /> : <Signup />} />
