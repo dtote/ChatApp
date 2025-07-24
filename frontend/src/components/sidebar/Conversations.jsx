@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaComments, FaUsers } from 'react-icons/fa'; // ← Importamos iconos
+import { FaComments, FaUsers, FaRobot } from 'react-icons/fa';
 import Conversation from './Conversation.jsx';
 import useGetConversations from "../../hooks/useGetConversations.js";
 import useGetCommunities from "../../hooks/useGetCommunities.js";
@@ -40,6 +40,17 @@ const Conversations = () => {
     }
   };
 
+  const handleOpenAIAssistant = () => {
+    // Crear una conversación especial para el asistente de IA
+    setSelectedConversation({
+      _id: 'ai-assistant',
+      name: 'Health Assistant',
+      type: 'ai-assistant',
+      image: '/geekbot-svgrepo-com.svg',
+      isAI: true
+    });
+  };
+
   return (
     <div className="py-2 flex flex-col overflow-auto">
       {/* Navigation buttons */}
@@ -75,6 +86,32 @@ const Conversations = () => {
 
       {view === 'conversations' && (
         <>
+          {/* Health Assistant Option - Visible en todas las resoluciones */}
+          <div
+            className="flex gap-3 items-center p-3 hover:bg-blue-50 rounded-lg cursor-pointer transition-all duration-200 border-2 border-blue-200 bg-blue-50/50"
+            onClick={handleOpenAIAssistant}
+          >
+            <div className="avatar">
+              <div className="w-12 h-12 rounded-full ring-2 ring-blue-300 bg-blue-100 flex items-center justify-center">
+                <img src="/geekbot-svgrepo-com.svg" alt="Health Assistant" className="w-8 h-8" />
+              </div>
+            </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-blue-800">Health Assistant</p>
+                <FaRobot className="w-4 h-4 text-blue-600" />
+              </div>
+              <span className="text-sm text-blue-600">Get help and support</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">AI</span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="divider my-2"></div>
+
+          {/* Regular Conversations */}
           {Array.isArray(conversations.filteredUser) && conversations.filteredUser.map((conversation, idx) => (
             <Conversation
               key={conversation._id}
