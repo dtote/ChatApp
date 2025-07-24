@@ -2,14 +2,42 @@ import useGetMessages from "../../hooks/useGetMessages";
 import MessageSkeleton from "../skeletons/MessageSkeleton";
 import Message from "./Message";
 import useListenMessages from "../../hooks/useListenMessages";
-import { div } from "@tensorflow/tfjs";
+import useConversation from "../../zustand/useConversation";
+import { useEffect, useRef } from "react";
+import { FaTimes } from "react-icons/fa";
 
 const Messages = () => {
-  const { messages, loading } = useGetMessages();
+  const { messages: rawMessages, loading } = useGetMessages();
+  const { selectedConversation, setSelectedConversation } = useConversation();
+  const messagesEndRef = useRef(null);
 
   useListenMessages();
 
-  if (loading) {
+  // Asegurar que messages sea siempre un array
+  const messages = Array.isArray(rawMessages) ? rawMessages : [];
+
+  // Debug logs
+  console.log("Messages component - selectedConversation:", selectedConversation);
+  console.log("Messages component - rawMessages:", rawMessages);
+  console.log("Messages component - messages (sanitized):", messages);
+  console.log("Messages component - rawMessages type:", typeof rawMessages);
+  console.log("Messages component - rawMessages is array:", Array.isArray(rawMessages));
+  console.log("Messages component - loading:", loading);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    try {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } catch (error) {
+      console.error("Error scrolling to bottom:", error);
+    }
+  }, [messages]);
+
+  const closeConversation = () => {
+    setSelectedConversation(null);
+  };
+
+  if (loading && selectedConversation?.type !== "ai-assistant") {
     return (
       <div className="flex justify-center items-center h-full">
         <span className="loading loading-spinner"></span>
@@ -17,41 +45,74 @@ const Messages = () => {
     )
   }
 
-  if (loading) {
+  // Si es una conversación con IA, mostrar siempre la información del asistente
+  if (selectedConversation?.type === "ai-assistant") {
     return (
-      <div className="flex justify-center items-center h-full">
-        <span className="loading loading-spinner"></span>
+      <div className='px-4 flex-1 overflow-auto'>
+        {/* Health Assistant Header - Siempre visible */}
+        <div className="flex flex-col justify-center items-center py-6 border-b border-gray-200 relative">
+          {/* Botón para cerrar conversación */}
+          <button
+            onClick={closeConversation}
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-gray-100"
+            title="Close conversation"
+          >
+            <FaTimes className="w-5 h-5" />
+          </button>
+
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+              <img src="/geekbot-svgrepo-com.svg" alt="Health Assistant" className="w-10 h-10" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Health Assistant</h3>
+            <p className="text-gray-600 mb-4">
+              Hello! I'm your health assistant. I can help you with health-related questions,
+              provide emotional support, and assist you with using this app.
+            </p>
+            <p className="text-sm text-gray-500">
+              Ask me anything - I'm here to help! 💙
+            </p>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div className="py-4">
+          {messages.length > 0 && messages.map((message, idx) => {
+            try {
+              return <Message key={message._id || idx} message={message} />;
+            } catch (error) {
+              console.error("Error rendering message:", error, message);
+              return null;
+            }
+          })}
+        </div>
+
+        {/* Scroll to bottom reference */}
+        <div ref={messagesEndRef} />
       </div>
-    )
+    );
   }
+
+  // Para conversaciones normales, usar el flujo original
   return (
     <div className='px-4 flex-1 overflow-auto'>
-
-      {messages.length > 0 && messages.map((message, idx) => (
-        <Message key={message._id || idx} message={message} />
-      ))}
-
-      {/* {loading && [...Array(3)].map((_, idx) => <MessageSkeleton key={`skeleton-${idx}`} />)} */}
+      {messages.length > 0 && messages.map((message, idx) => {
+        try {
+          return <Message key={message._id || idx} message={message} />;
+        } catch (error) {
+          console.error("Error rendering message:", error, message);
+          return null;
+        }
+      })}
 
       {messages.length === 0 && (
-        <p className='text-center'>Send a message to start the conversation</p>
+        <div className="flex justify-center items-center h-full">
+          <p className='text-center text-gray-500'>Send a message to start the conversation</p>
+        </div>
       )}
 
-      {/* Mostrar PDFs relacionados */}
-      {/* {!loading && pdfUrls.length > 0 && (
-        <div className="pdf-container">
-          <h3 className="text-lg font-bold mt-4">Attached PDFs:</h3>
-          <ul>
-            {pdfUrls.map((url, index) => (
-              <li key={index} className="mb-2">
-                <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600">
-                  Ver PDF {index + 1}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )} */}
+      {/* Scroll to bottom reference */}
+      <div ref={messagesEndRef} />
     </div>
   )
 }
