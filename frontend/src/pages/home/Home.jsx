@@ -3,7 +3,7 @@ import MessageContainer from '../../components/messages/MessageContainer';
 import SecurityOptions from '../../components/security/SecurityOptions';
 import PostQuantumEducation from '../../components/education/PostQuantumEducation';
 import './Home.css';
-import ChatBot from '../../components/chatbot/Chatbot';
+
 import { useState, useEffect } from 'react';
 
 const Home = () => {
@@ -70,9 +70,6 @@ const Home = () => {
           </div>
           <div className="flex-1 overflow-hidden relative bg-gray-50">
             <MessageContainer />
-            <div className="absolute bottom-4 right-4 z-10">
-              <ChatBot />
-            </div>
           </div>
         </div>
       </div>
@@ -93,9 +90,6 @@ const Home = () => {
           </div>
           <div className="flex-1 overflow-hidden relative">
             <MessageContainer />
-            <div className="absolute bottom-4 right-4 z-10">
-              <ChatBot />
-            </div>
           </div>
         </div>
       </div>
