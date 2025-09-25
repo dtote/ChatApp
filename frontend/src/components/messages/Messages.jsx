@@ -16,13 +16,7 @@ const Messages = () => {
   // Asegurar que messages sea siempre un array
   const messages = Array.isArray(rawMessages) ? rawMessages : [];
 
-  // Debug logs
-  console.log("Messages component - selectedConversation:", selectedConversation);
-  console.log("Messages component - rawMessages:", rawMessages);
-  console.log("Messages component - messages (sanitized):", messages);
-  console.log("Messages component - rawMessages type:", typeof rawMessages);
-  console.log("Messages component - rawMessages is array:", Array.isArray(rawMessages));
-  console.log("Messages component - loading:", loading);
+
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -81,7 +75,6 @@ const Messages = () => {
             try {
               return <Message key={message._id || idx} message={message} />;
             } catch (error) {
-              console.error("Error rendering message:", error, message);
               return null;
             }
           })}
@@ -100,7 +93,6 @@ const Messages = () => {
         try {
           return <Message key={message._id || idx} message={message} />;
         } catch (error) {
-          console.error("Error rendering message:", error, message);
           return null;
         }
       })}

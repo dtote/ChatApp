@@ -29,7 +29,7 @@ export const SocketContextProvider = ({ children }) => {
 			setSocket(socket);
 
 			socket.on("connect", () => {
-				console.log("Connected to server:", socket.id); // This should confirm the connection from the client
+				// Connected to server
 			});
 
 			socket.on("connect_error", (err) => {

@@ -1,5 +1,6 @@
 .home-large {
-  width: 80%; /* Ancho inicial para pantallas pequeñas */
+  width: 80%;
+  /* Initial width for small screens */
   height: 600px;
   display: flex;
   flex-direction: row;

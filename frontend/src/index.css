@@ -11,14 +11,14 @@ body {
 	overflow: hidden;
 }
 
-/* En pantallas pequeñas */
+/* On small screens */
 @media (max-width: 1000px) {
 	body {
 		background-size: cover;
-		/* Mantén cover también aquí */
+		/* Keep cover here too */
 		background-position: top center;
 		background-attachment: scroll;
-		/* Para que no sea pesado en móviles */
+		/* So it's not heavy on mobile */
 	}
 }
 
@@ -48,7 +48,7 @@ body {
 /* Mejoras para el sidebar responsive */
 @media (max-width: 640px) {
 
-	/* Ajustes para pantallas muy pequeñas */
+	/* Adjustments for very small screens */
 	.avatar .w-12 {
 		width: 2rem;
 		height: 2rem;
@@ -59,7 +59,7 @@ body {
 		padding: 0.5rem;
 	}
 
-	/* Ajustar tamaños de texto */
+	/* Adjust text sizes */
 	.text-sm {
 		font-size: 0.75rem;
 	}
@@ -74,39 +74,41 @@ body {
 	}
 }
 
-/* Asegurar que los botones de navegación tengan suficiente espacio */
+/* Ensure navigation buttons have enough space */
 @media (min-width: 768px) and (max-width: 1279px) {
 
-	/* En pantallas medianas, usar texto más corto */
+	/* On medium screens, use shorter text */
 	.nav-button-text {
 		font-size: 0.75rem;
 	}
 }
 
-/* Ajustes específicos para pantallas pequeñas */
+/* Specific adjustments for small screens */
 @media (max-width: 1050px) {
 
-	/* Reducir el ancho mínimo del sidebar en pantallas pequeñas */
+	/* Reduce minimum sidebar width on small screens */
 	.sidebar-min-width {
 		min-width: 250px;
 	}
 }
 
-/* Ajuste sutil para móviles - solo el ancho mínimo */
+/* Subtle adjustment for mobile - only minimum width */
 @media (max-width: 768px) {
 
-	/* En móviles, el sidebar debe ocupar todo el ancho disponible del drawer */
+	/* On mobile, sidebar should occupy all available drawer width */
 	.sidebar-min-width {
 		min-width: 100%;
 		max-width: 100%;
 	}
 
-	/* Asegurar que el drawer móvil esté pegado a la izquierda */
+	/* Ensure mobile drawer is attached to the left */
 	.mobile-drawer {
 		left: 0;
 		width: 85vw;
 		max-width: 320px;
 	}
+
+
 }
 
 

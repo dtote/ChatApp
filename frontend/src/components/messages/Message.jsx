@@ -9,7 +9,35 @@ import axios from 'axios';
 import { logger } from '../../utils/logger.js';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
+import DeletedUserIndicator from './DeletedUserIndicator.jsx';
+import VerificationBadge from './VerificationBadge.jsx';
+import VerificationModal from './VerificationModal.jsx';
 import './Message.css';
+
+// Función para renderizar markdown básico
+const renderMarkdown = (text) => {
+  if (!text || typeof text !== 'string') return text;
+
+  // Convertir **texto** a <strong>texto</strong>
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+  // Convertir *texto* a <em>texto</em>
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+  // Convertir `código` a <code>código</code>
+  text = text.replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+
+  // Convertir ```código``` a bloques de código
+  text = text.replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-100 p-3 rounded-lg overflow-x-auto my-2"><code>$1</code></pre>');
+
+  // Convertir enlaces [texto](url) a <a href="url">texto</a>
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">$1</a>');
+
+  // Convertir saltos de línea a <br>
+  text = text.replace(/\n/g, '<br>');
+
+  return text;
+};
 
 const checkUrlSafety = async (url, setUrlStatus) => {
   // 🔄 Mark as "checking" immediately
@@ -155,19 +183,34 @@ const Message = ({ message }) => {
   const { authUser } = useAuthContext();
   const { selectedConversation } = useConversation();
   const { socket } = useSocketContext();
-  const fromMe = message.senderId === authUser._id;
-  const formattedTime = extractTime(message.createdAt);
+
+  // Validate that the message has the necessary properties
+  if (!message || !message.message) {
+    console.error("Invalid message object:", message);
+    return null;
+  }
+
+  // Determine if the message is from the current user or the bot
+  const isAIConversation = selectedConversation?.type === "ai-assistant";
+  const fromMe = isAIConversation
+    ? message.senderId === "user"
+    : message.senderId === authUser._id;
+
+  const formattedTime = extractTime(message.createdAt || message.timestamp);
   const shakeClass = message.shouldShake ? "shake" : "";
   const chatClassName = fromMe ? "chat-end" : "chat-start";
   const bubbleBgColor = fromMe ? "bg-blue-500" : "";
-  const [showEncrypted, setShowEncrypted] = useState(false);
   const [messages, setMessages] = useState([message]);
   const [currentMessage, setCurrentMessage] = useState(message);
 
   const [showPopup, setShowPopup] = useState(false);
   const [urlStatus, setUrlStatus] = useState({});
   const [profilePic, setProfilePic] = useState(
-    fromMe ? authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
+    fromMe
+      ? authUser.profilePic
+      : isAIConversation
+        ? '/geekbot-svgrepo-com.svg'
+        : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
   );
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
   const { selectedKeySize } = useSecurity(state => state);
@@ -177,12 +220,18 @@ const Message = ({ message }) => {
     publicKey: "",
     sharedElements: "Shared elements"
   });
+  const [userDataLoaded, setUserDataLoaded] = useState(false);
   const [reactions, setReactions] = useState(message.reactions || []);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   const handleToggleEmojiPicker = () => {
     setShowEmojiPicker(prev => !prev);
+  };
+
+  const handleVerificationClick = () => {
+    setShowVerificationModal(true);
   };
 
   const handleReact = async (emojiObj) => {
@@ -206,7 +255,6 @@ const Message = ({ message }) => {
   let pollQuestion = '';
   let pollOptions = [];
 
-
   try {
     if (typeof message.message === 'string' && message.message.includes('"type":"poll"')) {
       const jsonStart = message.message.indexOf('{');
@@ -218,7 +266,6 @@ const Message = ({ message }) => {
         isPoll = true;
         pollQuestion = parsedPoll.question;
         pollOptions = parsedPoll.options;
-
       }
     }
   } catch (err) {
@@ -250,11 +297,22 @@ const Message = ({ message }) => {
     }
   };
 
+  // Separate useEffect for profile pic fetching (only once when component mounts)
   useEffect(() => {
-    if (!fromMe) {
+    if (!fromMe && !isAIConversation) {
       fetchProfilePic(message.senderId);
     }
+  }, [message.senderId, fromMe, isAIConversation]); // Only depend on these values
 
+  // Separate useEffect for popup data fetching (only when popup is shown and data not loaded)
+  useEffect(() => {
+    if (showPopup && !isAIConversation && !userDataLoaded) {
+      fetchUserData(message.senderId);
+    }
+  }, [showPopup, message.senderId, isAIConversation, userDataLoaded]); // Only depend on these values
+
+  // Separate useEffect for emoji picker click outside handling
+  useEffect(() => {
     const handleClickOutside = (e) => {
       const clickedElement = e.target;
 
@@ -269,14 +327,17 @@ const Message = ({ message }) => {
 
     if (showEmojiPicker) {
       document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
     }
+  }, [showEmojiPicker]);
 
-    if (showPopup) {
-      fetchUserData(message.senderId);
-    }
-
-    if (typeof message.message === 'string') {
-      const urls = message.message.match(urlPattern);
+  // Separate useEffect for URL safety checking
+  useEffect(() => {
+    const messageText = message.message;
+    if (typeof messageText === 'string') {
+      const urls = messageText.match(urlPattern);
       if (urls) {
         urls.forEach((url) => {
           if (!(url in urlStatus)) {
@@ -286,7 +347,10 @@ const Message = ({ message }) => {
         });
       }
     }
+  }, [message.message, urlPattern, urlStatus]);
 
+  // Separate useEffect for poll initialization
+  useEffect(() => {
     const initializePoll = async () => {
       if (isPoll && message._id) {
         try {
@@ -308,40 +372,49 @@ const Message = ({ message }) => {
 
             setPollOptionsState(pollOptions);
           } else {
-            console.error("Error to verify or create survey:", err);
+            // Survey error handled silently
           }
         }
       }
     };
 
     initializePoll();
-
-    if (socket) {
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [isPoll, showEmojiPicker, showPopup, message.senderId, urlPattern, urlStatus, pollOptions, pollQuestion, setUrlStatus, selectedConversation?.type, socket, message.message, selectedKeySize]);
+  }, [isPoll, message._id, pollOptionsState, pollOptions, pollQuestion]);
 
   const fetchProfilePic = async (senderId) => {
     try {
-      const response = await fetch(`/api/users/${senderId}/profile-pic`);
+      const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
+
+      // First try to get user information with fallback
+      const response = await fetch(`/api/users/${senderId}/info`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
       if (response.ok) {
         const data = await response.json();
         setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
+
+        // If user is deleted, show a visual indicator
+        if (data.isDeleted) {
+          setProfilePic('https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
+        }
       } else {
-        console.error("Error getting profile picture");
+        // Fallback to default image if we can't get the information
+        setProfilePic('https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
       }
     } catch (error) {
-      console.error("Error in fetch request:", error);
+      // Fallback to default image in case of error
+      setProfilePic('https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
     }
   };
 
   const fetchUserData = async (userId) => {
     try {
       const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
-      const response = await fetch(`/api/users/${userId}/popup-data`, {
+      const response = await fetch(`/api/users/${userId}/info`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -354,26 +427,45 @@ const Message = ({ message }) => {
           email: data.email,
           username: data.username,
           hasPublicKey: !!data.publicKey,
-          publicKeyLength: data.publicKey?.length
+          publicKeyLength: data.publicKey?.length,
+          isDeleted: data.isDeleted
         });
 
         setUserData({
-          email: data.email,
-          username: data.username,
+          email: data.email || 'Not available',
+          username: data.username || 'Deleted User',
           publicKey: data.publicKey,
-          sharedElements: "Shared elements"
+          sharedElements: data.isDeleted ? "Deleted user" : "Shared elements",
+          isDeleted: data.isDeleted
         });
+        setUserDataLoaded(true);
       } else {
         logger.error("Error getting user data", {
           status: response.status,
           statusText: response.statusText,
           userId
         });
-        setUserData(prev => ({ ...prev, publicKey: null }));
+        // Set default data for users not found
+        setUserData({
+          email: 'Not available',
+          username: 'Deleted User',
+          publicKey: null,
+          sharedElements: "Deleted user",
+          isDeleted: true
+        });
+        setUserDataLoaded(true);
       }
     } catch (error) {
       logger.error("Error in fetch request", error);
-      setUserData(prev => ({ ...prev, publicKey: null }));
+      // Set default data in case of error
+      setUserData({
+        email: 'Not available',
+        username: 'Deleted User',
+        publicKey: null,
+        sharedElements: "Deleted user",
+        isDeleted: true
+      });
+      setUserDataLoaded(true);
     }
   };
 
@@ -397,22 +489,7 @@ const Message = ({ message }) => {
     }
   }
 
-  function toBase64Unicode(str) {
-    return window.btoa(unescape(encodeURIComponent(str)));
-  }
 
-  const handleEncryptMessage = (message) => {
-    try {
-      // Encode message with btoa
-      const encodedMessage = toBase64Unicode(message.message);
-
-      // Return encoded message with username suffix
-      return `${encodedMessage.slice(0, 60)}...signedBy-${authUser.username}`;
-    } catch (error) {
-      console.error("Error encrypting message:", error);
-      return "[Error encrypting]";
-    }
-  };
 
   const getDocumentPreview = () => {
     const fileUrl = message.fileUrl;
@@ -468,22 +545,22 @@ const Message = ({ message }) => {
         onClick={() => window.open(fileUrl, '_blank')}
       >
         {/* 🔧 FILE ICON */}
-        < div className="text-3xl" >
+        <div className="text-3xl">
           {getFileIcon()}
-        </div >
+        </div>
 
         {/* 🔧 FILE INFORMATION */}
-        < div className="flex-1 min-w-0" >
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 truncate">
             {getFileName()}
           </p>
           <p className="text-xs text-gray-500">
             {getFileSize()} • {extension?.toUpperCase() || 'FILE'}
           </p>
-        </div >
+        </div>
 
         {/* 🔧 DOWNLOAD BUTTON */}
-        < button
+        <button
           className="text-gray-400 hover:text-gray-600 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
@@ -491,23 +568,30 @@ const Message = ({ message }) => {
           }}
         >
           <FaDownload className="w-4 h-4" />
-        </button >
-      </div >
+        </button>
+      </div>
     );
   }
 
+  // Para conversaciones de IA, usar message.text en lugar de message.message
+  const messageText = message.message;
+
   return (
     <>
-      <div className={`chat ${chatClassName} `} onDoubleClick={() => setShowEncrypted(!showEncrypted)}>
-        <div className="chat-image avatar" onClick={() => setShowPopup(true)}>
-          <div className="w-10 rounded-full">
-            <img alt="Profile" src={profilePic} />
+      <div className={`chat ${chatClassName}`}>
+        {!fromMe && (
+          <div className="chat-image avatar" onClick={() => !isAIConversation && setShowPopup(true)}>
+            <div className="w-10 rounded-full">
+              <img alt="Profile" src={profilePic} />
+            </div>
           </div>
-        </div>
-        <div className={`chat-bubble text-white ${bubbleBgColor} ${shakeClass} pb-2`}>
-          {showEncrypted ? (
-            <span className="text-yellow-500 break-all">{handleEncryptMessage(message)}</span>
-          ) : isPoll ? (
+        )}
+        <div
+          className={`chat-bubble text-white ${bubbleBgColor} ${shakeClass} pb-2 max-w-lg cursor-pointer hover:opacity-95 transition-opacity`}
+          onClick={handleVerificationClick}
+          title="Click to verify message"
+        >
+          {isPoll ? (
             <form className="w-full bg-white p-4 rounded shadow-md mt-2">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">{pollQuestion}</h3>
               <div className="flex flex-col gap-2">
@@ -526,24 +610,21 @@ const Message = ({ message }) => {
               </div>
               <button
                 type="button"
-                className={`mt - 4 bg - blue - 500 hover: bg - blue - 600 text - white py - 1.5 px - 4 rounded shadow `}
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded shadow"
                 onClick={handleVote}
-
               >
                 Send Vote
               </button>
             </form>
           ) : message.fileUrl ? (
             <div>
-
               {/* Show file according to its type */}
               {message.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                 // 🖼️ IMAGE FILES
-
                 <div className="relative group max-w-[200px]">
                   <div className="bg-white rounded-lg p-1 shadow-md">
                     <img
-                      src={`${message.fileUrl} `}
+                      src={`${message.fileUrl}`}
                       alt="Sent image"
                       className="max-w-[180px] max-h-[180px] w-auto h-auto rounded-lg shadow cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => window.open(message.fileUrl, '_blank')}
@@ -584,7 +665,7 @@ const Message = ({ message }) => {
               ) : message.fileUrl.match(/\.(mp4|webm|ogg)$/i) ? (
                 // 🎥 VIDEO FILES
                 <video
-                  src={`${message.fileUrl} `}
+                  src={`${message.fileUrl}`}
                   controls
                   className="w-full max-w-[250px] h-auto rounded shadow"
                 />
@@ -602,9 +683,9 @@ const Message = ({ message }) => {
             </div>
           ) : (
             <div>
-              {typeof message.message === 'string' && message.message.match(urlPattern) ? (
+              {typeof messageText === 'string' && messageText.match(urlPattern) ? (
                 <div>
-                  {message.message.split(urlPattern).map((part, index) => {
+                  {messageText.split(urlPattern).map((part, index) => {
                     if (part.match(urlPattern)) {
                       const safetyStatus = urlStatus[part];
                       return (
@@ -613,51 +694,83 @@ const Message = ({ message }) => {
                             href={part}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`underline ${safetyStatus === true ? 'text-blue-200' : safetyStatus === false ? 'text-red-400' : 'text-yellow-300'} `}
+                            className={`underline ${safetyStatus === 'safe' ? 'text-blue-300' : safetyStatus === 'unsafe' ? 'text-red-300' : 'text-yellow-300'}`}
                           >
                             {part}
                           </a>
-                          {safetyStatus === true && <span className="text-green-400 ml-1">✓</span>}
-                          {safetyStatus === false && <span className="text-red-400 ml-1">⚠</span>}
-                          {safetyStatus === null && <span className="text-yellow-300 ml-1">...</span>}
+                          {safetyStatus === 'unsafe' && (
+                            <span className="text-red-300 text-xs ml-1">⚠️</span>
+                          )}
                         </div>
                       );
                     }
-                    return <span key={index}>{part}</span>
+                    return <span key={index} dangerouslySetInnerHTML={{ __html: renderMarkdown(part) }} />;
                   })}
                 </div>
               ) : (
-                <span>{message.message}</span>
+                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(messageText) }} />
               )}
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-1 ml-12">
-          {reactions.map((reaction, index) => (
-            <span key={index} className="text-lg">
-              {reaction.emoji}
-            </span>
-          ))}
-          <button
-            className="text-sm text-white bg-gray-600 px-2 py-1 rounded hover:bg-gray-700"
-            onClick={handleToggleEmojiPicker}
-          >
-            +
-          </button>
+
+        {/* Avatar for current user messages */}
+        {fromMe && (
+          <div className="chat-image avatar" onClick={() => !isAIConversation && setShowPopup(true)}>
+            <div className="w-10 rounded-full">
+              <img alt="Profile" src={profilePic} />
+            </div>
+          </div>
+        )}
+
+        {/* Footer below avatar */}
+        <div className={`flex items-center mt-1 ${fromMe ? 'justify-end' : 'justify-start'}`}>
+          {/* Timestamp (left for incoming, right for outgoing) */}
+          {!fromMe && <span className="text-xs text-gray-500 mr-2">{formattedTime}</span>}
+
+          {/* Reactions and verification (only for non-AI conversations) */}
+          {!isAIConversation && (
+            <>
+              {reactions.length > 0 && (
+                <div className="flex items-center gap-0.5 mr-0.5">
+                  {reactions.slice(0, 3).map((reaction, index) => (
+                    <span key={index} className="text-xs bg-white bg-opacity-80 rounded-full px-1 py-0.5 shadow-sm border border-gray-100">
+                      {reaction.emoji}
+                    </span>
+                  ))}
+                  {reactions.length > 3 && (
+                    <span className="text-xs bg-white bg-opacity-80 rounded-full px-1 py-0.5 shadow-sm border border-gray-100 text-gray-600">
+                      +{reactions.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Add reaction button */}
+              <button
+                className="text-xs text-gray-500 hover:text-gray-700 bg-white bg-opacity-80 hover:bg-opacity-100 px-1.5 py-0.5 rounded-full shadow-sm border border-gray-100 transition-all duration-200 hover:scale-105 mr-0.5"
+                onClick={handleToggleEmojiPicker}
+                title="Add reaction"
+              >
+                +
+              </button>
+            </>
+          )}
+
+          {/* Timestamp (right for outgoing messages) */}
+          {fromMe && <span className="text-xs text-gray-500">{formattedTime}</span>}
         </div>
+
         {showEmojiPicker && (
           <div
-            className={`emoji - picker absolute z - 50 bottom - [100px] ${fromMe ? 'right-0' : 'left-0'
-              } `}
+            className={`emoji-picker absolute z-50 bottom-[100px] ${fromMe ? 'right-0' : 'left-0'}`}
           >
             <Picker data={data} onEmojiSelect={handleReact} theme="light" />
           </div>
         )}
+      </div>
 
-        <div className="chat-footer opacity-50 text-xs flex gap-1 items-center">{formattedTime}</div>
-      </div >
-
-      {showPopup && (
+      {showPopup && !isAIConversation && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg max-w-md mx-auto">
             <h2 className="text-center text-2xl font-bold mb-4">User Data</h2>
@@ -669,7 +782,7 @@ const Message = ({ message }) => {
               />
             </div>
             <p className="text-center"><strong>Email:</strong> {userData.email}</p>
-            <p className="text-center"><strong>Alias:</strong> {userData.username}</p>
+            <p className="text-center"><strong>Alias:</strong> <DeletedUserIndicator username={userData.username} isDeleted={userData.isDeleted} /></p>
             <PublicKeyDisplay publicKey={userData.publicKey} />
             <p className="text-center"><strong>Shared Elements:</strong> {userData.sharedElements || 'No shared elements'}</p>
             <button
@@ -681,6 +794,16 @@ const Message = ({ message }) => {
           </div>
         </div>
       )}
+
+      {/* Verification Modal */}
+      <VerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        verified={message.verified}
+        signature={message.signature}
+        publicKeyDSA={message.publicKeyDSA}
+        messageText={messageText}
+      />
     </>
   );
 };

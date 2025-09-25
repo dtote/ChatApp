@@ -25,11 +25,11 @@ const userSchema = new mongoose.Schema({
   },
   communities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Community' }],  // Comunidades a las que pertenece
   publicKey: {
-    type: String,  
+    type: String,
     required: true
   },
   secretKey: {
-    type: String,  
+    type: String,
     required: true
   },
   publicKeyDSA: {
@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   secretKeyDSA: {
-    type: String,  
+    type: String,
     required: true
   },
 }, { timestamps: true });

@@ -9,7 +9,20 @@ const useGetCommunities = () => {
   const fetchCommunities = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/communities");
+      const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
+
+      if (!token) {
+        setError(new Error("No authentication token found"));
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get("/api/communities", {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       setCommunities(response.data);
     } catch (error) {
       console.error("Error fetching communities:", error);

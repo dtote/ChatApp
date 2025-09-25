@@ -12,6 +12,13 @@ const useGetMessages = () => {
     const getMessages = async () => {
       setLoading(true);
 
+      // Si es una conversación de IA, limpiar mensajes y no hacer fetch
+      if (selectedConversation?.type === "ai-assistant") {
+        setMessages([]);
+        setLoading(false);
+        return;
+      }
+
       const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
 
       if (!token) {

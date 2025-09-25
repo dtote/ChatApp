@@ -45,7 +45,7 @@ const useSendMessage = () => {
     }
 
     try {
-      console.log("Selected Key Size: ", selectedKeySize);
+
 
       // Si es una conversación con IA, usar el endpoint de chat
       if (selectedConversation.type === "ai-assistant") {
@@ -56,7 +56,7 @@ const useSendMessage = () => {
           return;
         }
 
-        console.log("Sending message to AI:", originalMessage);
+
 
         // Crear mensaje del usuario con formato compatible
         const userMessage = {

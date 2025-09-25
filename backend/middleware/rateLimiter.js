@@ -23,7 +23,7 @@ export const cryptoRateLimiter = rateLimit({
 export const messageRateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 20, // Maximum 20 messages per minute per user
-  keyGenerator: (req) => req.user?._id || ipKeyGenerator(req), // Use user ID if authenticated, otherwise IP
+  keyGenerator: (req) => req.user?._id?.toString() || ipKeyGenerator(req), // Use user ID if authenticated, otherwise IP
   message: {
     error: 'Too many messages sent. Please wait a moment before sending another message.',
     retryAfter: 60

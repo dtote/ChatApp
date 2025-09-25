@@ -49,7 +49,6 @@ const useLogin = () => {
 
       toast.success('Login successful!');
     } catch (error) {
-      console.log('Error:', error);
       toast.error(error.message || 'An error occurred during login');
     } finally {
       setLoading(false);
