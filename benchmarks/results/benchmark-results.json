@@ -1,0 +1,558 @@
+{
+  "timestamp": "2025-09-30T09:55:07.639Z",
+  "classical": {
+    "rsa": {
+      "RSA-2048": {
+        "keyGeneration": {
+          "avgTime": 148.85,
+          "minTime": 38.15,
+          "maxTime": 343.97,
+          "medianTime": 150.33,
+          "stdDev": 81.02,
+          "throughput": 7,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 256,
+            "privateKeySize": 2048
+          }
+        },
+        "signing": {
+          "avgTime": 157.75,
+          "minTime": 55.38,
+          "maxTime": 403.48,
+          "medianTime": 145.82,
+          "stdDev": 77.31,
+          "throughput": 6,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 256
+          }
+        },
+        "verification": {
+          "avgTime": 145.74,
+          "minTime": 44.79,
+          "maxTime": 438.69,
+          "medianTime": 118.53,
+          "stdDev": 83.28,
+          "throughput": 7,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 256
+          }
+        }
+      },
+      "RSA-3072": {
+        "keyGeneration": {
+          "avgTime": 429.24,
+          "minTime": 175.15,
+          "maxTime": 883.38,
+          "medianTime": 400.66,
+          "stdDev": 205.12,
+          "throughput": 2,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 384,
+            "privateKeySize": 3072
+          }
+        },
+        "signing": {
+          "avgTime": 549.8,
+          "minTime": 133.88,
+          "maxTime": 1354.71,
+          "medianTime": 505.39,
+          "stdDev": 257.35,
+          "throughput": 2,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 384
+          }
+        },
+        "verification": {
+          "avgTime": 432.42,
+          "minTime": 132.15,
+          "maxTime": 965.14,
+          "medianTime": 399.86,
+          "stdDev": 192.55,
+          "throughput": 2,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 384
+          }
+        }
+      },
+      "RSA-4096": {
+        "keyGeneration": {
+          "avgTime": 1167.33,
+          "minTime": 479.47,
+          "maxTime": 3625.73,
+          "medianTime": 1118.27,
+          "stdDev": 602.65,
+          "throughput": 1,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 512,
+            "privateKeySize": 4096
+          }
+        },
+        "signing": {
+          "avgTime": 1050.79,
+          "minTime": 291.08,
+          "maxTime": 2404.38,
+          "medianTime": 941.15,
+          "stdDev": 486.74,
+          "throughput": 1,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 512
+          }
+        },
+        "verification": {
+          "avgTime": 937.46,
+          "minTime": 269.19,
+          "maxTime": 3779.97,
+          "medianTime": 788.46,
+          "stdDev": 606.72,
+          "throughput": 1,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 512
+          }
+        }
+      }
+    },
+    "ecdsa": {
+      "prime256v1": {
+        "keyGeneration": {
+          "avgTime": 0.12,
+          "minTime": 0.11,
+          "maxTime": 0.15,
+          "medianTime": 0.11,
+          "stdDev": 0.01,
+          "throughput": 8600,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 65,
+            "privateKeySize": 32
+          }
+        },
+        "signing": {
+          "avgTime": 0.41,
+          "minTime": 0.38,
+          "maxTime": 0.54,
+          "medianTime": 0.4,
+          "stdDev": 0.03,
+          "throughput": 2453,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 71
+          }
+        },
+        "verification": {
+          "avgTime": 0.56,
+          "minTime": 0.53,
+          "maxTime": 0.76,
+          "medianTime": 0.54,
+          "stdDev": 0.04,
+          "throughput": 1797,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 71
+          }
+        }
+      },
+      "secp384r1": {
+        "keyGeneration": {
+          "avgTime": 0.64,
+          "minTime": 0.6,
+          "maxTime": 1.03,
+          "medianTime": 0.61,
+          "stdDev": 0.08,
+          "throughput": 1569,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 97,
+            "privateKeySize": 48
+          }
+        },
+        "signing": {
+          "avgTime": 1.54,
+          "minTime": 1.39,
+          "maxTime": 2.75,
+          "medianTime": 1.48,
+          "stdDev": 0.21,
+          "throughput": 650,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 103
+          }
+        },
+        "verification": {
+          "avgTime": 1.98,
+          "minTime": 1.91,
+          "maxTime": 2.12,
+          "medianTime": 1.97,
+          "stdDev": 0.05,
+          "throughput": 505,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 103
+          }
+        }
+      },
+      "secp521r1": {
+        "keyGeneration": {
+          "avgTime": 1.41,
+          "minTime": 1.38,
+          "maxTime": 1.47,
+          "medianTime": 1.4,
+          "stdDev": 0.03,
+          "throughput": 707,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 133,
+            "privateKeySize": 66
+          }
+        },
+        "signing": {
+          "avgTime": 3.09,
+          "minTime": 3.02,
+          "maxTime": 3.22,
+          "medianTime": 3.09,
+          "stdDev": 0.05,
+          "throughput": 323,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 139
+          }
+        },
+        "verification": {
+          "avgTime": 4.29,
+          "minTime": 4.14,
+          "maxTime": 5.79,
+          "medianTime": 4.26,
+          "stdDev": 0.22,
+          "throughput": 233,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 139
+          }
+        }
+      }
+    },
+    "ecdh": {
+      "prime256v1": {
+        "keyGeneration": {
+          "avgTime": 0.12,
+          "minTime": 0.11,
+          "maxTime": 0.18,
+          "medianTime": 0.11,
+          "stdDev": 0.01,
+          "throughput": 8693,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 65,
+            "privateKeySize": 32
+          }
+        }
+      },
+      "secp384r1": {
+        "keyGeneration": {
+          "avgTime": 0.61,
+          "minTime": 0.59,
+          "maxTime": 0.72,
+          "medianTime": 0.61,
+          "stdDev": 0.03,
+          "throughput": 1632,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 97,
+            "privateKeySize": 48
+          }
+        }
+      },
+      "secp521r1": {
+        "keyGeneration": {
+          "avgTime": 1.42,
+          "minTime": 1.37,
+          "maxTime": 1.51,
+          "medianTime": 1.41,
+          "stdDev": 0.04,
+          "throughput": 704,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 133,
+            "privateKeySize": 66
+          }
+        }
+      }
+    }
+  },
+  "postQuantum": {
+    "mlKem": {
+      "ML-KEM-512": {
+        "keyGeneration": {
+          "avgTime": 1.02,
+          "minTime": 0.62,
+          "maxTime": 2.76,
+          "medianTime": 0.89,
+          "stdDev": 0.41,
+          "throughput": 981,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 0,
+            "privateKeySize": 0
+          }
+        }
+      },
+      "ML-KEM-768": {
+        "keyGeneration": {
+          "avgTime": 0.91,
+          "minTime": 0.8,
+          "maxTime": 1.11,
+          "medianTime": 0.89,
+          "stdDev": 0.08,
+          "throughput": 1095,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 0,
+            "privateKeySize": 0
+          }
+        }
+      },
+      "ML-KEM-1024": {
+        "keyGeneration": {
+          "avgTime": 1,
+          "minTime": 0.75,
+          "maxTime": 2.3,
+          "medianTime": 0.9,
+          "stdDev": 0.34,
+          "throughput": 996,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 0,
+            "privateKeySize": 0
+          }
+        }
+      }
+    },
+    "mlDsa": {
+      "ML-DSA-44": {
+        "keyGeneration": {
+          "avgTime": 0.92,
+          "minTime": 0.8,
+          "maxTime": 1.13,
+          "medianTime": 0.9,
+          "stdDev": 0.08,
+          "throughput": 1091,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 0,
+            "privateKeySize": 0
+          }
+        },
+        "signing": {
+          "avgTime": 1.28,
+          "minTime": 0.92,
+          "maxTime": 1.72,
+          "medianTime": 1.26,
+          "stdDev": 0.21,
+          "throughput": 782,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 0
+          }
+        },
+        "verification": {
+          "avgTime": 1.05,
+          "minTime": 0.8,
+          "maxTime": 2.04,
+          "medianTime": 1.01,
+          "stdDev": 0.21,
+          "throughput": 953,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 0
+          }
+        }
+      },
+      "ML-DSA-65": {
+        "keyGeneration": {
+          "avgTime": 1.18,
+          "minTime": 0.97,
+          "maxTime": 2.19,
+          "medianTime": 1.07,
+          "stdDev": 0.3,
+          "throughput": 849,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 0,
+            "privateKeySize": 0
+          }
+        },
+        "signing": {
+          "avgTime": 1.58,
+          "minTime": 1.05,
+          "maxTime": 2.96,
+          "medianTime": 1.48,
+          "stdDev": 0.38,
+          "throughput": 633,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 0
+          }
+        },
+        "verification": {
+          "avgTime": 1.06,
+          "minTime": 0.94,
+          "maxTime": 1.2,
+          "medianTime": 1.05,
+          "stdDev": 0.06,
+          "throughput": 944,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 0
+          }
+        }
+      },
+      "ML-DSA-87": {
+        "keyGeneration": {
+          "avgTime": 1.24,
+          "minTime": 1.1,
+          "maxTime": 1.35,
+          "medianTime": 1.26,
+          "stdDev": 0.06,
+          "throughput": 804,
+          "successRate": 100,
+          "iterations": 25,
+          "successCount": 25,
+          "errorRate": 0,
+          "footprint": {
+            "publicKeySize": 0,
+            "privateKeySize": 0
+          }
+        },
+        "signing": {
+          "avgTime": 1.81,
+          "minTime": 1.34,
+          "maxTime": 3.15,
+          "medianTime": 1.77,
+          "stdDev": 0.36,
+          "throughput": 552,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 0
+          }
+        },
+        "verification": {
+          "avgTime": 1.35,
+          "minTime": 1.19,
+          "maxTime": 1.73,
+          "medianTime": 1.33,
+          "stdDev": 0.11,
+          "throughput": 738,
+          "successRate": 100,
+          "iterations": 50,
+          "successCount": 50,
+          "errorRate": 0,
+          "footprint": {
+            "signatureSize": 0
+          }
+        }
+      }
+    }
+  },
+  "comparison": {}
+}
