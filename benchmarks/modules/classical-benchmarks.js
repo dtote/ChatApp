@@ -1,6 +1,6 @@
 /**
- * Benchmarks de Algoritmos Clásicos
- * Implementa los benchmarks para RSA, ECDSA y ECDH
+ * Classical Cryptography Benchmark Implementation
+ * Performance benchmarking for RSA, ECDSA, and ECDH algorithms
  */
 
 import crypto from 'crypto';

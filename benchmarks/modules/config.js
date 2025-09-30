@@ -4,7 +4,7 @@
  */
 
 export const CONFIG = {
-  // Configuración de la API
+  // API configuration
   API: {
     URL: process.env.PQCLEAN_API_URL || 'http://localhost:5003',
     TIMEOUT: 10000,
@@ -13,7 +13,7 @@ export const CONFIG = {
     HEALTH_CHECK_TIMEOUT: 5000
   },
 
-  // Configuración del benchmark
+  // Benchmark configuration
   BENCHMARK: {
     ITERATIONS: 50, // Balance óptimo para academia
     KEYGEN_ITERATIONS: 25, // RSA KeyGen: suficiente para estadística
@@ -22,14 +22,14 @@ export const CONFIG = {
     WARMUP_ITERATIONS: 3
   },
 
-  // Configuración de archivos
+  // File configuration
   FILES: {
     RESULTS_DIR: 'results',
     RESULTS_FILE: 'benchmark-results.json',
     CHARTS_DIR: 'results'
   },
 
-  // Configuración de visualización
+  // Display configuration
   DISPLAY: {
     DECIMAL_PLACES: 2,
     PADDING_LENGTH: 20,
@@ -39,7 +39,7 @@ export const CONFIG = {
     WARNING_ICON: '⚠️'
   },
 
-  // Configuración de algoritmos
+  // Algorithm configuration
   ALGORITHMS: {
     CLASSICAL: {
       RSA: ['RSA-2048', 'RSA-3072', 'RSA-4096'],
@@ -52,7 +52,7 @@ export const CONFIG = {
     }
   },
 
-  // Configuración de seguridad
+  // Security configuration
   SECURITY_LEVELS: {
     128: ['ML-KEM-512', 'ML-DSA-44', 'RSA-2048', 'prime256v1'],
     192: ['ML-KEM-768', 'ML-DSA-65', 'RSA-3072', 'secp384r1'],

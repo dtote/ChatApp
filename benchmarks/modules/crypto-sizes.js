@@ -38,7 +38,7 @@ export const CRYPTO_SIZES = {
     signatureSize: 4595
   },
 
-  // Algoritmos clásicos
+  // Classical algorithms
   'RSA-2048': {
     publicKeySize: 256,
     privateKeySize: 2048,
@@ -55,7 +55,7 @@ export const CRYPTO_SIZES = {
     signatureSize: 512
   },
 
-  // ECDSA - Tamaños aproximados según curva
+  // ECDSA - Approximate sizes by curve
   'ECDSA-prime256v1': {
     publicKeySize: 65,
     privateKeySize: 32,
@@ -72,7 +72,7 @@ export const CRYPTO_SIZES = {
     signatureSize: 139
   },
 
-  // ECDH - Tamaños aproximados según curva
+  // ECDH - Approximate sizes by curve
   'ECDH-prime256v1': {
     publicKeySize: 65,
     privateKeySize: 32,

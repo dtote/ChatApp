@@ -1,6 +1,6 @@
 /**
- * Benchmarks de Algoritmos Post-Cuánticos
- * Implementa los benchmarks para ML-KEM y ML-DSA
+ * Post-Quantum Cryptography Benchmark Implementation
+ * Performance benchmarking for ML-KEM and ML-DSA algorithms
  */
 
 import { performance } from 'perf_hooks';

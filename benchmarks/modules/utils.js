@@ -1,6 +1,6 @@
 /**
- * Utilidades del Benchmark
- * Funciones auxiliares para cálculos estadísticos y operaciones comunes
+ * Benchmark Utility Functions
+ * Statistical calculations and common operations for performance analysis
  */
 
 import { CONFIG } from './config.js';
