@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Generador de Gráficas Final para Benchmark de Criptografía Post-Cuántica
-Estructura específica: Una gráfica por cada tipo de operación
+Generador de Gráficas Simplificado para Benchmark de Criptografía Post-Cuántica
+Solo comparaciones académicamente válidas: KeyGen + Signing + Verification
 """
 
 import json
@@ -12,13 +12,90 @@ from pathlib import Path
 # Configurar estilo académico
 plt.style.use('seaborn-v0_8-whitegrid')
 
-class FinalChartGenerator:
-    def __init__(self, json_file="results/benchmark-academico.json"):
+def get_algorithm_colors():
+    """Sistema de colores por algoritmo con tonalidades para mejor identificación"""
+    colors = {}
+    
+    # ML-KEM (azules - transición suave)
+    colors['ML-KEM-512'] = '#1e3a8a'    # azul muy oscuro
+    colors['ML-KEM-768'] = '#3b82f6'    # azul medio
+    colors['ML-KEM-1024'] = '#93c5fd'   # azul claro
+    
+    # ML-DSA (azules verdosos - transición suave)
+    colors['ML-DSA-44'] = '#0f766e'     # azul verdoso muy oscuro
+    colors['ML-DSA-65'] = '#14b8a6'     # azul verdoso medio
+    colors['ML-DSA-87'] = '#5eead4'     # azul verdoso claro
+    
+    # RSA (naranjas - transición suave)
+    colors['RSA-2048'] = '#ea580c'      # naranja oscuro
+    colors['RSA-3072'] = '#f97316'      # naranja medio
+    colors['RSA-4096'] = '#fed7aa'      # naranja claro
+    
+    # ECDH (azules grisáceos - transición suave)
+    colors['ECDH-prime256v1'] = '#475569'   # azul grisáceo oscuro
+    colors['ECDH-secp384r1'] = '#64748b'   # azul grisáceo medio
+    colors['ECDH-secp521r1'] = '#94a3b8'   # azul grisáceo claro
+    
+    # ECDSA (grises - transición suave)
+    colors['ECDSA-prime256v1'] = '#374151'    # gris muy oscuro
+    colors['ECDSA-secp384r1'] = '#6b7280'    # gris medio
+    colors['ECDSA-secp521r1'] = '#d1d5db'    # gris claro
+    
+    
+    return colors
+
+def get_ordered_legend_items(pq_values, pq_labels, classical_values, classical_labels):
+    """Ordena los elementos de la leyenda agrupando por algoritmo"""
+    # Definir orden específico para cada algoritmo (agrupado por familia)
+    algorithm_order = {
+        # ML-KEM (grupo 1)
+        'ML-KEM-512': 1, 'ML-KEM-768': 2, 'ML-KEM-1024': 3,
+        # ML-DSA (grupo 2)
+        'ML-DSA-44': 4, 'ML-DSA-65': 5, 'ML-DSA-87': 6,
+        # RSA (grupo 3)
+        'RSA-2048': 7, 'RSA-3072': 8, 'RSA-4096': 9,
+        # ECDH (grupo 4)
+        'ECDH-prime256v1': 10, 'ECDH-secp384r1': 11, 'ECDH-secp521r1': 12,
+        # ECDSA (grupo 5)
+        'ECDSA-prime256v1': 13, 'ECDSA-secp384r1': 14, 'ECDSA-secp521r1': 15
+    }
+    
+    # Crear lista combinada de todos los elementos
+    all_items = []
+    
+    # Agregar elementos post-cuánticos
+    for val, label in zip(pq_values, pq_labels):
+        all_items.append((val, label, 'pq'))
+    
+    # Agregar elementos clásicos
+    for val, label in zip(classical_values, classical_labels):
+        all_items.append((val, label, 'classical'))
+    
+    # Ordenar por el orden definido del algoritmo
+    all_items.sort(key=lambda x: algorithm_order.get(x[1], 999))
+    
+    # Retornar todos los elementos ordenados globalmente
+    all_values_sorted = [item[0] for item in all_items]
+    all_labels_sorted = [item[1] for item in all_items]
+    
+    # Separar en grupos post-cuánticos y clásicos para mantener compatibilidad
+    pq_sorted = [(val, label) for val, label, group in all_items if group == 'pq']
+    classical_sorted = [(val, label) for val, label, group in all_items if group == 'classical']
+    
+    pq_values_sorted = [item[0] for item in pq_sorted]
+    pq_labels_sorted = [item[1] for item in pq_sorted]
+    classical_values_sorted = [item[0] for item in classical_sorted]
+    classical_labels_sorted = [item[1] for item in classical_sorted]
+    
+    return pq_values_sorted, pq_labels_sorted, classical_values_sorted, classical_labels_sorted
+
+class SimplifiedChartGenerator:
+    def __init__(self, json_file="results/benchmark-results.json"):
         self.json_file = json_file
         self.data = self.load_data()
         
     def load_data(self):
-        """Cargar datos del archivo JSON del benchmark"""
+        """Cargar datos del benchmark desde JSON"""
         try:
             with open(self.json_file, 'r') as f:
                 return json.load(f)
@@ -27,276 +104,145 @@ class FinalChartGenerator:
             return None
     
     def create_all_charts(self):
-        """Crear todas las gráficas según la estructura específica"""
-        print("🚀 Generador de Gráficas Final")
+        """Crear gráficas académicas: Solo comparaciones válidas"""
+        print("🚀 Generador de Gráficas Simplificado")
         print("=" * 50)
-        print("📊 Estructura: Una gráfica por cada tipo de operación")
+        print("📊 Generando gráficas académicas para paper...")
+        print("🎯 Solo comparaciones válidas: KeyGen + Signing + Verification")
         print()
         
-        # 1. Key Generation (Generación de Claves)
+        # 1. Key Generation (Generación de Claves) - TODOS los algoritmos
         self.create_keygen_chart()
         
-        # 2. Key Encapsulation (Encapsulación de Claves)
-        self.create_encapsulation_chart()
-        
-        # 3. Key Decapsulation (Decapsulación de Claves)
-        self.create_decapsulation_chart()
-        
-        # 4. Digital Signing (Firma Digital)
+        # 2. Digital Signing (Firma Digital) - Solo algoritmos de firma
         self.create_signing_chart()
         
-        # 5. Signature Verification (Verificación de Firmas)
+        # 3. Signature Verification (Verificación de Firmas) - Solo algoritmos de firma
         self.create_verification_chart()
         
-        print("✅ Todas las gráficas finales generadas exitosamente!")
+        print("✅ Gráficas académicas generadas exitosamente!")
+        print("📋 3 gráficas: KeyGen + Signing + Verification")
     
     def create_keygen_chart(self):
-        """Key Generation: ML-KEM vs RSA vs ECDH"""
-        fig, ax = plt.subplots(figsize=(14, 8))
+        """Key Generation: Todos los algoritmos"""
+        fig, ax = plt.subplots(figsize=(16, 10))
         
         pq_values = []
         pq_labels = []
         classical_values = []
         classical_labels = []
         
-        # ML-KEM (Post-Quantum)
+        # ML-KEM Key Generation (Post-Quantum)
         if 'postQuantum' in self.data and 'mlKem' in self.data['postQuantum']:
             ml_kem = self.data['postQuantum']['mlKem']
             for variant in ['ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024']:
                 if variant in ml_kem and 'keyGeneration' in ml_kem[variant]:
-                    time_ms = ml_kem[variant]['keyGeneration']['avgTime'] * 1000  # Convert to µs
-                    pq_values.append(time_ms)
+                    time_us = ml_kem[variant]['keyGeneration']['avgTime'] * 1000  # Convertir a microsegundos
+                    pq_values.append(time_us)
                     pq_labels.append(variant)
         
-        # RSA (Classical)
+        
+        
+        # RSA Key Generation (Classical)
         if 'classical' in self.data and 'rsa' in self.data['classical']:
             rsa = self.data['classical']['rsa']
-            for variant in ['2048', '3072', '4096']:
+            for variant in ['RSA-2048', 'RSA-3072', 'RSA-4096']:
                 if variant in rsa and 'keyGeneration' in rsa[variant]:
-                    time_ms = rsa[variant]['keyGeneration']['avgTime'] * 1000  # Convert to µs
-                    classical_values.append(time_ms)
-                    classical_labels.append(f'RSA-{variant}')
+                    time_us = rsa[variant]['keyGeneration']['avgTime'] * 1000  # Convertir a microsegundos
+                    classical_values.append(time_us)
+                    classical_labels.append(variant)
         
-        # ECDH (Classical)
+        # ECDH Key Generation (Classical)
         if 'classical' in self.data and 'ecdh' in self.data['classical']:
             ecdh = self.data['classical']['ecdh']
             for variant in ['prime256v1', 'secp384r1', 'secp521r1']:
                 if variant in ecdh and 'keyGeneration' in ecdh[variant]:
-                    time_ms = ecdh[variant]['keyGeneration']['avgTime'] * 1000  # Convert to µs
-                    classical_values.append(time_ms)
-                    curve_name = variant.replace('prime', 'P').replace('secp', 'P')
-                    classical_labels.append(f'ECDH-{curve_name}')
+                    time_us = ecdh[variant]['keyGeneration']['avgTime'] * 1000  # Convertir a microsegundos
+                    classical_values.append(time_us)
+                    classical_labels.append(f'ECDH-{variant}')
         
-        # Crear posiciones agrupadas
-        x_pq = range(len(pq_values))
-        x_classical = range(len(pq_values), len(pq_values) + len(classical_values))
         
-        # Colores únicos para cada algoritmo
-        all_colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FF7675', '#74B9FF', '#A29BFE', '#00B894', '#FDCB6E', '#E17055']
-        all_values = pq_values + classical_values
-        all_labels = pq_labels + classical_labels
-        all_positions = list(x_pq) + list(x_classical)
+        # Ordenar elementos para leyenda consistente
+        pq_values_sorted, pq_labels_sorted, classical_values_sorted, classical_labels_sorted = get_ordered_legend_items(
+            pq_values, pq_labels, classical_values, classical_labels
+        )
         
-        # Crear barras individuales con colores únicos
+        # Crear lista ordenada globalmente
+        all_values = pq_values_sorted + classical_values_sorted
+        all_labels = pq_labels_sorted + classical_labels_sorted
+        all_positions = list(range(len(all_values)))
+        
+        # Sistema de colores por algoritmo con tonalidades
+        color_map = get_algorithm_colors()
+        
+        # Crear barras individuales con colores por algoritmo
         bars = []
-        for i, (pos, val, label, color) in enumerate(zip(all_positions, all_values, all_labels, all_colors)):
-            bar = ax.bar(pos, val, color=color, alpha=0.8, label=label)
+        for i, (pos, val, label) in enumerate(zip(all_positions, all_values, all_labels)):
+            color = color_map.get(label, '#888888')
+            bar = ax.bar(pos, val, color=color, alpha=0.8, edgecolor='black', linewidth=0.5)
             bars.append(bar)
         
-        # Configurar gráfica
-        ax.set_yscale('log')
-        ax.set_ylabel('Average Time in Logarithmic Scale (µs)', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Key Generation Algorithms', fontsize=12, fontweight='bold')
-        ax.set_title('Key Generation Performance: Post-Quantum vs Classical\n(ML-KEM vs RSA vs ECDH)', fontsize=14, fontweight='bold')
+        # Configurar ejes
+        ax.set_xlabel('Algorithms', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Average time in logarithmic scale', fontsize=12, fontweight='bold')
+        ax.set_title('A Performance Comparison of Key Generation Algorithms: Post-Quantum vs Classical', fontsize=14, fontweight='bold')
         
-        # Etiquetas del eje X
+        # Configurar etiquetas del eje X
         ax.set_xticks(all_positions)
         ax.set_xticklabels(all_labels, rotation=45, ha='right')
         
-        # Línea separadora
+        # Aplicar escala logarítmica solo si hay datos válidos
+        if pq_values or classical_values:
+            ax.set_yscale('log')
+            ax.set_ylabel('Average Time (ms) - Logarithmic Scale', fontsize=12, fontweight='bold')
+        
+        # Añadir líneas separadoras entre grupos
         if pq_values and classical_values:
-            separator_pos = len(pq_values) - 0.5
-            ax.axvline(x=separator_pos, color='black', linestyle='--', alpha=0.5, linewidth=1)
+            separator_x = len(pq_values) - 0.5
+            ax.axvline(x=separator_x, color='red', linestyle='--', alpha=0.7, linewidth=2)
         
-        ax.grid(True, alpha=0.3)
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        # Crear leyenda personalizada por algoritmo
+        legend_elements = []
+        for label in all_labels:
+            color = color_map.get(label, '#888888')
+            # Añadir nivel de seguridad solo en la leyenda según NIST
+            if 'ML-KEM-512' in label or 'ML-DSA-44' in label or 'ECDH-prime256v1' in label or 'ECDSA-prime256v1' in label:
+                security_level = " (NIST Level 1)"
+            elif 'ML-KEM-768' in label or 'ML-DSA-65' in label or 'ECDH-secp384r1' in label or 'ECDSA-secp384r1' in label:
+                security_level = " (NIST Level 3)"
+            elif 'ML-KEM-1024' in label or 'ML-DSA-87' in label or 'ECDH-secp521r1' in label or 'ECDSA-secp521r1' in label:
+                security_level = " (NIST Level 5)"
+            elif 'RSA-2048' in label:
+                security_level = " (~NIST Level 1)"
+            elif 'RSA-3072' in label:
+                security_level = " (~NIST Level 2)"
+            elif 'RSA-4096' in label:
+                security_level = " (~NIST Level 3)"
+            else:
+                security_level = ""
+            
+            legend_elements.append(plt.Rectangle((0,0),1,1, facecolor=color, label=f"{label}{security_level}"))
         
-        # Valores en barras
+        ax.legend(handles=legend_elements, title='Algorithm', title_fontsize=10, fontsize=9, 
+                 frameon=True, fancybox=True, shadow=True, loc='upper right')
+        
+        # Añadir valores en las barras
         for i, (pos, val) in enumerate(zip(all_positions, all_values)):
-            ax.text(pos, val, f'{val:.1f}', ha='center', va='bottom', fontsize=9)
+            # Formatear números sin .0 innecesarios y separar μs
+            if val == int(val):
+                formatted_val = f'{int(val)} μs'
+            else:
+                formatted_val = f'{val:.1f} μs'
+            ax.text(pos, val, formatted_val, ha='center', va='bottom', fontsize=9)
         
-        plt.tight_layout()
-        plt.savefig('benchmark_keygen_final.png', dpi=300, bbox_inches='tight')
-        plt.show()
-        print("✅ Gráfica de KeyGen guardada: benchmark_keygen_final.png")
-    
-    def create_encapsulation_chart(self):
-        """Key Encapsulation: ML-KEM vs RSA vs ECDH"""
-        fig, ax = plt.subplots(figsize=(14, 8))
-        
-        pq_values = []
-        pq_labels = []
-        classical_values = []
-        classical_labels = []
-        
-        # ML-KEM Encryption (Post-Quantum)
-        if 'postQuantum' in self.data and 'mlKem' in self.data['postQuantum']:
-            ml_kem = self.data['postQuantum']['mlKem']
-            for variant in ['ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024']:
-                if variant in ml_kem and 'encryption' in ml_kem[variant]:
-                    time_ms = ml_kem[variant]['encryption']['avgTime'] * 1000
-                    pq_values.append(time_ms)
-                    pq_labels.append(variant)
-        
-        # RSA Encryption (Classical)
-        if 'classical' in self.data and 'rsa' in self.data['classical']:
-            rsa = self.data['classical']['rsa']
-            for variant in ['2048', '3072', '4096']:
-                if variant in rsa and 'encryption' in rsa[variant]:
-                    time_ms = rsa[variant]['encryption']['avgTime'] * 1000
-                    classical_values.append(time_ms)
-                    classical_labels.append(f'RSA-{variant}')
-        
-        # ECDH - Usar datos de KeyGen ya que no tenemos encapsulación separada
-        # En ECDH, la "encapsulación" es parte del intercambio de claves
-        if 'classical' in self.data and 'ecdh' in self.data['classical']:
-            ecdh = self.data['classical']['ecdh']
-            for variant in ['prime256v1', 'secp384r1', 'secp521r1']:
-                if variant in ecdh and 'keyGeneration' in ecdh[variant]:
-                    # Usar tiempo de generación como proxy para encapsulación
-                    time_ms = ecdh[variant]['keyGeneration']['avgTime'] * 1000
-                    classical_values.append(time_ms)
-                    curve_name = variant.replace('prime', 'P').replace('secp', 'P')
-                    classical_labels.append(f'ECDH-{curve_name}')
-        
-        # Crear posiciones agrupadas
-        x_pq = range(len(pq_values))
-        x_classical = range(len(pq_values), len(pq_values) + len(classical_values))
-        
-        # Colores únicos para cada algoritmo
-        all_colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FF7675', '#74B9FF', '#A29BFE', '#00B894', '#FDCB6E', '#E17055']
-        all_values = pq_values + classical_values
-        all_labels = pq_labels + classical_labels
-        all_positions = list(x_pq) + list(x_classical)
-        
-        # Crear barras individuales con colores únicos
-        bars = []
-        for i, (pos, val, label, color) in enumerate(zip(all_positions, all_values, all_labels, all_colors)):
-            bar = ax.bar(pos, val, color=color, alpha=0.8, label=label)
-            bars.append(bar)
-        
-        # Configurar gráfica
-        ax.set_yscale('log')
-        ax.set_ylabel('Average Time in Logarithmic Scale (µs)', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Key Encapsulation Algorithms', fontsize=12, fontweight='bold')
-        ax.set_title('Key Encapsulation Performance: Post-Quantum vs Classical\n(ML-KEM vs RSA vs ECDH)', fontsize=14, fontweight='bold')
-        
-        # Etiquetas del eje X
-        ax.set_xticks(all_positions)
-        ax.set_xticklabels(all_labels, rotation=45, ha='right')
-        
-        # Línea separadora
-        if pq_values and classical_values:
-            separator_pos = len(pq_values) - 0.5
-            ax.axvline(x=separator_pos, color='black', linestyle='--', alpha=0.5, linewidth=1)
-        
-        ax.grid(True, alpha=0.3)
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        
-        # Valores en barras
-        for i, (pos, val) in enumerate(zip(all_positions, all_values)):
-            ax.text(pos, val, f'{val:.3f}', ha='center', va='bottom', fontsize=9)
-        
-        plt.tight_layout()
-        plt.savefig('benchmark_encapsulation_final.png', dpi=300, bbox_inches='tight')
-        plt.show()
-        print("✅ Gráfica de Encapsulation guardada: benchmark_encapsulation_final.png")
-    
-    def create_decapsulation_chart(self):
-        """Key Decapsulation: ML-KEM vs RSA vs ECDH"""
-        fig, ax = plt.subplots(figsize=(14, 8))
-        
-        pq_values = []
-        pq_labels = []
-        classical_values = []
-        classical_labels = []
-        
-        # ML-KEM Decryption (Post-Quantum)
-        if 'postQuantum' in self.data and 'mlKem' in self.data['postQuantum']:
-            ml_kem = self.data['postQuantum']['mlKem']
-            for variant in ['ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024']:
-                if variant in ml_kem and 'decryption' in ml_kem[variant]:
-                    time_ms = ml_kem[variant]['decryption']['avgTime'] * 1000
-                    pq_values.append(time_ms)
-                    pq_labels.append(variant)
-        
-        # RSA Decryption (Classical)
-        if 'classical' in self.data and 'rsa' in self.data['classical']:
-            rsa = self.data['classical']['rsa']
-            for variant in ['2048', '3072', '4096']:
-                if variant in rsa and 'decryption' in rsa[variant]:
-                    time_ms = rsa[variant]['decryption']['avgTime'] * 1000
-                    classical_values.append(time_ms)
-                    classical_labels.append(f'RSA-{variant}')
-        
-        # ECDH - Usar datos de KeyGen ya que no tenemos decapsulación separada
-        # En ECDH, la "decapsulación" es parte del intercambio de claves
-        if 'classical' in self.data and 'ecdh' in self.data['classical']:
-            ecdh = self.data['classical']['ecdh']
-            for variant in ['prime256v1', 'secp384r1', 'secp521r1']:
-                if variant in ecdh and 'keyGeneration' in ecdh[variant]:
-                    # Usar tiempo de generación como proxy para decapsulación
-                    time_ms = ecdh[variant]['keyGeneration']['avgTime'] * 1000
-                    classical_values.append(time_ms)
-                    curve_name = variant.replace('prime', 'P').replace('secp', 'P')
-                    classical_labels.append(f'ECDH-{curve_name}')
-        
-        # Crear posiciones agrupadas
-        x_pq = range(len(pq_values))
-        x_classical = range(len(pq_values), len(pq_values) + len(classical_values))
-        
-        # Colores únicos para cada algoritmo
-        all_colors = ['#4ECDC4', '#45B7D1', '#96CEB4', '#FF7675', '#74B9FF', '#A29BFE', '#00B894', '#FDCB6E', '#E17055']
-        all_values = pq_values + classical_values
-        all_labels = pq_labels + classical_labels
-        all_positions = list(x_pq) + list(x_classical)
-        
-        # Crear barras individuales con colores únicos
-        bars = []
-        for i, (pos, val, label, color) in enumerate(zip(all_positions, all_values, all_labels, all_colors)):
-            bar = ax.bar(pos, val, color=color, alpha=0.8, label=label)
-            bars.append(bar)
-        
-        # Configurar gráfica
-        ax.set_yscale('log')
-        ax.set_ylabel('Average Time in Logarithmic Scale (µs)', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Key Decapsulation Algorithms', fontsize=12, fontweight='bold')
-        ax.set_title('Key Decapsulation Performance: Post-Quantum vs Classical\n(ML-KEM vs RSA vs ECDH)', fontsize=14, fontweight='bold')
-        
-        # Etiquetas del eje X
-        ax.set_xticks(all_positions)
-        ax.set_xticklabels(all_labels, rotation=45, ha='right')
-        
-        # Línea separadora
-        if pq_values and classical_values:
-            separator_pos = len(pq_values) - 0.5
-            ax.axvline(x=separator_pos, color='black', linestyle='--', alpha=0.5, linewidth=1)
-        
-        ax.grid(True, alpha=0.3)
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        
-        # Valores en barras
-        for i, (pos, val) in enumerate(zip(all_positions, all_values)):
-            ax.text(pos, val, f'{val:.3f}', ha='center', va='bottom', fontsize=9)
-        
-        plt.tight_layout()
-        plt.savefig('benchmark_decapsulation_final.png', dpi=300, bbox_inches='tight')
-        plt.show()
-        print("✅ Gráfica de Decapsulation guardada: benchmark_decapsulation_final.png")
+        # Ajustar layout para que quepa todo
+        plt.subplots_adjust(right=0.85, bottom=0.15)
+        plt.savefig('results/benchmark_keygen.png', dpi=300, bbox_inches='tight')
+        print("✅ Gráfica de KeyGen guardada: benchmark_keygen.png")
     
     def create_signing_chart(self):
-        """Digital Signing: ML-DSA vs RSA vs ECDSA"""
-        fig, ax = plt.subplots(figsize=(14, 8))
+        """Digital Signing: Solo algoritmos de firma"""
+        fig, ax = plt.subplots(figsize=(16, 10))
         
         pq_values = []
         pq_labels = []
@@ -308,75 +254,110 @@ class FinalChartGenerator:
             ml_dsa = self.data['postQuantum']['mlDsa']
             for variant in ['ML-DSA-44', 'ML-DSA-65', 'ML-DSA-87']:
                 if variant in ml_dsa and 'signing' in ml_dsa[variant]:
-                    time_ms = ml_dsa[variant]['signing']['avgTime'] * 1000
-                    pq_values.append(time_ms)
+                    time_us = ml_dsa[variant]['signing']['avgTime'] * 1000  # Convertir a microsegundos
+                    pq_values.append(time_us)
                     pq_labels.append(variant)
+        
         
         # RSA Signing (Classical)
         if 'classical' in self.data and 'rsa' in self.data['classical']:
             rsa = self.data['classical']['rsa']
-            for variant in ['2048', '3072', '4096']:
+            for variant in ['RSA-2048', 'RSA-3072', 'RSA-4096']:
                 if variant in rsa and 'signing' in rsa[variant]:
                     time_ms = rsa[variant]['signing']['avgTime'] * 1000
                     classical_values.append(time_ms)
-                    classical_labels.append(f'RSA-{variant}')
+                    classical_labels.append(variant)
         
         # ECDSA Signing (Classical)
         if 'classical' in self.data and 'ecdsa' in self.data['classical']:
             ecdsa = self.data['classical']['ecdsa']
             for variant in ['prime256v1', 'secp384r1', 'secp521r1']:
                 if variant in ecdsa and 'signing' in ecdsa[variant]:
-                    time_ms = ecdsa[variant]['signing']['avgTime'] * 1000
-                    classical_values.append(time_ms)
-                    curve_name = variant.replace('prime', 'P').replace('secp', 'P')
-                    classical_labels.append(f'ECDSA-{curve_name}')
+                    time_us = ecdsa[variant]['signing']['avgTime'] * 1000  # Convertir a microsegundos
+                    classical_values.append(time_us)
+                    classical_labels.append(f'ECDSA-{variant}')
         
-        # Crear posiciones agrupadas
-        x_pq = range(len(pq_values))
-        x_classical = range(len(pq_values), len(pq_values) + len(classical_values))
+        # Ordenar elementos para leyenda consistente
+        pq_values_sorted, pq_labels_sorted, classical_values_sorted, classical_labels_sorted = get_ordered_legend_items(
+            pq_values, pq_labels, classical_values, classical_labels
+        )
         
-        # Colores únicos para cada algoritmo
-        all_colors = ['#96CEB4', '#FFEAA7', '#DDA0DD', '#FF7675', '#74B9FF', '#A29BFE', '#00B894', '#FDCB6E', '#E17055']
-        all_values = pq_values + classical_values
-        all_labels = pq_labels + classical_labels
-        all_positions = list(x_pq) + list(x_classical)
+        # Crear lista ordenada globalmente
+        all_values = pq_values_sorted + classical_values_sorted
+        all_labels = pq_labels_sorted + classical_labels_sorted
+        all_positions = list(range(len(all_values)))
         
-        # Crear barras individuales con colores únicos
+        # Sistema de colores por algoritmo con tonalidades
+        color_map = get_algorithm_colors()
+        
+        # Crear barras individuales con colores por algoritmo
         bars = []
-        for i, (pos, val, label, color) in enumerate(zip(all_positions, all_values, all_labels, all_colors)):
-            bar = ax.bar(pos, val, color=color, alpha=0.8, label=label)
+        for i, (pos, val, label) in enumerate(zip(all_positions, all_values, all_labels)):
+            color = color_map.get(label, '#888888')
+            bar = ax.bar(pos, val, color=color, alpha=0.8, edgecolor='black', linewidth=0.5)
             bars.append(bar)
         
-        # Configurar gráfica
-        ax.set_yscale('log')
-        ax.set_ylabel('Average Time in Logarithmic Scale (µs)', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Digital Signing Algorithms', fontsize=12, fontweight='bold')
-        ax.set_title('Digital Signing Performance: Post-Quantum vs Classical\n(ML-DSA vs RSA vs ECDSA)', fontsize=14, fontweight='bold')
+        # Configurar ejes
+        ax.set_xlabel('Algorithms', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Average Time (ms)', fontsize=12, fontweight='bold')
+        ax.set_title('A Performance Comparison of Digital Signature Algorithms: Post-Quantum vs Classical', fontsize=14, fontweight='bold')
         
-        # Etiquetas del eje X
+        # Configurar etiquetas del eje X
         ax.set_xticks(all_positions)
         ax.set_xticklabels(all_labels, rotation=45, ha='right')
         
-        # Línea separadora
+        # Aplicar escala logarítmica solo si hay datos válidos
+        if pq_values or classical_values:
+            ax.set_yscale('log')
+            ax.set_ylabel('Average Time (ms) - Logarithmic Scale', fontsize=12, fontweight='bold')
+        
+        # Añadir líneas separadoras entre grupos
         if pq_values and classical_values:
-            separator_pos = len(pq_values) - 0.5
-            ax.axvline(x=separator_pos, color='black', linestyle='--', alpha=0.5, linewidth=1)
+            separator_x = len(pq_values) - 0.5
+            ax.axvline(x=separator_x, color='red', linestyle='--', alpha=0.7, linewidth=2)
         
-        ax.grid(True, alpha=0.3)
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        # Crear leyenda personalizada por algoritmo
+        legend_elements = []
+        for label in all_labels:
+            color = color_map.get(label, '#888888')
+            # Añadir nivel de seguridad solo en la leyenda según NIST
+            if 'ML-KEM-512' in label or 'ML-DSA-44' in label or 'ECDH-prime256v1' in label or 'ECDSA-prime256v1' in label:
+                security_level = " (NIST Level 1)"
+            elif 'ML-KEM-768' in label or 'ML-DSA-65' in label or 'ECDH-secp384r1' in label or 'ECDSA-secp384r1' in label:
+                security_level = " (NIST Level 3)"
+            elif 'ML-KEM-1024' in label or 'ML-DSA-87' in label or 'ECDH-secp521r1' in label or 'ECDSA-secp521r1' in label:
+                security_level = " (NIST Level 5)"
+            elif 'RSA-2048' in label:
+                security_level = " (~NIST Level 1)"
+            elif 'RSA-3072' in label:
+                security_level = " (~NIST Level 2)"
+            elif 'RSA-4096' in label:
+                security_level = " (~NIST Level 3)"
+            else:
+                security_level = ""
+            
+            legend_elements.append(plt.Rectangle((0,0),1,1, facecolor=color, label=f"{label}{security_level}"))
         
-        # Valores en barras
+        ax.legend(handles=legend_elements, title='Algorithm', title_fontsize=10, fontsize=9, 
+                 frameon=True, fancybox=True, shadow=True, loc='upper right')
+        
+        # Añadir valores en las barras
         for i, (pos, val) in enumerate(zip(all_positions, all_values)):
-            ax.text(pos, val, f'{val:.1f}', ha='center', va='bottom', fontsize=9)
+            # Formatear números sin .0 innecesarios y separar μs
+            if val == int(val):
+                formatted_val = f'{int(val)} μs'
+            else:
+                formatted_val = f'{val:.1f} μs'
+            ax.text(pos, val, formatted_val, ha='center', va='bottom', fontsize=9)
         
-        plt.tight_layout()
-        plt.savefig('benchmark_signing_final.png', dpi=300, bbox_inches='tight')
-        plt.show()
-        print("✅ Gráfica de Signing guardada: benchmark_signing_final.png")
+        # Ajustar layout para que quepa todo
+        plt.subplots_adjust(right=0.85, bottom=0.15)
+        plt.savefig('results/benchmark_signing.png', dpi=300, bbox_inches='tight')
+        print("✅ Gráfica de Signing guardada: benchmark_signing.png")
     
     def create_verification_chart(self):
-        """Signature Verification: ML-DSA vs RSA vs ECDSA"""
-        fig, ax = plt.subplots(figsize=(14, 8))
+        """Signature Verification: Solo algoritmos de firma"""
+        fig, ax = plt.subplots(figsize=(16, 10))
         
         pq_values = []
         pq_labels = []
@@ -392,14 +373,15 @@ class FinalChartGenerator:
                     pq_values.append(time_ms)
                     pq_labels.append(variant)
         
+        
         # RSA Verification (Classical)
         if 'classical' in self.data and 'rsa' in self.data['classical']:
             rsa = self.data['classical']['rsa']
-            for variant in ['2048', '3072', '4096']:
+            for variant in ['RSA-2048', 'RSA-3072', 'RSA-4096']:
                 if variant in rsa and 'verification' in rsa[variant]:
                     time_ms = rsa[variant]['verification']['avgTime'] * 1000
                     classical_values.append(time_ms)
-                    classical_labels.append(f'RSA-{variant}')
+                    classical_labels.append(variant)
         
         # ECDSA Verification (Classical)
         if 'classical' in self.data and 'ecdsa' in self.data['classical']:
@@ -408,54 +390,88 @@ class FinalChartGenerator:
                 if variant in ecdsa and 'verification' in ecdsa[variant]:
                     time_ms = ecdsa[variant]['verification']['avgTime'] * 1000
                     classical_values.append(time_ms)
-                    curve_name = variant.replace('prime', 'P').replace('secp', 'P')
-                    classical_labels.append(f'ECDSA-{curve_name}')
+                    classical_labels.append(f'ECDSA-{variant}')
         
-        # Crear posiciones agrupadas
-        x_pq = range(len(pq_values))
-        x_classical = range(len(pq_values), len(pq_values) + len(classical_values))
+        # Ordenar elementos para leyenda consistente
+        pq_values_sorted, pq_labels_sorted, classical_values_sorted, classical_labels_sorted = get_ordered_legend_items(
+            pq_values, pq_labels, classical_values, classical_labels
+        )
         
-        # Colores únicos para cada algoritmo
-        all_colors = ['#96CEB4', '#FFEAA7', '#DDA0DD', '#FF7675', '#74B9FF', '#A29BFE', '#00B894', '#FDCB6E', '#E17055']
-        all_values = pq_values + classical_values
-        all_labels = pq_labels + classical_labels
-        all_positions = list(x_pq) + list(x_classical)
+        # Crear lista ordenada globalmente
+        all_values = pq_values_sorted + classical_values_sorted
+        all_labels = pq_labels_sorted + classical_labels_sorted
+        all_positions = list(range(len(all_values)))
         
-        # Crear barras individuales con colores únicos
+        # Sistema de colores por algoritmo con tonalidades
+        color_map = get_algorithm_colors()
+        
+        # Crear barras individuales con colores por algoritmo
         bars = []
-        for i, (pos, val, label, color) in enumerate(zip(all_positions, all_values, all_labels, all_colors)):
-            bar = ax.bar(pos, val, color=color, alpha=0.8, label=label)
+        for i, (pos, val, label) in enumerate(zip(all_positions, all_values, all_labels)):
+            color = color_map.get(label, '#888888')
+            bar = ax.bar(pos, val, color=color, alpha=0.8, edgecolor='black', linewidth=0.5)
             bars.append(bar)
         
-        # Configurar gráfica
-        ax.set_yscale('log')
-        ax.set_ylabel('Average Time in Logarithmic Scale (µs)', fontsize=12, fontweight='bold')
-        ax.set_xlabel('Signature Verification Algorithms', fontsize=12, fontweight='bold')
-        ax.set_title('Signature Verification Performance: Post-Quantum vs Classical\n(ML-DSA vs RSA vs ECDSA)', fontsize=14, fontweight='bold')
+        # Configurar ejes
+        ax.set_xlabel('Algorithms', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Average Time (ms)', fontsize=12, fontweight='bold')
+        ax.set_title('A Performance Comparison of Signature Verification Algorithms: Post-Quantum vs Classical', fontsize=14, fontweight='bold')
         
-        # Etiquetas del eje X
+        # Configurar etiquetas del eje X
         ax.set_xticks(all_positions)
         ax.set_xticklabels(all_labels, rotation=45, ha='right')
         
-        # Línea separadora
+        # Aplicar escala logarítmica solo si hay datos válidos
+        if pq_values or classical_values:
+            ax.set_yscale('log')
+            ax.set_ylabel('Average Time (ms) - Logarithmic Scale', fontsize=12, fontweight='bold')
+        
+        # Añadir líneas separadoras entre grupos
         if pq_values and classical_values:
-            separator_pos = len(pq_values) - 0.5
-            ax.axvline(x=separator_pos, color='black', linestyle='--', alpha=0.5, linewidth=1)
+            separator_x = len(pq_values) - 0.5
+            ax.axvline(x=separator_x, color='red', linestyle='--', alpha=0.7, linewidth=2)
         
-        ax.grid(True, alpha=0.3)
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        # Crear leyenda personalizada por algoritmo
+        legend_elements = []
+        for label in all_labels:
+            color = color_map.get(label, '#888888')
+            # Añadir nivel de seguridad solo en la leyenda según NIST
+            if 'ML-KEM-512' in label or 'ML-DSA-44' in label or 'ECDH-prime256v1' in label or 'ECDSA-prime256v1' in label:
+                security_level = " (NIST Level 1)"
+            elif 'ML-KEM-768' in label or 'ML-DSA-65' in label or 'ECDH-secp384r1' in label or 'ECDSA-secp384r1' in label:
+                security_level = " (NIST Level 3)"
+            elif 'ML-KEM-1024' in label or 'ML-DSA-87' in label or 'ECDH-secp521r1' in label or 'ECDSA-secp521r1' in label:
+                security_level = " (NIST Level 5)"
+            elif 'RSA-2048' in label:
+                security_level = " (~NIST Level 1)"
+            elif 'RSA-3072' in label:
+                security_level = " (~NIST Level 2)"
+            elif 'RSA-4096' in label:
+                security_level = " (~NIST Level 3)"
+            else:
+                security_level = ""
+            
+            legend_elements.append(plt.Rectangle((0,0),1,1, facecolor=color, label=f"{label}{security_level}"))
         
-        # Valores en barras
+        ax.legend(handles=legend_elements, title='Algorithm', title_fontsize=10, fontsize=9, 
+                 frameon=True, fancybox=True, shadow=True, loc='upper right')
+        
+        # Añadir valores en las barras
         for i, (pos, val) in enumerate(zip(all_positions, all_values)):
-            ax.text(pos, val, f'{val:.1f}', ha='center', va='bottom', fontsize=9)
+            # Formatear números sin .0 innecesarios y separar μs
+            if val == int(val):
+                formatted_val = f'{int(val)} μs'
+            else:
+                formatted_val = f'{val:.1f} μs'
+            ax.text(pos, val, formatted_val, ha='center', va='bottom', fontsize=9)
         
-        plt.tight_layout()
-        plt.savefig('benchmark_verification_final.png', dpi=300, bbox_inches='tight')
-        plt.show()
-        print("✅ Gráfica de Verification guardada: benchmark_verification_final.png")
+        # Ajustar layout para que quepa todo
+        plt.subplots_adjust(right=0.85, bottom=0.15)
+        plt.savefig('results/benchmark_verification.png', dpi=300, bbox_inches='tight')
+        print("✅ Gráfica de Verification guardada: benchmark_verification.png")
 
 def main():
-    generator = FinalChartGenerator()
+    generator = SimplifiedChartGenerator()
     if generator.data:
         generator.create_all_charts()
     else:
