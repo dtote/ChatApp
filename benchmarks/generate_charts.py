@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Generador de Gráficas Simplificado para Benchmark de Criptografía Post-Cuántica
-Solo comparaciones académicamente válidas: KeyGen + Signing + Verification
+Academic chart generator for post-quantum cryptography benchmark analysis.
+
+Generates comparative performance charts for classical vs post-quantum 
+cryptographic algorithms with NIST security level annotations.
 """
 
 import json
@@ -13,33 +15,33 @@ from pathlib import Path
 plt.style.use('seaborn-v0_8-whitegrid')
 
 def get_algorithm_colors():
-    """Sistema de colores por algoritmo con tonalidades para mejor identificación"""
+    """Algorithm-specific color scheme with gradient variations for visual distinction"""
     colors = {}
     
-    # ML-KEM (azules - transición suave)
-    colors['ML-KEM-512'] = '#1e3a8a'    # azul muy oscuro
-    colors['ML-KEM-768'] = '#3b82f6'    # azul medio
-    colors['ML-KEM-1024'] = '#93c5fd'   # azul claro
+    # ML-KEM color scheme (blue gradient)
+    colors['ML-KEM-512'] = '#1e3a8a'    # dark blue
+    colors['ML-KEM-768'] = '#3b82f6'    # medium blue
+    colors['ML-KEM-1024'] = '#93c5fd'   # light blue
     
-    # ML-DSA (azules verdosos - transición suave)
-    colors['ML-DSA-44'] = '#0f766e'     # azul verdoso muy oscuro
-    colors['ML-DSA-65'] = '#14b8a6'     # azul verdoso medio
-    colors['ML-DSA-87'] = '#5eead4'     # azul verdoso claro
+    # ML-DSA color scheme (teal gradient)
+    colors['ML-DSA-44'] = '#0f766e'     # dark teal
+    colors['ML-DSA-65'] = '#14b8a6'     # medium teal
+    colors['ML-DSA-87'] = '#5eead4'     # light teal
     
-    # RSA (naranjas - transición suave)
-    colors['RSA-2048'] = '#ea580c'      # naranja oscuro
-    colors['RSA-3072'] = '#f97316'      # naranja medio
-    colors['RSA-4096'] = '#fed7aa'      # naranja claro
+    # RSA color scheme (orange gradient)
+    colors['RSA-2048'] = '#ea580c'      # dark orange
+    colors['RSA-3072'] = '#f97316'      # medium orange
+    colors['RSA-4096'] = '#fed7aa'      # light orange
     
-    # ECDH (azules grisáceos - transición suave)
-    colors['ECDH-prime256v1'] = '#475569'   # azul grisáceo oscuro
-    colors['ECDH-secp384r1'] = '#64748b'   # azul grisáceo medio
-    colors['ECDH-secp521r1'] = '#94a3b8'   # azul grisáceo claro
+    # ECDH color scheme (slate gradient)
+    colors['ECDH-prime256v1'] = '#475569'   # dark slate
+    colors['ECDH-secp384r1'] = '#64748b'   # medium slate
+    colors['ECDH-secp521r1'] = '#94a3b8'   # light slate
     
-    # ECDSA (grises - transición suave)
-    colors['ECDSA-prime256v1'] = '#374151'    # gris muy oscuro
-    colors['ECDSA-secp384r1'] = '#6b7280'    # gris medio
-    colors['ECDSA-secp521r1'] = '#d1d5db'    # gris claro
+    # ECDSA color scheme (gray gradient)
+    colors['ECDSA-prime256v1'] = '#374151'    # dark gray
+    colors['ECDSA-secp384r1'] = '#6b7280'    # medium gray
+    colors['ECDSA-secp521r1'] = '#d1d5db'    # light gray
     
     
     return colors

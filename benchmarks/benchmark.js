@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * Benchmark Refactorizado
- * Comparación de algoritmos criptográficos clásicos vs post-cuánticos
+ * Cryptographic Algorithm Performance Benchmark
+ * Comparative analysis of classical vs post-quantum cryptographic algorithms
  * 
- * Estructura modular siguiendo principios de código limpio:
- * - config.js: Configuración centralizada
- * - crypto-sizes.js: Tamaños criptográficos oficiales
- * - utils.js: Utilidades y funciones auxiliares
- * - api-client.js: Cliente para la API de PQClean
- * - classical-benchmarks.js: Benchmarks de algoritmos clásicos
- * - pqc-benchmarks.js: Benchmarks de algoritmos post-cuánticos
- * - display.js: Visualización de resultados
+ * Modular architecture following clean code principles:
+ * - config.js: Centralized configuration management
+ * - crypto-sizes.js: Official cryptographic size definitions
+ * - utils.js: Statistical utilities and helper functions
+ * - api-client.js: Robust API client for PQClean integration
+ * - classical-benchmarks.js: Classical cryptography benchmark implementations
+ * - pqc-benchmarks.js: Post-quantum cryptography benchmark implementations
+ * - display.js: Result visualization and console output
  */
 
 import fs from 'fs';
@@ -29,7 +29,7 @@ class Benchmark {
       postQuantum: {},
       comparison: {}
     };
-    
+
     this.classicalBenchmarks = new ClassicalBenchmarks();
     this.pqcBenchmarks = new PostQuantumBenchmarks();
     this.display = new ResultDisplay();
@@ -69,13 +69,13 @@ class Benchmark {
     try {
       await ensureDirectoryExists(CONFIG.FILES.RESULTS_DIR);
       const filePath = `${CONFIG.FILES.RESULTS_DIR}/${CONFIG.FILES.RESULTS_FILE}`;
-      
+
       await fs.promises.writeFile(
-        filePath, 
-        JSON.stringify(this.results, null, 2), 
+        filePath,
+        JSON.stringify(this.results, null, 2),
         'utf8'
       );
-      
+
       console.log(`\n💾 Resultados guardados en: ${filePath}`);
     } catch (error) {
       console.error('❌ Error guardando resultados:', error.message);
@@ -101,10 +101,10 @@ class Benchmark {
    * Muestra estadísticas del benchmark
    */
   displayStatistics() {
-    const totalAlgorithms = 
-      Object.keys(this.results.classical).length + 
+    const totalAlgorithms =
+      Object.keys(this.results.classical).length +
       Object.keys(this.results.postQuantum).length;
-    
+
     console.log('\n📊 ESTADÍSTICAS DEL BENCHMARK');
     console.log('='.repeat(40));
     console.log(`📅 Timestamp: ${this.results.timestamp}`);
@@ -123,7 +123,7 @@ async function main() {
     const benchmark = new Benchmark();
     await benchmark.runAllBenchmarks();
     benchmark.displayStatistics();
-    
+
     console.log('\n✅ Benchmark completado exitosamente!');
   } catch (error) {
     console.error('❌ Error fatal:', error.message);

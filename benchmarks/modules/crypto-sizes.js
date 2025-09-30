@@ -1,10 +1,10 @@
 /**
- * Tamaños Criptográficos Oficiales
- * Contiene los tamaños oficiales de claves, firmas y ciphertexts según NIST
+ * Official Cryptographic Size Definitions
+ * NIST-standardized sizes for keys, signatures, and ciphertexts
  */
 
 export const CRYPTO_SIZES = {
-  // ML-KEM (Kyber) - NIST FIPS 203
+  // ML-KEM (Kyber) - NIST FIPS 203 standard
   'ML-KEM-512': {
     publicKeySize: 800,
     privateKeySize: 1632,
@@ -21,7 +21,7 @@ export const CRYPTO_SIZES = {
     ciphertextSize: 1568
   },
 
-  // ML-DSA (Dilithium) - NIST FIPS 204
+  // ML-DSA (Dilithium) - NIST FIPS 204 standard
   'ML-DSA-44': {
     publicKeySize: 1952,
     privateKeySize: 4000,

@@ -1,6 +1,6 @@
 /**
- * Configuración del Benchmark Académico
- * Contiene todas las constantes y configuraciones del sistema
+ * Benchmark Configuration Module
+ * Centralized configuration for cryptographic performance benchmarks
  */
 
 export const CONFIG = {
