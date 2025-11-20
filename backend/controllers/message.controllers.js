@@ -15,18 +15,18 @@ const axiosRetry = async (url, data, retries = 5) => {
       return await axios.post(url, data);
     } catch (error) {
       console.log(`🔄 [axiosRetry] Attempt ${i + 1}/${retries} failed:`, error.response?.status);
-      
+
       // Si es rate limiting, esperar más tiempo con backoff exponencial más largo
       if (error.response?.status === 429) {
         // Backoff exponencial más largo: 5s, 10s, 20s, 40s, 80s
         const waitTime = Math.pow(2, i) * 5000; // 5s, 10s, 20s, 40s, 80s
-        console.log(`⏳ [axiosRetry] Rate limited, waiting ${waitTime/1000}s before retry`);
+        console.log(`⏳ [axiosRetry] Rate limited, waiting ${waitTime / 1000}s before retry`);
         await new Promise(r => setTimeout(r, waitTime));
       } else {
         // Para otros errores, esperar 2 segundos
         await new Promise(r => setTimeout(r, 2000));
       }
-      
+
       if (i === retries - 1) throw error;
     }
   }
@@ -271,10 +271,19 @@ export const getMessages = async (req, res) => {
       shared_secret: msg.sharedSecret
     }));
 
-    const bulkDecryptResult = await bulkDecryptResponse({
-      kem_name: "ML-KEM-512",
-      messages: bulkDecryptInput
-    });
+    let bulkDecryptResult;
+    try {
+      bulkDecryptResult = await bulkDecryptResponse({
+        kem_name: "ML-KEM-512",
+        messages: bulkDecryptInput
+      });
+    } catch (error) {
+      if (error.response?.status === 429) {
+        return res.status(429).json({ error: "Too many requests. Please wait a moment and try again." });
+      }
+      console.error("Error in bulkDecrypt:", error.message);
+      return res.status(503).json({ error: "Service temporarily unavailable. Please try again later." });
+    }
 
     const decryptedMessagesArray = bulkDecryptResult.data.results;
 
@@ -286,9 +295,18 @@ export const getMessages = async (req, res) => {
       ml_dsa_variant: "ML-DSA-44"
     }));
 
-    const bulkVerifyResult = await bulkVerifyResponse({
-      messages: bulkVerifyInput
-    });
+    let bulkVerifyResult;
+    try {
+      bulkVerifyResult = await bulkVerifyResponse({
+        messages: bulkVerifyInput
+      });
+    } catch (error) {
+      if (error.response?.status === 429) {
+        return res.status(429).json({ error: "Too many requests. Please wait a moment and try again." });
+      }
+      console.error("Error in bulkVerify:", error.message);
+      return res.status(503).json({ error: "Service temporarily unavailable. Please try again later." });
+    }
 
     const verificationResults = bulkVerifyResult.data.results;
 
