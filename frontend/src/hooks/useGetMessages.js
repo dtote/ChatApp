@@ -24,6 +24,13 @@ const useGetMessages = () => {
         return;
       }
 
+      // Si es el asistente de IA, no hacer fetch (no tiene mensajes en BD)
+      if (selectedConversation.type === "ai-assistant") {
+        setMessages([]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
 
       // Intentar obtener el token de múltiples fuentes
@@ -70,7 +77,7 @@ const useGetMessages = () => {
     };
 
     getMessages();
-  }, [selectedConversation?._id, selectedConversation?.type, selectedKeySize, authUser, setMessages]);
+  }, [selectedConversation?._id, selectedConversation?.type, selectedKeySize, authUser, setMessages, setAuthUser]);
 
   return { messages, loading };
 };
