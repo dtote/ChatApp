@@ -2,23 +2,34 @@ import { useEffect, useState } from "react";
 import useConversation from "../zustand/useConversation";
 import useSecurity from "../zustand/useSecurity";
 import toast from "react-hot-toast";
+import { useAuthContext } from "../context/AuthContext";
 
 const useGetMessages = () => {
   const [loading, setLoading] = useState(false);
   const { messages, setMessages, selectedConversation } = useConversation();
   const { selectedKeySize } = useSecurity();
+  const { authUser, setAuthUser } = useAuthContext();
 
   useEffect(() => {
     const getMessages = async () => {
-      setLoading(true);
-
-      const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
-
-      if (!token) {
-        toast.error("No authentication token found");
+      // Si no hay conversación seleccionada, no hacer nada
+      if (!selectedConversation?._id) {
         setLoading(false);
         return;
       }
+
+      // Si no hay usuario autenticado, no hacer nada (estado normal, no es un error)
+      if (!authUser) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      // Intentar obtener el token de múltiples fuentes
+      const chatUser = localStorage.getItem("chat-user");
+      const tokenFromStorage = localStorage.getItem("token");
+      const token = chatUser ? JSON.parse(chatUser)?.token : tokenFromStorage;
 
       try {
         const endpoint =
@@ -29,9 +40,19 @@ const useGetMessages = () => {
         const res = await fetch(endpoint, {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            ...(token && { Authorization: `Bearer ${token}` })
           }
         });
+
+        // Si el backend rechaza por falta de autenticación, limpiar authUser
+        // y dejar que App.jsx redirija automáticamente al login
+        if (res.status === 401 || res.status === 403) {
+          setAuthUser(null);
+          localStorage.removeItem("chat-user");
+          localStorage.removeItem("token");
+          localStorage.removeItem("sessionId");
+          return;
+        }
 
         const data = await res.json();
 
@@ -39,14 +60,17 @@ const useGetMessages = () => {
 
         setMessages(data);
       } catch (error) {
-        toast.error(`Error fetching messages: ${error.message}`);
+        // Solo mostrar error si no es un error de autenticación (ya manejado arriba)
+        if (error.message && !error.message.includes("401") && !error.message.includes("403")) {
+          toast.error(`Error fetching messages: ${error.message}`);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    if (selectedConversation?._id) getMessages();
-  }, [selectedConversation?._id, selectedConversation?.type, selectedKeySize, setMessages]);
+    getMessages();
+  }, [selectedConversation?._id, selectedConversation?.type, selectedKeySize, authUser, setMessages]);
 
   return { messages, loading };
 };

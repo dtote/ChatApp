@@ -19,22 +19,27 @@ const useLogin = () => {
         credentials: "include"
       });
 
-      if (!res.ok) {
-        const errorMessage = `Error ${res.status}: ${res.statusText}`;
+      const responseText = await res.text();
+      let data = {};
+      
+      // Intentar parsear la respuesta como JSON
+      try {
+        if (responseText) {
+          data = JSON.parse(responseText);
+        }
+      } catch (parseError) {
+        // Si no es JSON válido, usar el texto como mensaje de error
+        throw new Error(responseText || `Error ${res.status}: ${res.statusText}`);
+      }
+
+      // Si hay un error en la respuesta o el status no es OK
+      if (!res.ok || data.error) {
+        const errorMessage = data.error || `Error ${res.status}: ${res.statusText}`;
         toast.error(errorMessage);
         throw new Error(errorMessage);
       }
 
-      const responseText = await res.text();
-      let data = {};
-      if (responseText) {
-        data = JSON.parse(responseText);
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
+      // Solo si llegamos aquí, el login fue exitoso
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
@@ -50,6 +55,8 @@ const useLogin = () => {
       toast.success('Login successful!');
     } catch (error) {
       console.log('Error:', error);
+      // Asegurarse de que NO se actualice authUser si hay error
+      // El usuario permanecerá en la pantalla de login
       toast.error(error.message || 'An error occurred during login');
     } finally {
       setLoading(false);

@@ -97,25 +97,43 @@ const Login = () => {
         credentials: 'include',
       });
 
-      if (!response.ok) throw new Error(`Request error: ${response.status}`);
-
-      const data = await response.json();
-      if (data) {
-        // Stop camera before navigating
-        handleStopVideo();
-
-        localStorage.setItem('chat-user', JSON.stringify(data));
-        localStorage.setItem('token', data.token);
-        if (data.sessionId) {
-          localStorage.setItem("sessionId", data.sessionId);
+      const responseText = await response.text();
+      let data = {};
+      
+      // Intentar parsear la respuesta como JSON
+      try {
+        if (responseText) {
+          data = JSON.parse(responseText);
         }
-        setAuthUser(data);
-        navigate('/');
-        toast.success('Facial login successful!');
+      } catch (parseError) {
+        throw new Error(responseText || `Error ${response.status}: ${response.statusText}`);
       }
+
+      // Si hay un error en la respuesta o el status no es OK
+      if (!response.ok || data.error || data.message === 'Face authentication failed') {
+        const errorMessage = data.error || data.message || `Error ${response.status}: ${response.statusText}`;
+        toast.error(errorMessage);
+        // NO actualizar authUser ni navegar si hay error
+        return;
+      }
+
+      // Solo si llegamos aquí, el login fue exitoso
+      // Stop camera before navigating
+      handleStopVideo();
+
+      localStorage.setItem('chat-user', JSON.stringify(data));
+      localStorage.setItem('token', data.token);
+      if (data.sessionId) {
+        localStorage.setItem("sessionId", data.sessionId);
+      }
+      setAuthUser(data);
+      navigate('/');
+      toast.success('Facial login successful!');
     } catch (error) {
       console.error('Facial login error:', error);
-      toast.error(error.message);
+      toast.error(error.message || 'An error occurred during facial login');
+      // Asegurarse de que NO se actualice authUser si hay error
+      // El usuario permanecerá en la pantalla de login
     }
   };
 

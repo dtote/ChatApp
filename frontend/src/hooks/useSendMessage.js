@@ -2,6 +2,7 @@ import { useState } from "react";
 import useConversation from "../zustand/useConversation";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { useAuthContext } from "../context/AuthContext";
 
 const SYSTEM_PROMPT = `
 You are a versatile and empathetic assistant integrated into a secure chat application for hospital patients. Your main goal is to support users with health-related questions, provide emotional and conversational companionship, and help them navigate their experience as patients.
@@ -32,17 +33,26 @@ Your Role:
 const useSendMessage = () => {
   const [loading, setLoading] = useState(false);
   const { messages, setMessages, selectedConversation } = useConversation();
+  const { authUser } = useAuthContext();
 
   const sendMessage = async (formData, selectedKeySize) => {
     setLoading(true);
 
-    const token = JSON.parse(localStorage.getItem("chat-user"))?.token;
-
-    if (!token) {
-      toast.error("No authentication token found");
+    // Si no hay usuario autenticado, no debería llegar aquí (App.jsx redirige)
+    // Pero verificamos por seguridad
+    if (!authUser) {
+      toast.error("Please log in to send messages.");
       setLoading(false);
       return;
     }
+
+    // Obtener el token (si hay authUser, debería haber token por el flujo normal)
+    // Intentamos de múltiples fuentes por compatibilidad
+    const chatUser = localStorage.getItem("chat-user");
+    const tokenFromStorage = localStorage.getItem("token");
+    const token = chatUser ? JSON.parse(chatUser)?.token : tokenFromStorage;
+
+    // Si no hay token (caso edge), el backend rechazará la petición y el catch manejará el error
 
     try {
       console.log("Selected Key Size: ", selectedKeySize);
@@ -128,12 +138,17 @@ const useSendMessage = () => {
         method: "POST",
         body: formData,
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token || ''}`
         }
       });
 
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+
+      // Si el backend rechaza por falta de autenticación, manejar aquí
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Authentication required. Please log in again.");
+      }
 
       const currentMessages = Array.isArray(messages) ? messages : [];
       setMessages([...currentMessages, data]);
