@@ -43,28 +43,45 @@ const useSignup = () => {
         body: formData,
       });
 
-      const data = await res.json();
-
-      if (data.error) {
-        toast.error(data.error);
-        return { error: true };
-      } else {
-        if (data.token) {
-          localStorage.setItem("token", data.token);
+      const responseText = await res.text();
+      let data = {};
+      
+      // Intentar parsear la respuesta como JSON
+      try {
+        if (responseText) {
+          data = JSON.parse(responseText);
         }
-
-        if (data.sessionId) {
-          localStorage.setItem("sessionId", data.sessionId);
-        }
-
-        localStorage.setItem("chat-user", JSON.stringify(data));
-        setAuthUser(data);
-        toast.success("Signup successful");
-        return { success: true, data };
+      } catch (parseError) {
+        // Si no es JSON válido, usar el texto como mensaje de error
+        throw new Error(responseText || `Error ${res.status}: ${res.statusText}`);
       }
+
+      // Si hay un error en la respuesta o el status no es OK
+      if (!res.ok || data.error) {
+        const errorMessage = data.error || data.message || `Error ${res.status}: ${res.statusText}`;
+        toast.error(errorMessage);
+        // NO actualizar authUser ni navegar si hay error
+        return { error: true };
+      }
+
+      // Solo si llegamos aquí, el registro fue exitoso
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      if (data.sessionId) {
+        localStorage.setItem("sessionId", data.sessionId);
+      }
+
+      localStorage.setItem("chat-user", JSON.stringify(data));
+      setAuthUser(data);
+      toast.success("Signup successful");
+      return { success: true, data };
     } catch (error) {
-      console.error(error);
-      toast.error("Error during registration. Please try again.");
+      console.error("Error during registration:", error);
+      toast.error(error.message || "Error during registration. Please try again.");
+      // Asegurarse de que NO se actualice authUser si hay error
+      // El usuario permanecerá en la pantalla de registro
       return { error: true };
     } finally {
       setLoading(false);
