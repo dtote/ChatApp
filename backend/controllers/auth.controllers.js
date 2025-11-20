@@ -45,21 +45,22 @@ export const signupFacial = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Función helper para reintentos con backoff exponencial (maneja rate limits de Render)
-    const axiosRetry = async (url, data, retries = 3) => {
+    const axiosRetry = async (url, data, retries = 5) => {
       for (let i = 0; i < retries; i++) {
         try {
           return await axios.post(url, data);
         } catch (error) {
           console.log(`🔄 [axiosRetry] Attempt ${i + 1}/${retries} failed:`, error.response?.status);
 
-          // Si es rate limiting, esperar más tiempo con backoff exponencial
+          // Si es rate limiting, esperar más tiempo con backoff exponencial más largo
           if (error.response?.status === 429) {
-            const waitTime = Math.pow(2, i + 1) * 1000; // Backoff exponencial: 2s, 4s, 8s
-            console.log(`⏳ [axiosRetry] Rate limited, waiting ${waitTime}ms before retry`);
+            // Backoff exponencial más largo: 5s, 10s, 20s, 40s, 80s
+            const waitTime = Math.pow(2, i) * 5000; // 5s, 10s, 20s, 40s, 80s
+            console.log(`⏳ [axiosRetry] Rate limited, waiting ${waitTime / 1000}s before retry`);
             await new Promise(r => setTimeout(r, waitTime));
           } else {
-            // Para otros errores, esperar 1 segundo
-            await new Promise(r => setTimeout(r, 1000));
+            // Para otros errores, esperar 2 segundos
+            await new Promise(r => setTimeout(r, 2000));
           }
 
           if (i === retries - 1) throw error;
@@ -176,21 +177,22 @@ export const signup = async (req, res) => {
     }
 
     // Función helper para reintentos con backoff exponencial (maneja rate limits de Render)
-    const axiosRetry = async (url, data, retries = 3) => {
+    const axiosRetry = async (url, data, retries = 5) => {
       for (let i = 0; i < retries; i++) {
         try {
           return await axios.post(url, data);
         } catch (error) {
           console.log(`🔄 [axiosRetry] Attempt ${i + 1}/${retries} failed:`, error.response?.status);
 
-          // Si es rate limiting, esperar más tiempo con backoff exponencial
+          // Si es rate limiting, esperar más tiempo con backoff exponencial más largo
           if (error.response?.status === 429) {
-            const waitTime = Math.pow(2, i + 1) * 1000; // Backoff exponencial: 2s, 4s, 8s
-            console.log(`⏳ [axiosRetry] Rate limited, waiting ${waitTime}ms before retry`);
+            // Backoff exponencial más largo: 5s, 10s, 20s, 40s, 80s
+            const waitTime = Math.pow(2, i) * 5000; // 5s, 10s, 20s, 40s, 80s
+            console.log(`⏳ [axiosRetry] Rate limited, waiting ${waitTime / 1000}s before retry`);
             await new Promise(r => setTimeout(r, waitTime));
           } else {
-            // Para otros errores, esperar 1 segundo
-            await new Promise(r => setTimeout(r, 1000));
+            // Para otros errores, esperar 2 segundos
+            await new Promise(r => setTimeout(r, 2000));
           }
 
           if (i === retries - 1) throw error;
