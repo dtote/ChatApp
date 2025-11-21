@@ -27,25 +27,94 @@ command -v g++ >/dev/null 2>&1 || { echo "❌ g++ not found"; exit 1; }
 command -v cmake >/dev/null 2>&1 || { echo "❌ cmake not found"; exit 1; }
 command -v git >/dev/null 2>&1 || { echo "❌ git not found"; exit 1; }
 
-# Instalar Crow v2.0+ localmente (NO requiere Boost, más simple)
-echo "📥 Installing Crow framework (v2.0+, no Boost required)..."
+# Instalar ASIO standalone (requerido por Crow v2.0+)
+echo "📥 Installing ASIO (standalone, header-only)..."
+ASIO_INSTALL_DIR="$PQCLEAN_API_DIR/asio-install"
+ASIO_INCLUDE_DIR="$ASIO_INSTALL_DIR/include"
+if [ ! -f "$ASIO_INCLUDE_DIR/asio.hpp" ] && [ ! -d "$ASIO_INCLUDE_DIR/asio" ]; then
+    mkdir -p "$ASIO_INCLUDE_DIR"
+    
+    # Clonar ASIO standalone (más ligero que Boost.ASIO)
+    echo "📥 Cloning ASIO standalone..."
+    git clone --depth 1 https://github.com/chriskohlhoff/asio.git /tmp/asio-clone 2>/dev/null || {
+        echo "❌ Failed to clone ASIO"
+        exit 1
+    }
+    
+    # ASIO standalone tiene diferentes estructuras posibles
+    # Buscar asio.hpp en todas las ubicaciones posibles
+    ASIO_HPP_SOURCE=""
+    
+    # Buscar en diferentes estructuras posibles
+    if [ -f "/tmp/asio-clone/asio/include/asio.hpp" ]; then
+        ASIO_HPP_SOURCE="/tmp/asio-clone/asio/include/asio.hpp"
+        ASIO_DIR_SOURCE="/tmp/asio-clone/asio/include"
+    elif [ -f "/tmp/asio-clone/include/asio.hpp" ]; then
+        ASIO_HPP_SOURCE="/tmp/asio-clone/include/asio.hpp"
+        ASIO_DIR_SOURCE="/tmp/asio-clone/include"
+    elif [ -f "/tmp/asio-clone/asio/include/asio/asio.hpp" ]; then
+        ASIO_HPP_SOURCE="/tmp/asio-clone/asio/include/asio/asio.hpp"
+        ASIO_DIR_SOURCE="/tmp/asio-clone/asio/include"
+    elif [ -f "/tmp/asio-clone/include/asio/asio.hpp" ]; then
+        ASIO_HPP_SOURCE="/tmp/asio-clone/include/asio/asio.hpp"
+        ASIO_DIR_SOURCE="/tmp/asio-clone/include"
+    fi
+    
+    if [ -n "$ASIO_HPP_SOURCE" ]; then
+        echo "📌 Found ASIO at: $ASIO_HPP_SOURCE"
+        # Copiar asio.hpp directamente al directorio de include
+        cp "$ASIO_HPP_SOURCE" "$ASIO_INCLUDE_DIR/asio.hpp" || {
+            echo "❌ Failed to copy asio.hpp"
+            exit 1
+        }
+        
+        # Copiar el directorio asio/ completo si existe (para includes internos)
+        if [ -d "$ASIO_DIR_SOURCE/asio" ]; then
+            cp -r "$ASIO_DIR_SOURCE/asio" "$ASIO_INCLUDE_DIR/" || true
+        fi
+    else
+        echo "⚠️ ASIO structure not recognized, trying to find asio.hpp..."
+        find /tmp/asio-clone -name "asio.hpp" -type f | head -1 | while read found_file; do
+            echo "📌 Found asio.hpp at: $found_file"
+            cp "$found_file" "$ASIO_INCLUDE_DIR/asio.hpp" || true
+            # Copiar el directorio padre si es asio/
+            dir_path=$(dirname "$found_file")
+            if [ -d "$dir_path/asio" ]; then
+                cp -r "$dir_path/asio" "$ASIO_INCLUDE_DIR/" || true
+            fi
+        done
+    fi
+    
+    rm -rf /tmp/asio-clone
+    
+    # Verificar que tenemos asio.hpp disponible
+    if [ -f "$ASIO_INCLUDE_DIR/asio.hpp" ] || [ -d "$ASIO_INCLUDE_DIR/asio" ]; then
+        echo "✅ ASIO installed"
+    else
+        echo "❌ Failed to install ASIO (asio.hpp not found)"
+        exit 1
+    fi
+fi
+
+# Instalar Crow v2.0+ localmente (requiere ASIO pero no Boost)
+echo "📥 Installing Crow framework (v2.0+, requires ASIO)..."
 CROW_DIR="./crow"
 if [ ! -d "$CROW_DIR" ]; then
     # Clonar Crow (header-only library)
     git clone --depth 1 https://github.com/CrowCpp/Crow.git "$CROW_DIR"
     cd "$CROW_DIR"
-    # Buscar tags v2.0+ (que no requieren Boost)
+    # Buscar tags v2.0+ (que no requieren Boost pero sí ASIO)
     git fetch --tags 2>/dev/null || true
     # Buscar tags que empiecen con v2.
     TAG=$(git tag 2>/dev/null | grep "^v2\." | sort -V | tail -1 2>/dev/null || echo "")
     if [ -n "$TAG" ]; then
-        echo "📌 Using Crow version: $TAG (no Boost required)"
+        echo "📌 Using Crow version: $TAG (requires ASIO)"
         git checkout "$TAG" 2>/dev/null || {
             echo "⚠️ Tag $TAG not found, trying main branch"
             git checkout main 2>/dev/null || true
         }
     else
-        echo "📌 Using Crow main branch (v2.0+, no Boost required)"
+        echo "📌 Using Crow main branch (v2.0+, requires ASIO)"
         git checkout main 2>/dev/null || true
     fi
     cd "$PQCLEAN_API_DIR" || { echo "❌ Failed to return to PQClean-API directory"; exit 1; }
@@ -106,7 +175,7 @@ rm -rf /tmp/pqclean-api-repo
 # Compilar pqclean-api
 echo "🔨 Compiling pqclean-api binary..."
 
-# Determinar flags de Crow (v2.0+ no requiere Boost)
+# Determinar flags de Crow y ASIO
 if [ -d "./crow/include" ]; then
     # Crow con estructura include/
     CROW_INCLUDE="./crow/include"
@@ -118,10 +187,38 @@ else
     exit 1
 fi
 
+# ASIO headers - verificar estructura
+if [ -f "$ASIO_INCLUDE_DIR/asio.hpp" ]; then
+    # asio.hpp está directamente en include/
+    ASIO_INCLUDE="$ASIO_INCLUDE_DIR"
+elif [ -d "$ASIO_INCLUDE_DIR/asio" ] && [ -f "$ASIO_INCLUDE_DIR/asio/asio.hpp" ]; then
+    # asio/ está en include/, copiar asio.hpp al nivel superior
+    cp "$ASIO_INCLUDE_DIR/asio/asio.hpp" "$ASIO_INCLUDE_DIR/asio.hpp" 2>/dev/null || true
+    ASIO_INCLUDE="$ASIO_INCLUDE_DIR"
+elif [ -d "./asio-install/include" ]; then
+    ASIO_INCLUDE="./asio-install/include"
+else
+    echo "❌ ASIO not found!"
+    echo "   Checking: $ASIO_INCLUDE_DIR"
+    ls -la "$ASIO_INCLUDE_DIR" 2>/dev/null || true
+    exit 1
+fi
+
+# Verificar que asio.hpp existe antes de compilar
+if [ ! -f "$ASIO_INCLUDE/asio.hpp" ]; then
+    echo "❌ ERROR: asio.hpp not found at $ASIO_INCLUDE/asio.hpp"
+    echo "   Directory contents:"
+    ls -la "$ASIO_INCLUDE" 2>/dev/null || true
+    exit 1
+fi
+
 echo "📌 Using Crow headers from: $CROW_INCLUDE"
+echo "📌 Using ASIO headers from: $ASIO_INCLUDE"
+echo "✅ Verified asio.hpp exists at: $ASIO_INCLUDE/asio.hpp"
 
 g++ -std=c++17 -o pqclean-api pqclean-api.cpp base64.cpp \
-    -I. -I./PQClean -I"$CROW_INCLUDE" \
+    -I. -I./PQClean -I"$CROW_INCLUDE" -I"$ASIO_INCLUDE" \
+    -DASIO_STANDALONE \
     -L./PQClean/build/lib \
     -lml-kem-512_clean -lml-kem-768_clean -lml-kem-1024_clean \
     -lml-dsa-44_clean -lml-dsa-65_clean -lml-dsa-87_clean \
