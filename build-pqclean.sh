@@ -227,7 +227,25 @@ g++ -std=c++17 -o pqclean-api pqclean-api.cpp base64.cpp \
 
 chmod +x pqclean-api
 
-echo "✅ PQClean API compiled successfully!"
+# Verificar que el binario existe y está en el lugar correcto
+if [ -f "./pqclean-api" ]; then
+    echo "✅ PQClean API compiled successfully!"
+    echo "📌 Binary location: $(pwd)/pqclean-api"
+    ls -lh ./pqclean-api 2>/dev/null || true
+else
+    echo "❌ ERROR: pqclean-api binary not found after compilation"
+    echo "   Current directory: $(pwd)"
+    ls -la . 2>/dev/null || true
+    exit 1
+fi
+
 # Volver al directorio raíz del script
 cd "$SCRIPT_DIR" || { echo "❌ Failed to return to script directory"; exit 1; }
+
+# Verificar que el binario está accesible desde el directorio raíz
+if [ -f "$SCRIPT_DIR/PQClean-API/pqclean-api" ]; then
+    echo "✅ Binary verified at: $SCRIPT_DIR/PQClean-API/pqclean-api"
+else
+    echo "⚠️ Warning: Binary not found at expected location: $SCRIPT_DIR/PQClean-API/pqclean-api"
+fi
 

@@ -3,10 +3,24 @@ set -e
 
 echo "🚀 Starting PQClean API server..."
 
-# Iniciar PQClean API en background
-# El binario debe estar en /app/PQClean-API/pqclean-api después del build
-if [ -f "/app/PQClean-API/pqclean-api" ]; then
-    /app/PQClean-API/pqclean-api &
+# Obtener el directorio donde está el script (directorio raíz del proyecto)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PQCLEAN_BINARY="$SCRIPT_DIR/PQClean-API/pqclean-api"
+
+# Buscar el binario en diferentes ubicaciones posibles
+if [ ! -f "$PQCLEAN_BINARY" ]; then
+    # Intentar rutas alternativas
+    if [ -f "./PQClean-API/pqclean-api" ]; then
+        PQCLEAN_BINARY="./PQClean-API/pqclean-api"
+    elif [ -f "PQClean-API/pqclean-api" ]; then
+        PQCLEAN_BINARY="PQClean-API/pqclean-api"
+    fi
+fi
+
+# Verificar que el binario existe
+if [ -f "$PQCLEAN_BINARY" ]; then
+    echo "✅ Found PQClean API binary at: $PQCLEAN_BINARY"
+    "$PQCLEAN_BINARY" &
     PQCLEAN_PID=$!
     echo "✅ PQClean API started with PID: $PQCLEAN_PID"
     
@@ -24,8 +38,16 @@ if [ -f "/app/PQClean-API/pqclean-api" ]; then
         sleep 1
     done
 else
-    echo "❌ ERROR: PQClean API binary not found at /app/PQClean-API/pqclean-api"
-    echo "   Make sure PQClean API was compiled successfully during Docker build"
+    echo "❌ ERROR: PQClean API binary not found"
+    echo "   Searched in:"
+    echo "     - $SCRIPT_DIR/PQClean-API/pqclean-api"
+    echo "     - ./PQClean-API/pqclean-api"
+    echo "     - PQClean-API/pqclean-api"
+    echo "   Current directory: $(pwd)"
+    echo "   Directory contents:"
+    ls -la . 2>/dev/null || true
+    echo "   PQClean-API directory contents:"
+    ls -la PQClean-API 2>/dev/null || true
     exit 1
 fi
 
