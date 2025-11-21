@@ -1,6 +1,7 @@
 export const ENV_CONFIG = {
-  // External APIs
-  PQCLEAN_API_URL: process.env.PQCLEAN_API_URL || 'http://localhost:5003',
+  // PQClean API - SIEMPRE usar localhost para evitar rate limiting de Render
+  // El servidor PQClean se ejecuta en el mismo contenedor
+  PQCLEAN_API_URL: 'http://localhost:5003',
 
   // Databases (WIP: create local mongodb)
   MONGO_URI: process.env.MONGO_URI,
