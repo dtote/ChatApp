@@ -58,7 +58,39 @@ const useGetMessages = () => {
           localStorage.removeItem("chat-user");
           localStorage.removeItem("token");
           localStorage.removeItem("sessionId");
+          setLoading(false);
           return;
+        }
+
+        // Si la respuesta no es exitosa, manejar el error
+        if (!res.ok) {
+          const contentType = res.headers.get("content-type");
+          let errorMessage = `Server returned ${res.status}`;
+
+          if (contentType && contentType.includes("application/json")) {
+            try {
+              const errorData = await res.json();
+              errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+              // Si falla el parseo, usar el mensaje por defecto
+            }
+          } else {
+            try {
+              const text = await res.text();
+              errorMessage = text || errorMessage;
+            } catch (e) {
+              // Si falla leer el texto, usar el mensaje por defecto
+            }
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        // Verificar si la respuesta es JSON válido antes de parsear
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(text || `Server returned ${res.status}`);
         }
 
         const data = await res.json();
@@ -67,11 +99,15 @@ const useGetMessages = () => {
 
         setMessages(data);
       } catch (error) {
+        console.error("Error fetching messages:", error);
+        // Asegurar que los mensajes se limpien en caso de error
+        setMessages([]);
         // Solo mostrar error si no es un error de autenticación (ya manejado arriba)
         if (error.message && !error.message.includes("401") && !error.message.includes("403")) {
           toast.error(`Error fetching messages: ${error.message}`);
         }
       } finally {
+        // Asegurar que loading siempre se establezca en false
         setLoading(false);
       }
     };

@@ -173,7 +173,12 @@ router.get('/:id/messages', async (req, res) => {
     }
 
     // Process all messages in the community
-    const messages = community.messages;
+    const messages = community.messages || [];
+
+    // Si no hay mensajes, devolver array vacío
+    if (!messages.length) {
+      return res.status(200).json([]);
+    }
 
     // 1. Prepare bulkDecrypt
     const bulkDecryptInput = messages.map(msg => ({
@@ -195,11 +200,17 @@ router.get('/:id/messages', async (req, res) => {
       return res.status(503).json({ error: "Service temporarily unavailable. Please try again later." });
     }
 
+    // Validar que bulkDecryptResult tenga resultados
+    if (!bulkDecryptResult?.data?.results || !Array.isArray(bulkDecryptResult.data.results)) {
+      console.error("Invalid bulkDecrypt response:", bulkDecryptResult);
+      return res.status(500).json({ error: "Invalid response from decryption service" });
+    }
+
     const decryptedMessagesArray = bulkDecryptResult.data.results;
 
     // 2. Prepare bulkVerify
     const bulkVerifyInput = decryptedMessagesArray.map((decrypted, index) => ({
-      message: decrypted.original_message,
+      message: decrypted?.original_message || decrypted?.error || '',
       signature: messages[index].signature,
       public_key: messages[index].publicKeyDSA,
       ml_dsa_variant: "ML-DSA-44"
@@ -218,13 +229,29 @@ router.get('/:id/messages', async (req, res) => {
       return res.status(503).json({ error: "Service temporarily unavailable. Please try again later." });
     }
 
+    // Validar que bulkVerifyResult tenga resultados
+    if (!bulkVerifyResult?.data?.results || !Array.isArray(bulkVerifyResult.data.results)) {
+      console.error("Invalid bulkVerify response:", bulkVerifyResult);
+      return res.status(500).json({ error: "Invalid response from verification service" });
+    }
+
     const verificationResults = bulkVerifyResult.data.results;
+
+    // Validar que los arrays tengan la misma longitud
+    if (decryptedMessagesArray.length !== verificationResults.length || decryptedMessagesArray.length !== messages.length) {
+      console.error("Array length mismatch:", {
+        decrypted: decryptedMessagesArray.length,
+        verified: verificationResults.length,
+        messages: messages.length
+      });
+      return res.status(500).json({ error: "Data mismatch error" });
+    }
 
     // 3. Combine decrypted + verified
     const decryptedMessages = messages.map((msg, index) => ({
       ...msg._doc,
-      message: decryptedMessagesArray[index].original_message,
-      verified: verificationResults[index].verified,
+      message: decryptedMessagesArray[index]?.original_message || decryptedMessagesArray[index]?.error || '',
+      verified: verificationResults[index]?.verified || false,
       fileUrl: msg.fileUrl || null
     }));
 
