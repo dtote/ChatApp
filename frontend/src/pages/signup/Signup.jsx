@@ -18,14 +18,22 @@ const Signup = () => {
   const { videoRef, canvasRef, animationFrameRef, startVideo, stopVideo } = useCameraContext();
   const { loading, signup } = useSignup();
 
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
   useEffect(() => {
     const loadModels = async () => {
-      await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-        faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-      ]);
-      toast.success("Models loaded successfully.");
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+        ]);
+        setModelsLoaded(true);
+        toast.success("Models loaded successfully.");
+      } catch (error) {
+        console.error("Error loading face-api models:", error);
+        toast.error("Failed to load face recognition models");
+      }
     };
     loadModels();
   }, []);
@@ -39,7 +47,13 @@ const Signup = () => {
 
   const detectFaceLoop = async () => {
     const video = videoRef.current;
-    if (!video || video.paused || video.ended || video.readyState < 2) {
+    if (!video || video.paused || video.ended || video.readyState < 2 || !modelsLoaded) {
+      animationFrameRef.current = requestAnimationFrame(detectFaceLoop);
+      return;
+    }
+
+    // Validar que el video tenga dimensiones válidas
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
       animationFrameRef.current = requestAnimationFrame(detectFaceLoop);
       return;
     }
@@ -50,27 +64,34 @@ const Signup = () => {
       height: video.videoHeight,
     });
 
-    const detection = await faceapi
-      .detectSingleFace(video, new faceapi.SsdMobilenetv1Options())
-      .withFaceLandmarks()
-      .withFaceDescriptor();
+    try {
+      const detection = await faceapi
+        .detectSingleFace(video, new faceapi.SsdMobilenetv1Options())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
 
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (detection) {
-      const resized = faceapi.resizeResults(detection, {
-        width: video.videoWidth,
-        height: video.videoHeight,
-      });
-      faceapi.draw.drawDetections(canvas, resized);
-      faceapi.draw.drawFaceLandmarks(canvas, resized);
-      setFaceDetected(true);
-      setFaceDescriptor(detection.descriptor);
-    } else {
-      setFaceDetected(false);
-      setFaceDescriptor(null);
-      console.warn('No face detected. Make sure your face is well-lit and within the frame.');
+      if (detection) {
+        const resized = faceapi.resizeResults(detection, {
+          width: video.videoWidth,
+          height: video.videoHeight,
+        });
+        faceapi.draw.drawDetections(canvas, resized);
+        faceapi.draw.drawFaceLandmarks(canvas, resized);
+        setFaceDetected(true);
+        setFaceDescriptor(detection.descriptor);
+      } else {
+        setFaceDetected(false);
+        setFaceDescriptor(null);
+        console.warn('No face detected. Make sure your face is well-lit and within the frame.');
+      }
+    } catch (error) {
+      // Silenciar errores de detección (pueden ocurrir si el modelo aún no está listo)
+      if (error.message && !error.message.includes('load model')) {
+        console.error("Face detection error:", error);
+      }
     }
 
     animationFrameRef.current = requestAnimationFrame(detectFaceLoop);

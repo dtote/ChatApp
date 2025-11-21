@@ -9,6 +9,7 @@ import axios from 'axios';
 import { logger } from '../../utils/logger.js';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
+import ReactMarkdown from 'react-markdown';
 import './Message.css';
 
 const checkUrlSafety = async (url, setUrlStatus) => {
@@ -155,9 +156,18 @@ const Message = ({ message }) => {
   const { authUser } = useAuthContext();
   const { selectedConversation } = useConversation();
   const { socket } = useSocketContext();
-  const fromMe = message.senderId === authUser._id;
+
+  // Determinar si el mensaje es del usuario actual
+  // El asistente siempre tiene senderId === 'ai-assistant' (izquierda)
+  // Los mensajes del usuario tienen senderId === 'user' (en chatbot) o authUser._id (en conversaciones normales) (derecha)
+  const isAssistant = message.senderId === 'ai-assistant';
+  const isUserMessage = message.senderId === 'user' || (authUser?._id && message.senderId === authUser._id);
+  const fromMe = isUserMessage && !isAssistant;
+
   const formattedTime = extractTime(message.createdAt);
   const shakeClass = message.shouldShake ? "shake" : "";
+
+  // chat-end = derecha (mensajes del usuario), chat-start = izquierda (mensajes del asistente/otros)
   const chatClassName = fromMe ? "chat-end" : "chat-start";
   const bubbleBgColor = fromMe ? "bg-blue-500" : "";
   const [showEncrypted, setShowEncrypted] = useState(false);
@@ -166,9 +176,17 @@ const Message = ({ message }) => {
 
   const [showPopup, setShowPopup] = useState(false);
   const [urlStatus, setUrlStatus] = useState({});
-  const [profilePic, setProfilePic] = useState(
-    fromMe ? authUser.profilePic : 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg'
-  );
+  const [profilePic, setProfilePic] = useState(() => {
+    if (fromMe) {
+      return authUser.profilePic;
+    }
+    // Si es el asistente de IA, usar su imagen específica
+    if (message.senderId === 'ai-assistant') {
+      return '/geekbot-svgrepo-com.svg';
+    }
+    // Para otros usuarios, usar imagen por defecto (se actualizará con fetchProfilePic)
+    return 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg';
+  });
   const urlPattern = useMemo(() => /(https?:\/\/[^\s]+)/g, []);
   const { selectedKeySize } = useSecurity(state => state);
   const [userData, setUserData] = useState({
@@ -251,8 +269,16 @@ const Message = ({ message }) => {
   };
 
   useEffect(() => {
+    // Solo intentar obtener profilePic si no es un mensaje propio y el senderId es válido
     if (!fromMe) {
-      fetchProfilePic(message.senderId);
+      // Si es el chatbot, usar su imagen directamente
+      if (message.senderId === 'ai-assistant') {
+        setProfilePic('/geekbot-svgrepo-com.svg');
+      }
+      // Si es "user", no hacer nada (ya está usando el profilePic del usuario autenticado)
+      else if (message.senderId !== 'user' && message.senderId && /^[0-9a-fA-F]{24}$/.test(message.senderId)) {
+        fetchProfilePic(message.senderId);
+      }
     }
 
     const handleClickOutside = (e) => {
@@ -325,16 +351,34 @@ const Message = ({ message }) => {
   }, [isPoll, showEmojiPicker, showPopup, message.senderId, urlPattern, urlStatus, pollOptions, pollQuestion, setUrlStatus, selectedConversation?.type, socket, message.message, selectedKeySize]);
 
   const fetchProfilePic = async (senderId) => {
+    // Validar que senderId sea un ObjectId válido de MongoDB (24 caracteres hexadecimales)
+    // o que no sea "user", "ai-assistant" u otros valores especiales
+    if (!senderId || senderId === 'user' || senderId === 'ai-assistant' || !/^[0-9a-fA-F]{24}$/.test(senderId)) {
+      // Si es el chatbot, usar su imagen por defecto
+      if (senderId === 'ai-assistant') {
+        setProfilePic('/geekbot-svgrepo-com.svg');
+      }
+      // Si es "user", usar el profilePic del usuario autenticado (ya está en el estado inicial)
+      // No hacer nada, el profilePic ya está correcto desde el estado inicial
+      return;
+    }
+
     try {
       const response = await fetch(`/api/users/${senderId}/profile-pic`);
       if (response.ok) {
         const data = await response.json();
         setProfilePic(data.profilePic || 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg');
       } else {
-        console.error("Error getting profile picture");
+        // No mostrar error en consola para 404/500, solo usar imagen por defecto
+        if (response.status !== 404 && response.status !== 500) {
+          console.error("Error getting profile picture");
+        }
       }
     } catch (error) {
-      console.error("Error in fetch request:", error);
+      // Solo loggear errores de red, no errores esperados
+      if (error.name !== 'TypeError') {
+        console.error("Error in fetch request:", error);
+      }
     }
   };
 
@@ -504,7 +548,7 @@ const Message = ({ message }) => {
             <img alt="Profile" src={profilePic} />
           </div>
         </div>
-        <div className={`chat-bubble text-white ${bubbleBgColor} ${shakeClass} pb-2`}>
+        <div className={`chat-bubble text-white ${bubbleBgColor} ${shakeClass} ${isAssistant ? 'pb-4 px-4 leading-relaxed' : 'pb-2'}`}>
           {showEncrypted ? (
             <span className="text-yellow-500 break-all">{handleEncryptMessage(message)}</span>
           ) : isPoll ? (
@@ -601,8 +645,29 @@ const Message = ({ message }) => {
               )}
             </div>
           ) : (
-            <div>
-              {typeof message.message === 'string' && message.message.match(urlPattern) ? (
+            <div className={isAssistant ? "prose prose-invert max-w-none" : ""}>
+              {isAssistant ? (
+                // Renderizar markdown para mensajes del asistente con mejor espaciado
+                <ReactMarkdown
+                  className="markdown-content"
+                  components={{
+                    p: ({ node, ...props }) => <p className="mb-4 leading-7" {...props} />,
+                    strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+                    em: ({ node, ...props }) => <em className="italic" {...props} />,
+                    ul: ({ node, ...props }) => <ul className="list-disc list-inside mb-4 space-y-2 ml-4" {...props} />,
+                    ol: ({ node, ...props }) => <ol className="list-decimal list-inside mb-4 space-y-2 ml-4" {...props} />,
+                    li: ({ node, ...props }) => <li className="mb-2 leading-6" {...props} />,
+                    h1: ({ node, ...props }) => <h1 className="text-xl font-bold mb-3 mt-4" {...props} />,
+                    h2: ({ node, ...props }) => <h2 className="text-lg font-bold mb-3 mt-4" {...props} />,
+                    h3: ({ node, ...props }) => <h3 className="text-base font-bold mb-2 mt-3" {...props} />,
+                    code: ({ node, ...props }) => <code className="bg-gray-700 px-1.5 py-0.5 rounded text-sm" {...props} />,
+                    blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-gray-400 pl-4 italic my-3" {...props} />,
+                  }}
+                >
+                  {message.message}
+                </ReactMarkdown>
+              ) : typeof message.message === 'string' && message.message.match(urlPattern) ? (
+                // Renderizado normal con URLs para mensajes del usuario
                 <div>
                   {message.message.split(urlPattern).map((part, index) => {
                     if (part.match(urlPattern)) {
@@ -627,7 +692,7 @@ const Message = ({ message }) => {
                   })}
                 </div>
               ) : (
-                <span>{message.message}</span>
+                <span className="leading-relaxed">{message.message}</span>
               )}
             </div>
           )}

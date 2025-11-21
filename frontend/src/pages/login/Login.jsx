@@ -18,14 +18,22 @@ const Login = () => {
   const { setAuthUser } = useAuthContext();
   const navigate = useNavigate();
 
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
   useEffect(() => {
     const loadModels = async () => {
-      await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-        faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-      ]);
-      toast.success("Models loaded successfully.");
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+        ]);
+        setModelsLoaded(true);
+        toast.success("Models loaded successfully.");
+      } catch (error) {
+        console.error("Error loading face-api models:", error);
+        toast.error("Failed to load face recognition models");
+      }
     };
     loadModels();
   }, []);
@@ -39,7 +47,13 @@ const Login = () => {
 
   const detectFaceLoop = async () => {
     const video = videoRef.current;
-    if (!video || video.paused || video.ended || video.readyState < 2) {
+    if (!video || video.paused || video.ended || video.readyState < 2 || !modelsLoaded) {
+      animationFrameRef.current = requestAnimationFrame(detectFaceLoop);
+      return;
+    }
+
+    // Validar que el video tenga dimensiones válidas
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
       animationFrameRef.current = requestAnimationFrame(detectFaceLoop);
       return;
     }
@@ -50,26 +64,33 @@ const Login = () => {
       height: video.videoHeight,
     });
 
-    const detection = await faceapi
-      .detectSingleFace(video, new faceapi.SsdMobilenetv1Options())
-      .withFaceLandmarks()
-      .withFaceDescriptor();
+    try {
+      const detection = await faceapi
+        .detectSingleFace(video, new faceapi.SsdMobilenetv1Options())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
 
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (detection) {
-      const resized = faceapi.resizeResults(detection, {
-        width: video.videoWidth,
-        height: video.videoHeight,
-      });
-      faceapi.draw.drawDetections(canvas, resized);
-      faceapi.draw.drawFaceLandmarks(canvas, resized);
-      setFaceDetected(true);
-      setDetectionProgress(100);
-    } else {
-      setFaceDetected(false);
-      setDetectionProgress((prev) => (prev < 95 ? prev + 1 : 0));
+      if (detection) {
+        const resized = faceapi.resizeResults(detection, {
+          width: video.videoWidth,
+          height: video.videoHeight,
+        });
+        faceapi.draw.drawDetections(canvas, resized);
+        faceapi.draw.drawFaceLandmarks(canvas, resized);
+        setFaceDetected(true);
+        setDetectionProgress(100);
+      } else {
+        setFaceDetected(false);
+        setDetectionProgress((prev) => (prev < 95 ? prev + 1 : 0));
+      }
+    } catch (error) {
+      // Silenciar errores de detección (pueden ocurrir si el modelo aún no está listo)
+      if (error.message && !error.message.includes('load model')) {
+        console.error("Face detection error:", error);
+      }
     }
 
     animationFrameRef.current = requestAnimationFrame(detectFaceLoop);
@@ -99,7 +120,7 @@ const Login = () => {
 
       const responseText = await response.text();
       let data = {};
-      
+
       // Intentar parsear la respuesta como JSON
       try {
         if (responseText) {
@@ -188,7 +209,7 @@ const Login = () => {
                 <span className="text-lg font-medium text-gray-700">Facial Recognition</span>
                 <p className="text-sm text-gray-500 mt-1">Position your face in the center</p>
               </div>
-              
+
               <div className="relative w-full max-w-xs aspect-[4/3] mx-auto mb-6">
                 <video
                   ref={videoRef}
@@ -198,12 +219,12 @@ const Login = () => {
                   className="rounded-2xl w-full h-full object-cover bg-gray-100"
                 />
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full rounded-2xl" />
-                
+
                 {/* Marco de detección más sutil */}
                 <div className="absolute border border-blue-300 rounded-xl
                   w-[75%] aspect-square top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
                   z-20 pointer-events-none" />
-                
+
                 {/* Indicador de estado */}
                 {faceDetected && (
                   <div className="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
@@ -211,11 +232,11 @@ const Login = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Barra de progreso simple */}
               <div className="mb-6">
                 <div className="w-full bg-gray-200 rounded-full h-1">
-                  <div 
+                  <div
                     className="bg-blue-500 h-1 rounded-full transition-all duration-300"
                     style={{ width: `${detectionProgress}%` }}
                   ></div>
@@ -224,19 +245,19 @@ const Login = () => {
                   {detectionProgress === 100 ? 'Face detected successfully!' : 'Detecting face...'}
                 </p>
               </div>
-              
+
               {/* Botones simplificados */}
               <div className="space-y-3">
-                <button 
-                  type="button" 
-                  onClick={startVideo} 
+                <button
+                  type="button"
+                  onClick={startVideo}
                   className="w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
                 >
                   Start Camera
                 </button>
-                <button 
-                  type="button" 
-                  onClick={handleStopVideo} 
+                <button
+                  type="button"
+                  onClick={handleStopVideo}
                   className="w-full py-2 px-4 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Stop Camera
@@ -246,12 +267,11 @@ const Login = () => {
           )}
 
           <div>
-            <button 
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mt-6 ${
-                faceDetected && !loading 
-                  ? 'bg-green-500 text-white hover:bg-green-600' 
+            <button
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 mt-6 ${faceDetected && !loading
+                  ? 'bg-green-500 text-white hover:bg-green-600'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+                }`}
               disabled={loading || (isFaceLogin && !faceDetected)}
             >
               {loading ? (
