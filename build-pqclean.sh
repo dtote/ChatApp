@@ -27,20 +27,59 @@ command -v g++ >/dev/null 2>&1 || { echo "❌ g++ not found"; exit 1; }
 command -v cmake >/dev/null 2>&1 || { echo "❌ cmake not found"; exit 1; }
 command -v git >/dev/null 2>&1 || { echo "❌ git not found"; exit 1; }
 
-# Instalar Crow localmente (header-only, no necesita compilación)
+# Instalar Boost localmente (Crow v1.0+ requiere Boost)
+# Solo necesitamos los headers (header-only library)
+echo "📥 Installing Boost headers..."
+BOOST_INSTALL_DIR="$PQCLEAN_API_DIR/boost-install"
+BOOST_INCLUDE_DIR="$BOOST_INSTALL_DIR/include"
+if [ ! -d "$BOOST_INCLUDE_DIR/boost" ]; then
+    mkdir -p "$BOOST_INCLUDE_DIR"
+    
+    # Clonar Boost completo pero solo los headers (usando sparse checkout)
+    echo "📥 Cloning Boost headers (this may take a minute)..."
+    git clone --depth 1 --filter=blob:none --sparse https://github.com/boostorg/boost.git /tmp/boost-clone 2>/dev/null || {
+        # Fallback: clonar completo pero shallow
+        echo "⚠️ Sparse clone failed, trying full shallow clone..."
+        git clone --depth 1 https://github.com/boostorg/boost.git /tmp/boost-clone 2>/dev/null || {
+            echo "❌ Failed to clone Boost"
+            exit 1
+        }
+    }
+    
+    # Copiar solo los headers necesarios
+    if [ -d "/tmp/boost-clone/boost" ]; then
+        # Copiar estructura completa de headers
+        cp -r /tmp/boost-clone/boost "$BOOST_INCLUDE_DIR/" 2>/dev/null || true
+    elif [ -d "/tmp/boost-clone" ]; then
+        # Buscar headers en subdirectorios
+        find /tmp/boost-clone -name "*.hpp" -path "*/boost/*" -exec mkdir -p "$BOOST_INCLUDE_DIR/{}" \; 2>/dev/null || true
+        find /tmp/boost-clone -type d -name "boost" -exec cp -r {} "$BOOST_INCLUDE_DIR/" \; 2>/dev/null || true
+    fi
+    
+    rm -rf /tmp/boost-clone
+    
+    if [ -d "$BOOST_INCLUDE_DIR/boost" ]; then
+        echo "✅ Boost headers installed"
+    else
+        echo "❌ Failed to install Boost headers"
+        exit 1
+    fi
+fi
+
+# Instalar Crow localmente (header-only)
 echo "📥 Installing Crow framework..."
 CROW_DIR="./crow"
 if [ ! -d "$CROW_DIR" ]; then
     # Clonar Crow (header-only library)
     git clone --depth 1 https://github.com/CrowCpp/Crow.git "$CROW_DIR"
     cd "$CROW_DIR"
-    # Intentar usar un tag estable, si no existe usar main
+    # Usar v1.0+5 que es estable y funciona con Boost
     git fetch --tags 2>/dev/null || true
     # Buscar tags que empiecen con v1.0
     TAG=$(git tag 2>/dev/null | grep "^v1.0" | sort -V | tail -1 2>/dev/null || echo "")
     if [ -n "$TAG" ]; then
         echo "📌 Using Crow version: $TAG"
-        git checkout "$TAG" 2>/dev/null || echo "⚠️ Tag $TAG not found, using current branch"
+        git checkout "$TAG" 2>/dev/null || echo "⚠️ Tag $TAG not found, using main branch"
     else
         echo "📌 Using Crow main branch"
     fi
@@ -102,7 +141,7 @@ rm -rf /tmp/pqclean-api-repo
 # Compilar pqclean-api
 echo "🔨 Compiling pqclean-api binary..."
 
-# Determinar flags de Crow (header-only library)
+# Determinar flags de Crow y Boost
 if [ -d "./crow/include" ]; then
     # Crow con estructura include/
     CROW_INCLUDE="./crow/include"
@@ -114,10 +153,17 @@ else
     exit 1
 fi
 
+# Boost headers
+BOOST_INCLUDE="$BOOST_INSTALL_DIR/include"
+if [ ! -d "$BOOST_INCLUDE" ] && [ -d "./boost" ]; then
+    BOOST_INCLUDE="./boost"
+fi
+
 echo "📌 Using Crow headers from: $CROW_INCLUDE"
+echo "📌 Using Boost headers from: $BOOST_INCLUDE"
 
 g++ -std=c++17 -o pqclean-api pqclean-api.cpp base64.cpp \
-    -I. -I./PQClean -I"$CROW_INCLUDE" \
+    -I. -I./PQClean -I"$CROW_INCLUDE" -I"$BOOST_INCLUDE" \
     -L./PQClean/build/lib \
     -lml-kem-512_clean -lml-kem-768_clean -lml-kem-1024_clean \
     -lml-dsa-44_clean -lml-dsa-65_clean -lml-dsa-87_clean \
