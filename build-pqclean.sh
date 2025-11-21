@@ -3,51 +3,56 @@ set -e
 
 echo "🔨 Building PQClean API..."
 
-# Crear directorio para PQClean API
-mkdir -p PQClean-API
-cd PQClean-API
+# Obtener el directorio base del script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR" || { echo "❌ Failed to cd to script directory"; exit 1; }
 
-# Instalar dependencias del sistema necesarias para compilar
-echo "📦 Installing build dependencies..."
-sudo apt-get update -qq && \
-sudo apt-get install -y -qq \
-    build-essential \
-    cmake \
-    libssl-dev \
-    git \
-    libboost-all-dev \
-    wget \
-    libasio-dev \
-    pkg-config \
-    g++ \
-    > /dev/null 2>&1 || echo "⚠️ Some packages may already be installed"
+# Crear directorio para PQClean API y asegurarse de que existe
+PQCLEAN_API_DIR="$SCRIPT_DIR/PQClean-API"
+mkdir -p "$PQCLEAN_API_DIR" || { echo "❌ Failed to create PQClean-API directory"; exit 1; }
 
-# Instalar Crow v1.0+3
-echo "📥 Installing Crow framework..."
-if [ ! -d "/usr/local/include/crow" ]; then
-    git clone --depth 1 https://github.com/CrowCpp/Crow.git /tmp/crow-build && \
-    cd /tmp/crow-build && \
-    git checkout v1.0+3 && \
-    mkdir build && cd build && \
-    cmake .. \
-        -DCROW_BUILD_EXAMPLES=OFF \
-        -DCROW_BUILD_TESTS=OFF \
-        -DCROW_BUILD_DOCS=OFF \
-        -DCROW_ENABLE_SSL=OFF && \
-    make -j$(nproc) && \
-    sudo make install && \
-    sudo ldconfig && \
-    cd /tmp && rm -rf /tmp/crow-build
+# Verificar que el directorio se creó correctamente
+if [ ! -d "$PQCLEAN_API_DIR" ]; then
+    echo "❌ PQClean-API directory does not exist after creation"
+    exit 1
 fi
 
-cd "$(dirname "$0")/PQClean-API"
+cd "$PQCLEAN_API_DIR" || { echo "❌ Failed to cd to PQClean-API directory"; exit 1; }
 
-# Instalar base64
+# Instalar dependencias del sistema (sin sudo, Render ya tiene las herramientas básicas)
+echo "📦 Checking build dependencies..."
+# Render ya tiene g++, cmake, git, pkg-config instalados por defecto
+# Solo verificamos que estén disponibles
+command -v g++ >/dev/null 2>&1 || { echo "❌ g++ not found"; exit 1; }
+command -v cmake >/dev/null 2>&1 || { echo "❌ cmake not found"; exit 1; }
+command -v git >/dev/null 2>&1 || { echo "❌ git not found"; exit 1; }
+
+# Instalar Crow localmente (header-only, no necesita compilación)
+echo "📥 Installing Crow framework..."
+CROW_DIR="./crow"
+if [ ! -d "$CROW_DIR" ]; then
+    # Clonar Crow (header-only library)
+    git clone --depth 1 https://github.com/CrowCpp/Crow.git "$CROW_DIR"
+    cd "$CROW_DIR"
+    # Intentar usar un tag estable, si no existe usar main
+    git fetch --tags 2>/dev/null || true
+    # Buscar tags que empiecen con v1.0
+    TAG=$(git tag 2>/dev/null | grep "^v1.0" | sort -V | tail -1 2>/dev/null || echo "")
+    if [ -n "$TAG" ]; then
+        echo "📌 Using Crow version: $TAG"
+        git checkout "$TAG" 2>/dev/null || echo "⚠️ Tag $TAG not found, using current branch"
+    else
+        echo "📌 Using Crow main branch"
+    fi
+    cd "$PQCLEAN_API_DIR" || { echo "❌ Failed to return to PQClean-API directory"; exit 1; }
+fi
+
+# Instalar base64 localmente
 echo "📥 Installing base64 library..."
-if [ ! -f "/usr/local/include/base64.h" ]; then
-    git clone --depth 1 https://github.com/ReneNyffenegger/cpp-base64.git /tmp/cpp-base64 && \
-    sudo cp /tmp/cpp-base64/base64.h /usr/local/include/ && \
-    cp /tmp/cpp-base64/base64.cpp ./base64.cpp && \
+if [ ! -f "./base64.h" ]; then
+    git clone --depth 1 https://github.com/ReneNyffenegger/cpp-base64.git /tmp/cpp-base64
+    cp /tmp/cpp-base64/base64.h ./
+    cp /tmp/cpp-base64/base64.cpp ./
     rm -rf /tmp/cpp-base64
 fi
 
@@ -82,7 +87,8 @@ for lib in $(cat /tmp/libraries.txt); do
 done
 cp libpqclean_common.a build/lib/
 
-cd ..
+# Volver al directorio PQClean-API
+cd "$PQCLEAN_API_DIR" || { echo "❌ Failed to return to PQClean-API directory"; exit 1; }
 
 # Obtener pqclean-api.cpp desde GitHub
 echo "📥 Downloading pqclean-api.cpp..."
@@ -95,17 +101,32 @@ rm -rf /tmp/pqclean-api-repo
 
 # Compilar pqclean-api
 echo "🔨 Compiling pqclean-api binary..."
+
+# Determinar flags de Crow (header-only library)
+if [ -d "./crow/include" ]; then
+    # Crow con estructura include/
+    CROW_INCLUDE="./crow/include"
+elif [ -d "./crow" ]; then
+    # Crow clonado, headers en la raíz
+    CROW_INCLUDE="./crow"
+else
+    echo "❌ Crow not found!"
+    exit 1
+fi
+
+echo "📌 Using Crow headers from: $CROW_INCLUDE"
+
 g++ -std=c++17 -o pqclean-api pqclean-api.cpp base64.cpp \
-    -I. -I./PQClean \
+    -I. -I./PQClean -I"$CROW_INCLUDE" \
     -L./PQClean/build/lib \
     -lml-kem-512_clean -lml-kem-768_clean -lml-kem-1024_clean \
     -lml-dsa-44_clean -lml-dsa-65_clean -lml-dsa-87_clean \
     -lpqclean_common \
-    -lpthread \
-    $(pkg-config --cflags --libs crow 2>/dev/null || echo "-lcrow")
+    -lpthread
 
 chmod +x pqclean-api
 
 echo "✅ PQClean API compiled successfully!"
-cd ..
+# Volver al directorio raíz del script
+cd "$SCRIPT_DIR" || { echo "❌ Failed to return to script directory"; exit 1; }
 
